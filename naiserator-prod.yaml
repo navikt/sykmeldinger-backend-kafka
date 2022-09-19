@@ -35,4 +35,6 @@ spec:
       memory: 768Mi
   vault:
     enabled: false
+  envFrom:
+    - secret: google-sql-sykmeldinger-backend-sykmeldinger-sykmeldin-7ee1e806
   webproxy: true
