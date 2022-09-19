@@ -2,10 +2,10 @@ package no.nav.sykmeldinger.application.db
 
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
+import no.nav.sykmeldinger.Environment
 import java.sql.Connection
 import java.sql.ResultSet
 import java.util.Properties
-import no.nav.sykmeldinger.Environment
 
 class Database(
     env: Environment
@@ -33,7 +33,6 @@ class Database(
                 validate()
             }
         )
-
     }
 }
 

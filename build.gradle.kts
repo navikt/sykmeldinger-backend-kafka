@@ -19,6 +19,7 @@ val kotlinVersion = "1.6.21"
 val kotestVersion = "5.4.2"
 val postgresVersion = "42.5.0"
 val hikariVersion = "5.0.1"
+val googlePostgresVersion = "1.6.3"
 
 tasks.withType<Jar> {
     manifest.attributes["Main-Class"] = "no.nav.sykmeldinger.BootstrapKt"
@@ -80,6 +81,9 @@ dependencies {
 
     implementation("com.zaxxer:HikariCP:$hikariVersion")
     implementation("org.postgresql:postgresql:$postgresVersion")
+    implementation("com.google.cloud.sql:postgres-socket-factory:$googlePostgresVersion") {
+        exclude(group = "commons-codec", module = "commons-codec")
+    }
 
     testImplementation("org.amshove.kluent:kluent:$kluentVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
