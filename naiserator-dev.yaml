@@ -12,6 +12,12 @@ spec:
     max: 2
     cpuThresholdPercentage: 90
   port: 8080
+  gcp:
+    permissions:
+      - resource:
+          apiVersion: resourcemanager.cnrm.cloud.google.com/v1beta1
+          kind: Project
+        role: roles/cloudsql.client
   liveness:
     path: /internal/is_alive
     initialDelay: 10
@@ -33,6 +39,9 @@ spec:
     requests:
       cpu: 400m
       memory: 768Mi
-  vault:
-    enabled: false
+  envFrom:
+    - secret: google-sql-sykmeldinger-backend-sykmeldinger-sykmeldin-7ee1e806
   webproxy: true
+  env:
+    - name: CLOUD_SQL_INSTANCE
+      value: teamsykmelding-dev-1d34:europe-north1:sykmeldinger-db-instance

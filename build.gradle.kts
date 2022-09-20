@@ -6,10 +6,10 @@ group = "no.nav.sykmeldinger"
 version = "1.0.0"
 
 val coroutinesVersion = "1.6.4"
-val jacksonVersion = "2.13.3"
+val jacksonVersion = "2.13.4"
 val kluentVersion = "1.68"
-val ktorVersion = "2.1.0"
-val logbackVersion = "1.2.11"
+val ktorVersion = "2.1.1"
+val logbackVersion = "1.4.0"
 val logstashEncoderVersion = "7.2"
 val prometheusVersion = "0.16.0"
 val smCommonVersion = "1.f132f2b"
@@ -17,6 +17,9 @@ val mockkVersion = "1.12.7"
 val testContainerKafkaVersion = "1.17.3"
 val kotlinVersion = "1.6.21"
 val kotestVersion = "5.4.2"
+val postgresVersion = "42.5.0"
+val hikariVersion = "5.0.1"
+val googlePostgresVersion = "1.6.3"
 
 tasks.withType<Jar> {
     manifest.attributes["Main-Class"] = "no.nav.sykmeldinger.BootstrapKt"
@@ -75,6 +78,12 @@ dependencies {
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
+
+    implementation("com.zaxxer:HikariCP:$hikariVersion")
+    implementation("org.postgresql:postgresql:$postgresVersion")
+    implementation("com.google.cloud.sql:postgres-socket-factory:$googlePostgresVersion") {
+        exclude(group = "commons-codec", module = "commons-codec")
+    }
 
     testImplementation("org.amshove.kluent:kluent:$kluentVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
