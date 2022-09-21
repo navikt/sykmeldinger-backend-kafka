@@ -12,14 +12,15 @@ val ktorVersion = "2.1.1"
 val logbackVersion = "1.4.0"
 val logstashEncoderVersion = "7.2"
 val prometheusVersion = "0.16.0"
-val smCommonVersion = "1.f132f2b"
 val mockkVersion = "1.12.7"
-val testContainerKafkaVersion = "1.17.3"
+val testContainerVersion = "1.17.3"
 val kotlinVersion = "1.6.21"
 val kotestVersion = "5.4.2"
 val postgresVersion = "42.5.0"
 val hikariVersion = "5.0.1"
 val googlePostgresVersion = "1.6.3"
+val smCommonVersion = "1.cbb3aed"
+val flywayVersion = "8.5.10"
 
 tasks.withType<Jar> {
     manifest.attributes["Main-Class"] = "no.nav.sykmeldinger.BootstrapKt"
@@ -85,15 +86,20 @@ dependencies {
         exclude(group = "commons-codec", module = "commons-codec")
     }
 
+    implementation("no.nav.helse:syfosm-common-kafka:$smCommonVersion")
+    implementation("no.nav.helse:syfosm-common-models:$smCommonVersion")
+
     testImplementation("org.amshove.kluent:kluent:$kluentVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
-    testImplementation("org.testcontainers:kafka:$testContainerKafkaVersion")
+    testImplementation("org.testcontainers:kafka:$testContainerVersion")
+    testImplementation("org.testcontainers:postgresql:$testContainerVersion")
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion") {
         exclude(group = "org.eclipse.jetty")
     }
     testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
     testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
     testImplementation("io.kotest:kotest-property:$kotestVersion")
+    testImplementation("org.flywaydb:flyway-core:$flywayVersion")
 }
 
 tasks.jacocoTestReport {
