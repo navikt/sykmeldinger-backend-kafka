@@ -12,6 +12,8 @@ import no.nav.sykmeldinger.status.db.insertStatus
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.LoggerFactory
 import java.time.Duration
+import java.time.OffsetDateTime
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 
 class SykmeldingStatusConsumer(
@@ -24,9 +26,18 @@ class SykmeldingStatusConsumer(
         private val log = LoggerFactory.getLogger(SykmeldingStatusConsumer::class.java)
     }
 
+    private var totalRecords = 0
+    private var lastDate = OffsetDateTime.MIN
+
     @OptIn(DelicateCoroutinesApi::class)
     fun startConsumer() {
         GlobalScope.launch(Dispatchers.IO) {
+            val loggerJob = GlobalScope.launch(Dispatchers.IO) {
+                while (applicationState.ready) {
+                    log.info("$totalRecords records processed, last record was at $lastDate")
+                    delay(10000)
+                }
+            }
             while (applicationState.ready) {
                 try {
                     kafkaConsumer.subscribe(listOf(environment.statusTopic))
@@ -47,7 +58,9 @@ class SykmeldingStatusConsumer(
             val records = kafkaConsumer.poll(Duration.ofSeconds(1))
             records.forEach {
                 updateStatus(it.value())
+                lastDate = it.value().kafkaMetadata.timestamp
             }
+            totalRecords += records.count()
         }
     }
 
