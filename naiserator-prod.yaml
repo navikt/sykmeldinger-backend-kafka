@@ -12,6 +12,8 @@ spec:
     max: 3
     cpuThresholdPercentage: 90
   port: 8080
+  kafka:
+    pool: nav-prod
   gcp:
     permissions:
       - resource:
