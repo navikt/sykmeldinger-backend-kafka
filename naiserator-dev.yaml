@@ -8,8 +8,8 @@ metadata:
 spec:
   image: {{ image }}
   replicas:
-    min: 2
-    max: 2
+    min: 1
+    max: 1
     cpuThresholdPercentage: 90
   port: 8080
   gcp:
@@ -37,7 +37,7 @@ spec:
       cpu: 500m
       memory: 1Gi
     requests:
-      cpu: 400m
+      cpu: 100m
       memory: 768Mi
   envFrom:
     - secret: google-sql-sykmeldinger-backend-sykmeldinger-sykmeldin-7ee1e806

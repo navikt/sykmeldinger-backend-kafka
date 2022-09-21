@@ -12,6 +12,7 @@ import no.nav.sykmeldinger.status.db.insertStatus
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.LoggerFactory
 import java.time.Duration
+import kotlinx.coroutines.delay
 
 class SykmeldingStatusConsumer(
     private val environment: Environment,
@@ -24,7 +25,7 @@ class SykmeldingStatusConsumer(
     }
 
     @OptIn(DelicateCoroutinesApi::class)
-    suspend fun startConsumer() {
+    fun startConsumer() {
         GlobalScope.launch(Dispatchers.IO) {
             while (applicationState.ready) {
                 try {
@@ -34,6 +35,8 @@ class SykmeldingStatusConsumer(
                     log.error("error running consumer", ex)
                 } finally {
                     kafkaConsumer.unsubscribe()
+                    log.info("Unsubscribed from topic ${environment.statusTopic} and waiting for 10 seconds before trying again")
+                    delay(10_000)
                 }
             }
         }
