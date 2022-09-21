@@ -19,8 +19,8 @@ val kotestVersion = "5.4.2"
 val postgresVersion = "42.5.0"
 val hikariVersion = "5.0.1"
 val googlePostgresVersion = "1.6.3"
-val smCommonVersion = "1.cbb3aed"
-val flywayVersion = "8.5.10"
+val smCommonVersion = "1.069b5f9"
+val flywayVersion = "9.3.0"
 
 tasks.withType<Jar> {
     manifest.attributes["Main-Class"] = "no.nav.sykmeldinger.BootstrapKt"
