@@ -8,7 +8,7 @@ fun DatabaseInterface.insertStatus(sykmeldingId: String, status: String, timesta
     connection.use { connection ->
         connection.prepareStatement(
             """
-            insert into sykmeldingstatus(sykmelding_id, event, event_timestamp) values(?, ?, ?) on conflict do nothing;
+            insert into sykmeldingstatus(sykmelding_id, event, timestamp) values(?, ?, ?) on conflict do nothing;
         """
         ).use { ps ->
             var index = 1

@@ -8,9 +8,9 @@ import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy
 import java.sql.Connection
 
-class PsqlContainer : PostgreSQLContainer<PsqlContainer>("postgres:14")
+class PsqlContainer : PostgreSQLContainer<PsqlContainer>("postgres:14.4")
 
-class TestDatabase(val connectionName: String, val dbUsername: String, val dbPassword:String) : DatabaseInterface {
+class TestDatabase(val connectionName: String, val dbUsername: String, val dbPassword: String) : DatabaseInterface {
     private val dataSource: HikariDataSource
     override val connection: Connection
         get() = dataSource.connection

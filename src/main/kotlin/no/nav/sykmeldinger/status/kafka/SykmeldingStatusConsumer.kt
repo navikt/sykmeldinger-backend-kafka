@@ -3,6 +3,7 @@ package no.nav.sykmeldinger.status.kafka
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import no.nav.syfo.model.sykmeldingstatus.SykmeldingStatusKafkaMessageDTO
 import no.nav.sykmeldinger.Environment
@@ -13,8 +14,6 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.time.OffsetDateTime
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.delay
 
 class SykmeldingStatusConsumer(
     private val environment: Environment,

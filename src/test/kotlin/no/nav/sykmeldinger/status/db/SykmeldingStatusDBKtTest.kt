@@ -7,7 +7,7 @@ import java.time.OffsetDateTime
 internal class SykmeldingStatusDBKtTest : FunSpec({
 
     context("sykmelding status inserts") {
-        test("should handle concurrent updates") {
+        test("should handle insert") {
             val testDb = TestDB.database
             val timestamp = OffsetDateTime.now()
             testDb.insertStatus("1", "OPEN", timestamp)
