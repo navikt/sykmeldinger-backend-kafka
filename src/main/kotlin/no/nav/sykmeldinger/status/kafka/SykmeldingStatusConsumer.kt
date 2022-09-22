@@ -57,7 +57,7 @@ class SykmeldingStatusConsumer(
             val records = kafkaConsumer.poll(Duration.ofSeconds(1)).mapNotNull { it.value() }
             records.forEach {
                 updateStatus(it)
-                lastDate = it.kafkaMetadata.timestamp
+                lastDate = it.event.timestamp
             }
             totalRecords += records.count()
         }

@@ -30,7 +30,7 @@ fun main() {
     val database = Database(env)
     val kafkaConsumer = getSykmeldingStatusKafkaConsumer()
     val sykmeldingStatusConsumer = SykmeldingStatusConsumer(env, kafkaConsumer, database, applicationState)
-    // sykmeldingStatusConsumer.startConsumer()
+    sykmeldingStatusConsumer.startConsumer()
     applicationServer.start()
 }
 
