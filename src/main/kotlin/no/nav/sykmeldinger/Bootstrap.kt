@@ -37,9 +37,9 @@ fun main() {
 private fun getSykmeldingStatusKafkaConsumer(): KafkaConsumer<String, SykmeldingStatusKafkaMessageDTO> {
     val kafkaConsumer = KafkaConsumer(
         KafkaUtils.getAivenKafkaConfig().also {
-            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
+            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
             it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
-        }.toConsumerConfig("sykmeldinger-backend-kafka", JacksonKafkaDeserializer::class),
+        }.toConsumerConfig("sykmeldinger-backend-kafka-consumer", JacksonKafkaDeserializer::class),
         StringDeserializer(),
         JacksonKafkaDeserializer(SykmeldingStatusKafkaMessageDTO::class)
     )
