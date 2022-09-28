@@ -3,8 +3,11 @@ package no.nav.sykmeldinger.status.kafka
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import no.nav.syfo.model.sykmeldingstatus.SykmeldingStatusKafkaEventDTO
 import no.nav.syfo.model.sykmeldingstatus.SykmeldingStatusKafkaMessageDTO
 import no.nav.sykmeldinger.Environment
@@ -15,9 +18,8 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.time.OffsetDateTime
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.withContext
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 class SykmeldingStatusConsumer(
     private val environment: Environment,
@@ -28,7 +30,7 @@ class SykmeldingStatusConsumer(
     companion object {
         private val log = LoggerFactory.getLogger(SykmeldingStatusConsumer::class.java)
     }
-
+    private var duration = kotlin.time.Duration.ZERO
     private var totalRecords = 0
     private var lastDate = OffsetDateTime.MIN
 
@@ -37,7 +39,7 @@ class SykmeldingStatusConsumer(
         GlobalScope.launch(Dispatchers.IO) {
             val loggerJob = GlobalScope.launch(Dispatchers.IO) {
                 while (applicationState.ready) {
-                    log.info("$totalRecords records processed, last record was at $lastDate")
+                    log.info("$totalRecords records processed, last record was at $lastDate avg time per record: ${duration.div(totalRecords).inWholeMilliseconds} ms")
                     delay(10000)
                 }
             }
@@ -56,14 +58,18 @@ class SykmeldingStatusConsumer(
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     private suspend fun consume() {
         while (applicationState.ready) {
             val records = kafkaConsumer.poll(Duration.ofSeconds(1)).mapNotNull { it.value() }
             if (records.isNotEmpty()) {
                 lastDate = records.last().event.timestamp
-                updateStatus(records.map { it.event })
+                val time = measureTime {
+                    updateStatus(records.map { it.event })
+                }
+                duration += time
+                totalRecords += records.count()
             }
-            totalRecords += records.count()
         }
     }
 

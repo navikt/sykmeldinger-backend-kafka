@@ -1,14 +1,13 @@
 package no.nav.sykmeldinger.status.db
 
 import io.kotest.core.spec.style.FunSpec
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import no.nav.syfo.model.sykmeldingstatus.SykmeldingStatusKafkaEventDTO
 import no.nav.sykmeldinger.TestDB
 import org.amshove.kluent.shouldBeEqualTo
 import java.time.OffsetDateTime
-import kotlin.random.Random
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 
 internal class SykmeldingStatusDBKtTest : FunSpec({
 

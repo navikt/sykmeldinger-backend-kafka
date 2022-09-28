@@ -21,7 +21,7 @@ fun toPGObject(jsonObject: Any) = PGobject().also {
     it.value = objectMapper.writeValueAsString(jsonObject)
 }
 
-fun DatabaseInterface.insertStatus(statusEvent: List<SykmeldingStatusKafkaEventDTO>) : Int {
+fun DatabaseInterface.insertStatus(statusEvent: List<SykmeldingStatusKafkaEventDTO>): Int {
     connection.use { connection ->
         connection.prepareStatement(
             """
