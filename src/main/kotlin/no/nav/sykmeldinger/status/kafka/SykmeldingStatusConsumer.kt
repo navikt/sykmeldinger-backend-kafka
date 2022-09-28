@@ -39,7 +39,7 @@ class SykmeldingStatusConsumer(
         GlobalScope.launch(Dispatchers.IO) {
             val loggerJob = GlobalScope.launch(Dispatchers.IO) {
                 while (applicationState.ready) {
-                    log.info("$totalRecords records processed, last record was at $lastDate avg time per record: ${duration.div(totalRecords).inWholeMilliseconds} ms")
+                    log.info("$totalRecords records processed, last record was at $lastDate avg time per record: ${getDurationPerRecord()} ms")
                     delay(10000)
                 }
             }
@@ -55,6 +55,13 @@ class SykmeldingStatusConsumer(
                     delay(10_000)
                 }
             }
+        }
+    }
+
+    private fun getDurationPerRecord(): Long {
+        return when (duration.inWholeMilliseconds == 0L || totalRecords == 0) {
+            false -> duration.div(totalRecords).inWholeMilliseconds
+            else -> 0L
         }
     }
 
