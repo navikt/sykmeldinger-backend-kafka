@@ -9,7 +9,8 @@ data class Environment(
     val dbPort: String = getEnvVar("DB_SYKMELDINGER_KAFKA_USER_PORT"),
     val dbName: String = getEnvVar("DB_SYKMELDINGER_KAFKA_USER_DATABASE"),
     val cloudSqlInstance: String = getEnvVar("CLOUD_SQL_INSTANCE"),
-    val statusTopic: String = "teamsykmelding.sykmeldingstatus-leesah"
+    val statusTopic: String = "teamsykmelding.sykmeldingstatus-leesah",
+    val bekreftetTopic: String = "teamsykmelding.syfo-bekreftet-sykmelding"
 ) {
     fun jdbcUrl(): String {
         return "jdbc:postgresql://$dbHost:$dbPort/$dbName"

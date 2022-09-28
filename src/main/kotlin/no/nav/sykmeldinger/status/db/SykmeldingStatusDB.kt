@@ -1,22 +1,45 @@
 package no.nav.sykmeldinger.status.db
 
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import no.nav.syfo.model.sykmeldingstatus.SykmeldingStatusKafkaEventDTO
 import no.nav.sykmeldinger.application.db.DatabaseInterface
+import org.postgresql.util.PGobject
 import java.sql.Timestamp
-import java.time.OffsetDateTime
 
-fun DatabaseInterface.insertStatus(sykmeldingId: String, status: String, timestamp: OffsetDateTime) {
+private val objectMapper: ObjectMapper = jacksonObjectMapper().apply {
+    registerModule(JavaTimeModule())
+    configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+    configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true)
+}
+fun toPGObject(jsonObject: Any) = PGobject().also {
+    it.type = "json"
+    it.value = objectMapper.writeValueAsString(jsonObject)
+}
+
+fun DatabaseInterface.insertStatus(statusEvent: List<SykmeldingStatusKafkaEventDTO>) : Int {
     connection.use { connection ->
         connection.prepareStatement(
             """
-            insert into sykmeldingstatus(sykmelding_id, event, timestamp) values(?, ?, ?) on conflict do nothing;
+            insert into sykmeldingstatus(sykmelding_id, event, timestamp, arbeidsgiver, sporsmal) values(?, ?, ?, ?, ?) on conflict do nothing;
         """
         ).use { ps ->
-            var index = 1
-            ps.setString(index++, sykmeldingId)
-            ps.setString(index++, status)
-            ps.setTimestamp(index, Timestamp.from(timestamp.toInstant()))
-            ps.executeUpdate()
+            for (event in statusEvent) {
+                var index = 1
+                ps.setString(index++, event.sykmeldingId)
+                ps.setObject(index++, toPGObject(event))
+                ps.setTimestamp(index++, Timestamp.from(event.timestamp.toInstant()))
+                ps.setObject(index++, event.arbeidsgiver?.let { toPGObject(it) })
+                ps.setObject(index, event.sporsmals?.let { toPGObject(it) })
+                ps.addBatch()
+            }
+            return ps.executeBatch().also {
+                connection.commit()
+            }.size
         }
-        connection.commit()
     }
 }

@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import no.nav.syfo.model.sykmeldingstatus.SykmeldingStatusKafkaEventDTO
 import no.nav.syfo.model.sykmeldingstatus.SykmeldingStatusKafkaMessageDTO
 import no.nav.sykmeldinger.Environment
 import no.nav.sykmeldinger.application.ApplicationState
@@ -14,6 +15,9 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.time.OffsetDateTime
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.withContext
 
 class SykmeldingStatusConsumer(
     private val environment: Environment,
@@ -39,31 +43,37 @@ class SykmeldingStatusConsumer(
             }
             while (applicationState.ready) {
                 try {
-                    kafkaConsumer.subscribe(listOf(environment.statusTopic))
+                    kafkaConsumer.subscribe(listOf(environment.bekreftetTopic))
                     consume()
                 } catch (ex: Exception) {
                     log.error("error running consumer", ex)
                 } finally {
                     kafkaConsumer.unsubscribe()
-                    log.info("Unsubscribed from topic ${environment.statusTopic} and waiting for 10 seconds before trying again")
+                    log.info("Unsubscribed from topic ${environment.bekreftetTopic} and waiting for 10 seconds before trying again")
                     delay(10_000)
                 }
             }
         }
     }
 
-    private fun consume() {
+    private suspend fun consume() {
         while (applicationState.ready) {
             val records = kafkaConsumer.poll(Duration.ofSeconds(1)).mapNotNull { it.value() }
-            records.forEach {
-                updateStatus(it)
-                lastDate = it.event.timestamp
+            if (records.isNotEmpty()) {
+                lastDate = records.last().event.timestamp
+                updateStatus(records.map { it.event })
             }
             totalRecords += records.count()
         }
     }
 
-    private fun updateStatus(it: SykmeldingStatusKafkaMessageDTO) {
-        database.insertStatus(it.event.sykmeldingId, it.event.statusEvent, it.event.timestamp)
+    @OptIn(DelicateCoroutinesApi::class)
+    private suspend fun updateStatus(statusEvents: List<SykmeldingStatusKafkaEventDTO>) = withContext(Dispatchers.IO) {
+        val chunks = statusEvents.chunked(10).map { chunk ->
+            async(Dispatchers.IO) {
+                database.insertStatus(chunk)
+            }
+        }
+        chunks.awaitAll()
     }
 }
