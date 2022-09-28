@@ -82,7 +82,7 @@ class SykmeldingStatusConsumer(
 
     @OptIn(DelicateCoroutinesApi::class)
     private suspend fun updateStatus(statusEvents: List<SykmeldingStatusKafkaEventDTO>) = withContext(Dispatchers.IO) {
-        val chunks = statusEvents.chunked(10).map { chunk ->
+        val chunks = statusEvents.chunked(100).map { chunk ->
             async(Dispatchers.IO) {
                 database.insertStatus(chunk)
             }
