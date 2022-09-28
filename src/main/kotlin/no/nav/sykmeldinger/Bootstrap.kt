@@ -30,7 +30,7 @@ fun main() {
     val database = Database(env)
     val kafkaConsumer = getSykmeldingStatusKafkaConsumer()
     val sykmeldingStatusConsumer = SykmeldingStatusConsumer(env, kafkaConsumer, database, applicationState)
-    //sykmeldingStatusConsumer.startConsumer()
+    sykmeldingStatusConsumer.startConsumer()
     applicationServer.start()
 }
 
@@ -39,7 +39,7 @@ private fun getSykmeldingStatusKafkaConsumer(): KafkaConsumer<String, Sykmelding
         KafkaUtils.getAivenKafkaConfig().also {
             it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
             it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
-        }.toConsumerConfig("sykmeldinger-backend-kafka-consumer", JacksonKafkaDeserializer::class),
+        }.toConsumerConfig("sykmeldinger-kafka-bekreftet", JacksonKafkaDeserializer::class),
         StringDeserializer(),
         JacksonKafkaDeserializer(SykmeldingStatusKafkaMessageDTO::class)
     )
