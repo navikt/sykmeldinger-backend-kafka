@@ -37,7 +37,7 @@ class SykmeldingStatusConsumer(
     @OptIn(DelicateCoroutinesApi::class)
     fun startConsumer() {
         GlobalScope.launch(Dispatchers.IO) {
-            val loggerJob = GlobalScope.launch(Dispatchers.IO) {
+            GlobalScope.launch(Dispatchers.IO) {
                 while (applicationState.ready) {
                     log.info("$totalRecords records processed, last record was at $lastDate avg time per record: ${getDurationPerRecord()} ms")
                     delay(10000)
@@ -45,13 +45,13 @@ class SykmeldingStatusConsumer(
             }
             while (applicationState.ready) {
                 try {
-                    kafkaConsumer.subscribe(listOf(environment.sendtTopic))
+                    kafkaConsumer.subscribe(listOf(environment.statusTopic))
                     consume()
                 } catch (ex: Exception) {
                     log.error("error running consumer", ex)
                 } finally {
                     kafkaConsumer.unsubscribe()
-                    log.info("Unsubscribed from topic ${environment.sendtTopic} and waiting for 10 seconds before trying again")
+                    log.info("Unsubscribed from topic ${environment.statusTopic} and waiting for 10 seconds before trying again")
                     delay(10_000)
                 }
             }
@@ -80,13 +80,7 @@ class SykmeldingStatusConsumer(
         }
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
     private suspend fun updateStatus(statusEvents: List<SykmeldingStatusKafkaEventDTO>) = withContext(Dispatchers.IO) {
-        val chunks = statusEvents.chunked(25).map { chunk ->
-            async(Dispatchers.IO) {
-                database.insertStatus(chunk)
-            }
-        }
-        chunks.awaitAll()
+        database.insertStatus(statusEvents)
     }
 }
