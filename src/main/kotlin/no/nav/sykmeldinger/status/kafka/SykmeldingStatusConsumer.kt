@@ -3,6 +3,8 @@ package no.nav.sykmeldinger.status.kafka
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -43,13 +45,13 @@ class SykmeldingStatusConsumer(
             }
             while (applicationState.ready) {
                 try {
-                    kafkaConsumer.subscribe(listOf(environment.statusTopic))
+                    kafkaConsumer.subscribe(listOf(environment.bekreftetTopic))
                     consume()
                 } catch (ex: Exception) {
                     log.error("error running consumer", ex)
                 } finally {
                     kafkaConsumer.unsubscribe()
-                    log.info("Unsubscribed from topic ${environment.statusTopic} and waiting for 10 seconds before trying again")
+                    log.info("Unsubscribed from topic ${environment.bekreftetTopic} and waiting for 10 seconds before trying again")
                     delay(10_000)
                 }
             }
@@ -79,6 +81,11 @@ class SykmeldingStatusConsumer(
     }
 
     private suspend fun updateStatus(statusEvents: List<SykmeldingStatusKafkaEventDTO>) = withContext(Dispatchers.IO) {
-        database.insertStatus(statusEvents)
+        val chunks = statusEvents.chunked(25).map { chunk ->
+            async(Dispatchers.IO) {
+                database.insertStatus(chunk)
+            }
+        }
+        chunks.awaitAll()
     }
 }

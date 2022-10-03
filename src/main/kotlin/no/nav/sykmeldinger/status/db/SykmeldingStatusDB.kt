@@ -31,7 +31,7 @@ fun DatabaseInterface.insertStatus(statusEvent: List<SykmeldingStatusKafkaEventD
             for (event in statusEvent) {
                 var index = 1
                 ps.setString(index++, event.sykmeldingId)
-                ps.setObject(index++, toPGObject(event))
+                ps.setString(index++, event.statusEvent)
                 ps.setTimestamp(index++, Timestamp.from(event.timestamp.toInstant()))
                 ps.setObject(index++, event.arbeidsgiver?.let { toPGObject(it) })
                 ps.setObject(index, event.sporsmals?.let { toPGObject(it) })

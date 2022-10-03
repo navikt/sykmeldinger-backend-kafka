@@ -14,7 +14,9 @@ data class Environment(
     val clientId: String = getEnvVar("AZURE_APP_CLIENT_ID"),
     val clientSecret: String = getEnvVar("AZURE_APP_CLIENT_SECRET"),
     val pdlGraphqlPath: String = getEnvVar("PDL_GRAPHQL_PATH"),
-    val pdlScope: String = getEnvVar("PDL_SCOPE")
+    val pdlScope: String = getEnvVar("PDL_SCOPE"),
+    val bekreftetTopic: String = "teamsykmelding.syfo-bekreftet-sykmelding",
+    val sendtTopic: String = "teamsykmelding.syfo-sendt-sykmelding"
 ) {
     fun jdbcUrl(): String {
         return "jdbc:postgresql://$dbHost:$dbPort/$dbName"
