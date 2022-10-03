@@ -100,7 +100,7 @@ private fun getSykmeldingStatusKafkaConsumer(): KafkaConsumer<String, Sykmelding
         KafkaUtils.getAivenKafkaConfig().also {
             it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
             it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 1000
-        }.toConsumerConfig("sykmeldinger-kafka-bekreftet-consumer-v2", JacksonKafkaDeserializer::class),
+        }.toConsumerConfig("sykmeldinger-kafka-sendt-consumer-v2", JacksonKafkaDeserializer::class),
         StringDeserializer(),
         JacksonKafkaDeserializer(SykmeldingStatusKafkaMessageDTO::class)
     )

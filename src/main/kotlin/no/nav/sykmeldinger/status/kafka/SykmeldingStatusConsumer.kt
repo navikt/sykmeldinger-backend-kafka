@@ -45,13 +45,13 @@ class SykmeldingStatusConsumer(
             }
             while (applicationState.ready) {
                 try {
-                    kafkaConsumer.subscribe(listOf(environment.bekreftetTopic))
+                    kafkaConsumer.subscribe(listOf(environment.sendtTopic))
                     consume()
                 } catch (ex: Exception) {
                     log.error("error running consumer", ex)
                 } finally {
                     kafkaConsumer.unsubscribe()
-                    log.info("Unsubscribed from topic ${environment.bekreftetTopic} and waiting for 10 seconds before trying again")
+                    log.info("Unsubscribed from topic ${environment.sendtTopic} and waiting for 10 seconds before trying again")
                     delay(10_000)
                 }
             }
