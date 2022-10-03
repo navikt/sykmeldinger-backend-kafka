@@ -1,5 +1,18 @@
 package no.nav.sykmeldinger
 
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.SerializationFeature
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
+import io.ktor.client.engine.cio.CIO
+import io.ktor.client.engine.cio.CIOEngineConfig
+import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.HttpResponseValidator
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.network.sockets.SocketTimeoutException
+import io.ktor.serialization.jackson.jackson
 import io.prometheus.client.hotspot.DefaultExports
 import no.nav.syfo.kafka.aiven.KafkaUtils
 import no.nav.syfo.kafka.toConsumerConfig
@@ -8,6 +21,10 @@ import no.nav.sykmeldinger.application.ApplicationServer
 import no.nav.sykmeldinger.application.ApplicationState
 import no.nav.sykmeldinger.application.createApplicationEngine
 import no.nav.sykmeldinger.application.db.Database
+import no.nav.sykmeldinger.application.exception.ServiceUnavailableException
+import no.nav.sykmeldinger.azuread.AccessTokenClient
+import no.nav.sykmeldinger.pdl.client.PdlClient
+import no.nav.sykmeldinger.pdl.service.PdlPersonService
 import no.nav.sykmeldinger.status.kafka.SykmeldingStatusConsumer
 import no.nav.sykmeldinger.util.kafka.JacksonKafkaDeserializer
 import org.apache.kafka.clients.consumer.ConsumerConfig
@@ -28,6 +45,50 @@ fun main() {
     )
     val applicationServer = ApplicationServer(applicationEngine, applicationState)
     val database = Database(env)
+
+    val config: HttpClientConfig<CIOEngineConfig>.() -> Unit = {
+        install(HttpRequestRetry) {
+            constantDelay(100, 0, false)
+            retryOnExceptionIf(3) { _, throwable ->
+                log.warn("Caught exception ${throwable.message}")
+                true
+            }
+            retryIf(maxRetries) { _, response ->
+                if (response.status.value.let { it in 500..599 }) {
+                    log.warn("Retrying for statuscode ${response.status.value}")
+                    true
+                } else {
+                    false
+                }
+            }
+        }
+        install(ContentNegotiation) {
+            jackson {
+                registerKotlinModule()
+                registerModule(JavaTimeModule())
+                configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+                configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+            }
+        }
+        HttpResponseValidator {
+            handleResponseExceptionWithRequest { exception, _ ->
+                when (exception) {
+                    is SocketTimeoutException -> throw ServiceUnavailableException(exception.message)
+                }
+            }
+        }
+        expectSuccess = true
+    }
+    val httpClient = HttpClient(CIO, config)
+
+    val accessTokenClient = AccessTokenClient(env.aadAccessTokenUrl, env.clientId, env.clientSecret, httpClient)
+    val pdlClient = PdlClient(
+        httpClient,
+        env.pdlGraphqlPath,
+        PdlClient::class.java.getResource("/graphql/getPerson.graphql").readText().replace(Regex("[\n\t]"), "")
+    )
+    val pdlPersonService = PdlPersonService(pdlClient, accessTokenClient, env.pdlScope)
+
     val kafkaConsumer = getSykmeldingStatusKafkaConsumer()
     val sykmeldingStatusConsumer = SykmeldingStatusConsumer(env, kafkaConsumer, database, applicationState)
     sykmeldingStatusConsumer.startConsumer()

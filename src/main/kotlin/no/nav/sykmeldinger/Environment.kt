@@ -10,6 +10,11 @@ data class Environment(
     val dbName: String = getEnvVar("DB_SYKMELDINGER_KAFKA_USER_DATABASE"),
     val cloudSqlInstance: String = getEnvVar("CLOUD_SQL_INSTANCE"),
     val statusTopic: String = "teamsykmelding.sykmeldingstatus-leesah",
+    val aadAccessTokenUrl: String = getEnvVar("AZURE_OPENID_CONFIG_TOKEN_ENDPOINT"),
+    val clientId: String = getEnvVar("AZURE_APP_CLIENT_ID"),
+    val clientSecret: String = getEnvVar("AZURE_APP_CLIENT_SECRET"),
+    val pdlGraphqlPath: String = getEnvVar("PDL_GRAPHQL_PATH"),
+    val pdlScope: String = getEnvVar("PDL_SCOPE")
 ) {
     fun jdbcUrl(): String {
         return "jdbc:postgresql://$dbHost:$dbPort/$dbName"
