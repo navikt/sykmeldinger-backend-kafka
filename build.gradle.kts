@@ -9,16 +9,16 @@ val coroutinesVersion = "1.6.4"
 val jacksonVersion = "2.13.4"
 val kluentVersion = "1.68"
 val ktorVersion = "2.1.1"
-val logbackVersion = "1.4.0"
+val logbackVersion = "1.4.1"
 val logstashEncoderVersion = "7.2"
 val prometheusVersion = "0.16.0"
-val mockkVersion = "1.12.7"
+val mockkVersion = "1.12.8"
 val testContainerVersion = "1.17.3"
-val kotlinVersion = "1.6.21"
+val kotlinVersion = "1.7.10"
 val kotestVersion = "5.4.2"
 val postgresVersion = "42.5.0"
 val hikariVersion = "5.0.1"
-val googlePostgresVersion = "1.6.3"
+val googlePostgresVersion = "1.7.0"
 val smCommonVersion = "1.ea531b3"
 val flywayVersion = "9.3.0"
 
@@ -28,10 +28,9 @@ tasks.withType<Jar> {
 
 plugins {
     id("org.jmailen.kotlinter") version "3.10.0"
-    kotlin("jvm") version "1.6.21"
+    kotlin("jvm") version "1.7.10"
     id("com.diffplug.spotless") version "6.5.0"
     id("com.github.johnrengelman.shadow") version "7.1.2"
-    jacoco
 }
 
 buildscript {
@@ -70,7 +69,7 @@ dependencies {
     implementation("io.ktor:ktor-server-call-id:$ktorVersion")
     implementation("io.ktor:ktor-server-status-pages:$ktorVersion")
     implementation("io.ktor:ktor-client-core:$ktorVersion")
-    implementation("io.ktor:ktor-client-apache:$ktorVersion")
+    implementation("io.ktor:ktor-client-cio:$ktorVersion")
     implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
 
@@ -102,14 +101,6 @@ dependencies {
     testImplementation("org.flywaydb:flyway-core:$flywayVersion")
 }
 
-tasks.jacocoTestReport {
-    reports {
-        xml.required.set(true)
-        html.required.set(true)
-    }
-}
-
-
 tasks {
 
     create("printVersion") {
@@ -120,14 +111,6 @@ tasks {
         kotlinOptions.jvmTarget = "17"
     }
 
-    withType<JacocoReport> {
-        classDirectories.setFrom(
-                sourceSets.main.get().output.asFileTree.matching {
-                    exclude()
-                }
-        )
-
-    }
     withType<ShadowJar> {
         transform(ServiceFileTransformer::class.java) {
             setPath("META-INF/cxf")

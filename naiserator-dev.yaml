@@ -41,9 +41,16 @@ spec:
     requests:
       cpu: 100m
       memory: 768Mi
+  azure:
+    application:
+      enabled: true
+      tenant: trygdeetaten.no
   envFrom:
     - secret: google-sql-sykmeldinger-backend-sykmeldinger-sykmeldin-7ee1e806
-  webproxy: true
   env:
     - name: CLOUD_SQL_INSTANCE
       value: teamsykmelding-dev-1d34:europe-north1:sykmeldinger-db-instance
+    - name: PDL_GRAPHQL_PATH
+      value: https://pdl-api.dev-fss-pub.nais.io/graphql
+    - name: PDL_SCOPE
+      value: dev-fss:pdl:pdl-api
