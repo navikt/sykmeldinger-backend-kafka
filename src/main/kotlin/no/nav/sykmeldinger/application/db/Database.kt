@@ -24,8 +24,8 @@ class Database(
                 jdbcUrl = "jdbc:postgresql://${env.dbHost}:${env.dbPort}/${env.dbName}"
                 username = env.databaseUsername
                 password = env.databasePassword
-                maximumPoolSize = 25
-                minimumIdle = 25
+                maximumPoolSize = 10
+                minimumIdle = 3
                 idleTimeout = 10000
                 maxLifetime = 300000
                 isAutoCommit = false
