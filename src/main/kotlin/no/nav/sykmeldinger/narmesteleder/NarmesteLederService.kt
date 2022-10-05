@@ -25,11 +25,7 @@ class NarmesteLederService(
                     NL_TOPIC_COUNTER.labels("ny").inc()
                 } catch (e: Exception) {
                     log.error("Noe gikk galt ved oppdatering av nærmeste leder med id ${narmestelederLeesahKafkaMessage.narmesteLederId}", e)
-                    if (cluster == "dev-gcp") {
-                        log.info("Ignorerer feil i dev for id ${narmestelederLeesahKafkaMessage.narmesteLederId}")
-                    } else {
-                        throw e
-                    }
+                    throw e
                 }
             }
 
