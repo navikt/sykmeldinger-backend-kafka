@@ -23,6 +23,10 @@ import no.nav.sykmeldinger.application.createApplicationEngine
 import no.nav.sykmeldinger.application.db.Database
 import no.nav.sykmeldinger.application.exception.ServiceUnavailableException
 import no.nav.sykmeldinger.azuread.AccessTokenClient
+import no.nav.sykmeldinger.narmesteleder.NarmesteLederService
+import no.nav.sykmeldinger.narmesteleder.db.NarmestelederDb
+import no.nav.sykmeldinger.narmesteleder.kafka.NarmesteLederConsumer
+import no.nav.sykmeldinger.narmesteleder.kafka.NarmestelederLeesahKafkaMessage
 import no.nav.sykmeldinger.pdl.client.PdlClient
 import no.nav.sykmeldinger.pdl.service.PdlPersonService
 import no.nav.sykmeldinger.status.kafka.SykmeldingStatusConsumer
@@ -92,6 +96,12 @@ fun main() {
     val kafkaConsumer = getSykmeldingStatusKafkaConsumer()
     val sykmeldingStatusConsumer = SykmeldingStatusConsumer(env, kafkaConsumer, database, applicationState)
     sykmeldingStatusConsumer.startConsumer()
+
+    val narmesteLederKafkaConsumer = getNarmesteLederKafkaConsumer()
+    val narmestelederDb = NarmestelederDb(database)
+    val narmesteLederService = NarmesteLederService(pdlPersonService, narmestelederDb, env.cluster)
+    val narmesteLederConsumer = NarmesteLederConsumer(env, narmesteLederKafkaConsumer, narmesteLederService, applicationState)
+    narmesteLederConsumer.startConsumer()
     applicationServer.start()
 }
 
@@ -103,6 +113,18 @@ private fun getSykmeldingStatusKafkaConsumer(): KafkaConsumer<String, Sykmelding
         }.toConsumerConfig("sykmeldinger-backend-kafka-consumer", JacksonKafkaDeserializer::class),
         StringDeserializer(),
         JacksonKafkaDeserializer(SykmeldingStatusKafkaMessageDTO::class)
+    )
+    return kafkaConsumer
+}
+
+private fun getNarmesteLederKafkaConsumer(): KafkaConsumer<String, NarmestelederLeesahKafkaMessage> {
+    val kafkaConsumer = KafkaConsumer(
+        KafkaUtils.getAivenKafkaConfig().also {
+            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
+            it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
+        }.toConsumerConfig("sykmeldinger-backend-kafka-consumer", JacksonKafkaDeserializer::class),
+        StringDeserializer(),
+        JacksonKafkaDeserializer(NarmestelederLeesahKafkaMessage::class)
     )
     return kafkaConsumer
 }

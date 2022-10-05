@@ -38,9 +38,9 @@ class PdlPersonServiceTest : FunSpec({
                 errors = null
             )
 
-            val person = pdlPersonService.getNavn("fnr", "callid")
+            val navn = pdlPersonService.getNavn("fnr", "callid")
 
-            person.navn shouldBeEqualTo no.nav.sykmeldinger.pdl.model.Navn("Fornavn", null, "Etternavn")
+            navn shouldBeEqualTo no.nav.sykmeldinger.pdl.model.Navn("Fornavn", null, "Etternavn")
         }
         test("Feiler hvis vi ikke finner navn") {
             coEvery { pdlClient.getPerson("fnr", "token") } returns GetPersonResponse(

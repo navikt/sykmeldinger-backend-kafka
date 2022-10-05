@@ -5,7 +5,6 @@ import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.pdl.client.PdlClient
 import no.nav.sykmeldinger.pdl.error.PersonNotFoundInPdl
 import no.nav.sykmeldinger.pdl.model.Navn
-import no.nav.sykmeldinger.pdl.model.PdlPerson
 
 class PdlPersonService(
     private val pdlClient: PdlClient,
@@ -13,7 +12,7 @@ class PdlPersonService(
     private val pdlScope: String
 ) {
 
-    suspend fun getNavn(fnr: String, callId: String): PdlPerson {
+    suspend fun getNavn(fnr: String, callId: String): Navn {
         val accessToken = accessTokenClient.getAccessToken(pdlScope)
         val pdlResponse = pdlClient.getPerson(fnr, accessToken)
 
@@ -32,7 +31,7 @@ class PdlPersonService(
             throw PersonNotFoundInPdl("Fant ikke navn på person i PDL")
         }
 
-        return PdlPerson(getNavn(pdlResponse.data.person.navn[0]))
+        return getNavn(pdlResponse.data.person.navn[0])
     }
 
     private fun getNavn(navn: no.nav.sykmeldinger.pdl.client.model.Navn): Navn {

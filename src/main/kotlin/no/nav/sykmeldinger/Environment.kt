@@ -16,7 +16,9 @@ data class Environment(
     val pdlGraphqlPath: String = getEnvVar("PDL_GRAPHQL_PATH"),
     val pdlScope: String = getEnvVar("PDL_SCOPE"),
     val bekreftetTopic: String = "teamsykmelding.syfo-bekreftet-sykmelding",
-    val sendtTopic: String = "teamsykmelding.syfo-sendt-sykmelding"
+    val sendtTopic: String = "teamsykmelding.syfo-sendt-sykmelding",
+    val narmestelederLeesahTopic: String = "teamsykmelding.syfo-narmesteleder-leesah",
+    val cluster: String = getEnvVar("NAIS_CLUSTER_NAME")
 ) {
     fun jdbcUrl(): String {
         return "jdbc:postgresql://$dbHost:$dbPort/$dbName"
