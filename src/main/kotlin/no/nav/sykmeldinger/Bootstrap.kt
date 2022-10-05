@@ -122,7 +122,7 @@ private fun getNarmesteLederKafkaConsumer(): KafkaConsumer<String, Narmesteleder
         KafkaUtils.getAivenKafkaConfig().also {
             it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
             it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
-        }.toConsumerConfig("sykmeldinger-backend-kafka-consumer", JacksonKafkaDeserializer::class),
+        }.toConsumerConfig("sykmeldinger-backend-kafka-consumer-2", JacksonKafkaDeserializer::class),
         StringDeserializer(),
         JacksonKafkaDeserializer(NarmestelederLeesahKafkaMessage::class)
     )
