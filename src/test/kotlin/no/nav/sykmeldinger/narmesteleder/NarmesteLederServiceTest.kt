@@ -10,6 +10,7 @@ import no.nav.sykmeldinger.narmesteleder.kafka.NarmestelederLeesahKafkaMessage
 import no.nav.sykmeldinger.pdl.model.Navn
 import no.nav.sykmeldinger.pdl.service.PdlPersonService
 import org.amshove.kluent.shouldBeEqualTo
+import java.time.Clock
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
@@ -23,7 +24,7 @@ class NarmesteLederServiceTest : FunSpec({
     val fnr = "12345678910"
     val lederFnr = "10987654321"
     val orgnummer = "888888888"
-    val timestamp = OffsetDateTime.now(ZoneOffset.UTC).minusMinutes(5)
+    val timestamp = OffsetDateTime.now(Clock.tickMillis(ZoneOffset.UTC)).minusMinutes(5)
 
     beforeEach {
         coEvery { pdlPersonService.getNavn(any(), any()) } returns Navn("Fornavn", "Mellomnavn", "Etternavn")
@@ -78,7 +79,7 @@ class NarmesteLederServiceTest : FunSpec({
                     timestamp = timestamp
                 )
             )
-            val timestampOppdatering = OffsetDateTime.now(ZoneOffset.UTC)
+            val timestampOppdatering = OffsetDateTime.now(Clock.tickMillis(ZoneOffset.UTC))
 
             narmesteLederService.updateNarmesteLeder(
                 NarmestelederLeesahKafkaMessage(
