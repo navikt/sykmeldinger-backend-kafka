@@ -3,6 +3,9 @@ package no.nav.sykmeldinger
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import no.nav.sykmeldinger.application.db.DatabaseInterface
+import no.nav.sykmeldinger.application.db.toList
+import no.nav.sykmeldinger.narmesteleder.db.NarmestelederDbModel
+import no.nav.sykmeldinger.narmesteleder.db.toNarmestelederDbModel
 import org.flywaydb.core.Flyway
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy
@@ -62,6 +65,33 @@ class TestDB private constructor() {
             } catch (ex: Exception) {
                 log.error("Error", ex)
                 throw ex
+            }
+        }
+
+        fun clearAllData() {
+            return database.connection.use {
+                it.prepareStatement(
+                    """
+                    DELETE FROM narmesteleder;
+                    DELETE FROM sykmeldingstatus;
+                """
+                ).use { ps ->
+                    ps.executeUpdate()
+                }
+                it.commit()
+            }
+        }
+
+        fun getNarmesteleder(narmestelederId: String): NarmestelederDbModel? {
+            return database.connection.use {
+                it.prepareStatement(
+                    """
+                    SELECT * FROM narmesteleder WHERE narmeste_leder_id = ?;
+                """
+                ).use { ps ->
+                    ps.setString(1, narmestelederId)
+                    ps.executeQuery().toList { toNarmestelederDbModel() }.firstOrNull()
+                }
             }
         }
     }

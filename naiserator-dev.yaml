@@ -53,4 +53,4 @@ spec:
     - name: PDL_GRAPHQL_PATH
       value: https://pdl-api.dev-fss-pub.nais.io/graphql
     - name: PDL_SCOPE
-      value: dev-fss:pdl:pdl-api
+      value: api://dev-fss.pdl.pdl-api/.default
