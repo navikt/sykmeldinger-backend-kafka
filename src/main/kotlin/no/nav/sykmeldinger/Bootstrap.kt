@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import io.confluent.kafka.serializers.KafkaAvroDeserializer
+import io.confluent.kafka.serializers.KafkaAvroSerializerConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.cio.CIO
@@ -14,6 +16,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.network.sockets.SocketTimeoutException
 import io.ktor.serialization.jackson.jackson
 import io.prometheus.client.hotspot.DefaultExports
+import no.nav.person.pdl.leesah.Personhendelse
 import no.nav.syfo.kafka.aiven.KafkaUtils
 import no.nav.syfo.kafka.toConsumerConfig
 import no.nav.syfo.model.sykmeldingstatus.SykmeldingStatusKafkaMessageDTO
@@ -27,6 +30,7 @@ import no.nav.sykmeldinger.narmesteleder.NarmesteLederService
 import no.nav.sykmeldinger.narmesteleder.db.NarmestelederDb
 import no.nav.sykmeldinger.narmesteleder.kafka.NarmesteLederConsumer
 import no.nav.sykmeldinger.narmesteleder.kafka.NarmestelederLeesahKafkaMessage
+import no.nav.sykmeldinger.navnendring.NavnendringConsumer
 import no.nav.sykmeldinger.pdl.client.PdlClient
 import no.nav.sykmeldinger.pdl.service.PdlPersonService
 import no.nav.sykmeldinger.status.kafka.SykmeldingStatusConsumer
@@ -102,6 +106,10 @@ fun main() {
     val narmesteLederService = NarmesteLederService(pdlPersonService, narmestelederDb, env.cluster)
     val narmesteLederConsumer = NarmesteLederConsumer(env, narmesteLederKafkaConsumer, narmesteLederService, applicationState)
     narmesteLederConsumer.startConsumer()
+
+    val navnendringConsumer = NavnendringConsumer(env.navnendringTopic, getNavnendringerConsumer(env), applicationState, narmestelederDb, pdlPersonService)
+    navnendringConsumer.startConsumer()
+
     applicationServer.start()
 }
 
@@ -120,11 +128,27 @@ private fun getSykmeldingStatusKafkaConsumer(): KafkaConsumer<String, Sykmelding
 private fun getNarmesteLederKafkaConsumer(): KafkaConsumer<String, NarmestelederLeesahKafkaMessage> {
     val kafkaConsumer = KafkaConsumer(
         KafkaUtils.getAivenKafkaConfig().also {
-            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
+            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
             it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
         }.toConsumerConfig("sykmeldinger-backend-kafka-consumer", JacksonKafkaDeserializer::class),
         StringDeserializer(),
         JacksonKafkaDeserializer(NarmestelederLeesahKafkaMessage::class)
     )
     return kafkaConsumer
+}
+
+private fun getNavnendringerConsumer(environment: Environment): KafkaConsumer<String, Personhendelse> {
+    val consumerProperties = KafkaUtils.getAivenKafkaConfig().apply {
+        setProperty(KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG, environment.schemaRegistryUrl)
+        setProperty(KafkaAvroSerializerConfig.USER_INFO_CONFIG, "${environment.kafkaSchemaRegistryUsername}:${environment.kafkaSchemaRegistryPassword}")
+        setProperty(KafkaAvroSerializerConfig.BASIC_AUTH_CREDENTIALS_SOURCE, "USER_INFO")
+    }.toConsumerConfig(
+        "sykmeldinger-backend-kafka-consumer",
+        valueDeserializer = KafkaAvroDeserializer::class
+    ).also {
+        it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "latest"
+        it["specific.avro.reader"] = true
+    }
+
+    return KafkaConsumer<String, Personhendelse>(consumerProperties)
 }

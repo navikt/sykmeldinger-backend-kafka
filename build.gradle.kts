@@ -8,19 +8,20 @@ version = "1.0.0"
 val coroutinesVersion = "1.6.4"
 val jacksonVersion = "2.13.4"
 val kluentVersion = "1.68"
-val ktorVersion = "2.1.1"
+val ktorVersion = "2.1.2"
 val logbackVersion = "1.4.1"
 val logstashEncoderVersion = "7.2"
 val prometheusVersion = "0.16.0"
-val mockkVersion = "1.12.8"
-val testContainerVersion = "1.17.3"
+val mockkVersion = "1.13.2"
+val testContainerVersion = "1.17.4"
 val kotlinVersion = "1.7.10"
 val kotestVersion = "5.4.2"
 val postgresVersion = "42.5.0"
 val hikariVersion = "5.0.1"
 val googlePostgresVersion = "1.7.0"
 val smCommonVersion = "1.ea531b3"
-val flywayVersion = "9.3.0"
+val flywayVersion = "9.4.0"
+val confluentVersion = "7.2.1"
 
 tasks.withType<Jar> {
     manifest.attributes["Main-Class"] = "no.nav.sykmeldinger.BootstrapKt"
@@ -31,6 +32,7 @@ plugins {
     kotlin("jvm") version "1.7.10"
     id("com.diffplug.spotless") version "6.5.0"
     id("com.github.johnrengelman.shadow") version "7.1.2"
+    id("com.github.davidmc24.gradle.plugin.avro") version "1.5.0"
 }
 
 buildscript {
@@ -43,6 +45,7 @@ val githubPassword: String by project
 
 repositories {
     mavenCentral()
+    maven(url = "https://packages.confluent.io/maven/")
     maven {
         url = uri("https://maven.pkg.github.com/navikt/syfosm-common")
         credentials {
@@ -62,12 +65,7 @@ dependencies {
 
     implementation("io.ktor:ktor-server-core:$ktorVersion")
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
-    implementation("io.ktor:ktor-server-auth:$ktorVersion")
-    implementation("io.ktor:ktor-server-auth-jwt:$ktorVersion")
     implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
-    implementation("io.ktor:ktor-server-cors:$ktorVersion")
-    implementation("io.ktor:ktor-server-call-id:$ktorVersion")
-    implementation("io.ktor:ktor-server-status-pages:$ktorVersion")
     implementation("io.ktor:ktor-client-core:$ktorVersion")
     implementation("io.ktor:ktor-client-cio:$ktorVersion")
     implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
@@ -87,6 +85,7 @@ dependencies {
 
     implementation("no.nav.helse:syfosm-common-kafka:$smCommonVersion")
     implementation("no.nav.helse:syfosm-common-models:$smCommonVersion")
+    implementation("io.confluent:kafka-avro-serializer:$confluentVersion")
 
     testImplementation("org.amshove.kluent:kluent:$kluentVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
