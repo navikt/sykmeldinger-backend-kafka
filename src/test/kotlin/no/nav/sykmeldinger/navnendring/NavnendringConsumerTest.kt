@@ -19,7 +19,7 @@ import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.UUID
 
-class NavnendringConsumerTest : FunSpec({
+object NavnendringConsumerTest : FunSpec({
     val kafkaConsumer = mockk<KafkaConsumer<String, Personhendelse>>()
     val testDb = TestDB.database
     val narmesteLederDb = NarmestelederDb(testDb)

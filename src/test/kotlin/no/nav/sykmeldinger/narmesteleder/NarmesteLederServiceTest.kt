@@ -16,7 +16,7 @@ import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import java.util.UUID
 
-class NarmesteLederServiceTest : FunSpec({
+object NarmesteLederServiceTest : FunSpec({
     val testDb = TestDB.database
     val pdlPersonService = mockk<PdlPersonService>()
     val narmesteLederService = NarmesteLederService(pdlPersonService, NarmestelederDb(testDb), "prod-gcp")

@@ -9,7 +9,7 @@ import no.nav.sykmeldinger.TestDB
 import org.amshove.kluent.shouldBeEqualTo
 import java.time.OffsetDateTime
 
-internal class SykmeldingStatusDBKtTest : FunSpec({
+object SykmeldingStatusDBKtTest : FunSpec({
 
     context("sykmelding status inserts") {
         test("should handle batch insert") {
