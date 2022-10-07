@@ -53,6 +53,34 @@ class NarmestelederDb(
             connection.commit()
         }
     }
+
+    fun isNarmesteleder(lederFnr: String): Boolean {
+        return database.connection.use {
+            it.prepareStatement(
+                """
+                    SELECT * FROM narmesteleder WHERE narmeste_leder_fnr = ?;
+                """
+            ).use { ps ->
+                ps.setString(1, lederFnr)
+                ps.executeQuery().next()
+            }
+        }
+    }
+
+    fun updateNavn(lederFnr: String, navn: String) {
+        database.connection.use { connection ->
+            connection.prepareStatement(
+                """
+               update narmesteleder set navn = ? where narmeste_leder_fnr = ?;
+            """
+            ).use { preparedStatement ->
+                preparedStatement.setString(1, navn)
+                preparedStatement.setString(2, lederFnr)
+                preparedStatement.executeUpdate()
+            }
+            connection.commit()
+        }
+    }
 }
 
 fun ResultSet.toNarmestelederDbModel(): NarmestelederDbModel =

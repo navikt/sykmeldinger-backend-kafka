@@ -15,7 +15,7 @@ import no.nav.sykmeldinger.pdl.error.PersonNotFoundInPdl
 import org.amshove.kluent.internal.assertFailsWith
 import org.amshove.kluent.shouldBeEqualTo
 
-class PdlPersonServiceTest : FunSpec({
+object PdlPersonServiceTest : FunSpec({
     val pdlClient = mockk<PdlClient>()
     val accessTokenClient = mockk<AccessTokenClient>()
     val pdlPersonService = PdlPersonService(pdlClient, accessTokenClient, "scope")
