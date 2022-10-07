@@ -7,6 +7,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import no.nav.person.pdl.leesah.Personhendelse
 import no.nav.sykmeldinger.application.ApplicationState
+import no.nav.sykmeldinger.application.metrics.NL_NAVN_COUNTER
 import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.narmesteleder.db.NarmestelederDb
 import no.nav.sykmeldinger.pdl.service.PdlPersonService
@@ -50,7 +51,9 @@ class NavnendringConsumer(
     }
 
     suspend fun handlePersonhendelse(personhendelse: Personhendelse) {
+        log.info("Lest melding med id ${personhendelse.hendelseId} og type ${personhendelse.endringstype.name}")
         if (personhendelse.navn != null) {
+            log.info("Melding gjelder navneendring ${personhendelse.hendelseId}")
             personhendelse.personidenter.forEach {
                 if (narmestelederDb.isNarmesteleder(it)) {
                     log.info("Oppdaterer navn med navn fra PDL for nærmeste leder for personhendelse ${personhendelse.hendelseId}")
@@ -59,6 +62,7 @@ class NavnendringConsumer(
                         it,
                         navn.toFormattedNameString()
                     )
+                    NL_NAVN_COUNTER.inc()
                 }
             }
         }
