@@ -51,9 +51,7 @@ class NavnendringConsumer(
     }
 
     suspend fun handlePersonhendelse(personhendelse: Personhendelse) {
-        log.info("Lest melding med id ${personhendelse.hendelseId} og type ${personhendelse.endringstype.name}")
         if (personhendelse.navn != null) {
-            log.info("Melding gjelder navneendring ${personhendelse.hendelseId}")
             personhendelse.personidenter.forEach {
                 if (narmestelederDb.isNarmesteleder(it)) {
                     log.info("Oppdaterer navn med navn fra PDL for nærmeste leder for personhendelse ${personhendelse.hendelseId}")
