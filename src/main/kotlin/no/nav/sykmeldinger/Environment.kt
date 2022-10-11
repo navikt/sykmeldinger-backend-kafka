@@ -21,10 +21,11 @@ data class Environment(
     val navnendringTopic: String = "pdl.leesah-v1",
     val schemaRegistryUrl: String = getEnvVar("KAFKA_SCHEMA_REGISTRY"),
     val kafkaSchemaRegistryUsername: String = getEnvVar("KAFKA_SCHEMA_REGISTRY_USER"),
-    val kafkaSchemaRegistryPassword: String = getEnvVar("KAFKA_SCHEMA_REGISTRY_PASSWORD")
+    val kafkaSchemaRegistryPassword: String = getEnvVar("KAFKA_SCHEMA_REGISTRY_PASSWORD"),
     val historiskTopic: String = "teamsykmelding.sykmelding-historisk",
     val behandlingsutfallConsumer: String = "teamsykmelding.sykmelding-behandlingsutfall",
     val cluster: String = getEnvVar("NAIS_CLUSTER_NAME"),
+    val oldBehandlingsutfallTopicHeader: String = "privat-syfo-sm2013-behandlingsUtfall",
 ) {
     fun jdbcUrl(): String {
         return "jdbc:postgresql://$dbHost:$dbPort/$dbName"

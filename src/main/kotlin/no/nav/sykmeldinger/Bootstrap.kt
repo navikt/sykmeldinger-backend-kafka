@@ -107,8 +107,8 @@ fun main() {
     val narmestelederDb = NarmestelederDb(database)
     val narmesteLederService = NarmesteLederService(pdlPersonService, narmestelederDb, env.cluster)
     val narmesteLederConsumer = NarmesteLederConsumer(env, narmesteLederKafkaConsumer, narmesteLederService, applicationState)
-    val BehandlingsutfallDB = BehandlingsutfallDB(database)
-    val behandlingsutfallConsumer = BehandlingsutfallConsumer(getBehandlingsutfallKafkaConsumer(), applicationState, env, BehandlingsutfallDB)
+    val behandlingsutfallDB = BehandlingsutfallDB(database)
+    val behandlingsutfallConsumer = BehandlingsutfallConsumer(getBehandlingsutfallKafkaConsumer(), applicationState, env, behandlingsutfallDB)
     behandlingsutfallConsumer.startConsumer()
     narmesteLederConsumer.startConsumer()
 

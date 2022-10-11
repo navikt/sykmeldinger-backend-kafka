@@ -44,10 +44,16 @@ class BehandlingsutfallConsumer(
 
     private var totalRecords = 0
     private var lastDate = OffsetDateTime.MIN
-
+    private var behandlingsutfallTopics = 0
     @OptIn(DelicateCoroutinesApi::class)
     fun startConsumer() {
         GlobalScope.launch(Dispatchers.IO) {
+            GlobalScope.launch(Dispatchers.IO) {
+                while (applicationState.ready) {
+                    no.nav.sykmeldinger.log.info("total records: $totalRecords, behandlingsutfall: $behandlingsutfallTopics recods  last record was at $lastDate")
+                    delay(10000)
+                }
+            }
             while (applicationState.ready) {
                 try {
                     kafkaConsumer.subscribe(listOf(environment.historiskTopic))
@@ -65,17 +71,21 @@ class BehandlingsutfallConsumer(
 
     private suspend fun consume() = withContext(Dispatchers.IO) {
         while (applicationState.ready) {
-            val records: List<ConsumerRecord<String, String>> = kafkaConsumer.poll(Duration.ofSeconds(1)).filter {
-                val topicHeader = it.headers().headers("topic").first()
-                topicHeader.value().toString(Charsets.UTF_8) == "behandlingsutfall-topic"
-            }
-            if (records.isNotEmpty()) {
+            val consumerRecords = kafkaConsumer.poll(Duration.ofSeconds(1))
+            if (!consumerRecords.isEmpty) {
+                totalRecords += consumerRecords.count()
                 lastDate = OffsetDateTime.ofInstant(
-                    Instant.ofEpochMilli(records.last().timestamp()),
+                    Instant.ofEpochMilli(consumerRecords.last().timestamp()),
                     ZoneOffset.UTC,
                 )
-                handleBehandlingsutfall(records)
-                totalRecords += records.count()
+            }
+            val behandlingsutfallRecrods: List<ConsumerRecord<String, String>> = consumerRecords.filter {
+                val topicHeader = it.headers().headers("topic").first()
+                topicHeader.value().toString(Charsets.UTF_8) == environment.oldBehandlingsutfallTopicHeader
+            }
+            if (behandlingsutfallRecrods.isNotEmpty()) {
+                handleBehandlingsutfall(behandlingsutfallRecrods)
+                totalRecords += behandlingsutfallRecrods.count()
             }
         }
     }
