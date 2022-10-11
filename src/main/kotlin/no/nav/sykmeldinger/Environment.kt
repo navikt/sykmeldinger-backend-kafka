@@ -18,11 +18,13 @@ data class Environment(
     val bekreftetTopic: String = "teamsykmelding.syfo-bekreftet-sykmelding",
     val sendtTopic: String = "teamsykmelding.syfo-sendt-sykmelding",
     val narmestelederLeesahTopic: String = "teamsykmelding.syfo-narmesteleder-leesah",
-    val cluster: String = getEnvVar("NAIS_CLUSTER_NAME"),
     val navnendringTopic: String = "pdl.leesah-v1",
     val schemaRegistryUrl: String = getEnvVar("KAFKA_SCHEMA_REGISTRY"),
     val kafkaSchemaRegistryUsername: String = getEnvVar("KAFKA_SCHEMA_REGISTRY_USER"),
     val kafkaSchemaRegistryPassword: String = getEnvVar("KAFKA_SCHEMA_REGISTRY_PASSWORD")
+    val historiskTopic: String = "teamsykmelding.sykmelding-historisk",
+    val behandlingsutfallConsumer: String = "teamsykmelding.sykmelding-behandlingsutfall",
+    val cluster: String = getEnvVar("NAIS_CLUSTER_NAME"),
 ) {
     fun jdbcUrl(): String {
         return "jdbc:postgresql://$dbHost:$dbPort/$dbName"

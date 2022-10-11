@@ -26,6 +26,8 @@ import no.nav.sykmeldinger.application.createApplicationEngine
 import no.nav.sykmeldinger.application.db.Database
 import no.nav.sykmeldinger.application.exception.ServiceUnavailableException
 import no.nav.sykmeldinger.azuread.AccessTokenClient
+import no.nav.sykmeldinger.behandlingsutfall.db.BehandlingsutfallDB
+import no.nav.sykmeldinger.behandlingsutfall.kafka.BehandlingsutfallConsumer
 import no.nav.sykmeldinger.narmesteleder.NarmesteLederService
 import no.nav.sykmeldinger.narmesteleder.db.NarmestelederDb
 import no.nav.sykmeldinger.narmesteleder.kafka.NarmesteLederConsumer
@@ -105,6 +107,9 @@ fun main() {
     val narmestelederDb = NarmestelederDb(database)
     val narmesteLederService = NarmesteLederService(pdlPersonService, narmestelederDb, env.cluster)
     val narmesteLederConsumer = NarmesteLederConsumer(env, narmesteLederKafkaConsumer, narmesteLederService, applicationState)
+    val BehandlingsutfallDB = BehandlingsutfallDB(database)
+    val behandlingsutfallConsumer = BehandlingsutfallConsumer(getBehandlingsutfallKafkaConsumer(), applicationState, env, BehandlingsutfallDB)
+    behandlingsutfallConsumer.startConsumer()
     narmesteLederConsumer.startConsumer()
 
     val navnendringConsumer = NavnendringConsumer(env.navnendringTopic, getNavnendringerConsumer(env), applicationState, narmestelederDb, pdlPersonService)
@@ -113,11 +118,23 @@ fun main() {
     applicationServer.start()
 }
 
+private fun getBehandlingsutfallKafkaConsumer(): KafkaConsumer<String, String> {
+    val kafkaConsumer = KafkaConsumer(
+        KafkaUtils.getAivenKafkaConfig().also {
+            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
+            it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
+        }.toConsumerConfig("sykmeldinger-backend-kafka-consumer", StringDeserializer::class),
+        StringDeserializer(),
+        StringDeserializer()
+    )
+    return kafkaConsumer
+}
+
 private fun getSykmeldingStatusKafkaConsumer(): KafkaConsumer<String, SykmeldingStatusKafkaMessageDTO> {
     val kafkaConsumer = KafkaConsumer(
         KafkaUtils.getAivenKafkaConfig().also {
             it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
-            it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 1000
+            it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
         }.toConsumerConfig("sykmeldinger-backend-kafka-consumer", JacksonKafkaDeserializer::class),
         StringDeserializer(),
         JacksonKafkaDeserializer(SykmeldingStatusKafkaMessageDTO::class)
