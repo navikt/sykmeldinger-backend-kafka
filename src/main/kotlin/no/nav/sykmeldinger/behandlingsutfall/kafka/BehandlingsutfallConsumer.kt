@@ -43,29 +43,36 @@ class BehandlingsutfallConsumer(
     companion object {
         private val log = LoggerFactory.getLogger(BehandlingsutfallConsumer::class.java)
     }
-    private var behandlingsutfallDuration = kotlin.time.Duration.ZERO
+
     private var totalDuration = kotlin.time.Duration.ZERO
     private var totalRecords = 0
     private var lastDate = OffsetDateTime.MIN
-    private var behandlingsutfallTopics = 0
+
     @OptIn(DelicateCoroutinesApi::class)
     fun startConsumer() {
         GlobalScope.launch(Dispatchers.IO) {
             GlobalScope.launch(Dispatchers.IO) {
                 while (applicationState.ready) {
-                    no.nav.sykmeldinger.log.info("total: $totalRecords, behutfall: $behandlingsutfallTopics, last $lastDate avg tot: ${getDurationPerRecord(totalDuration, totalRecords)} ms, avg behutfall ${getDurationPerRecord(behandlingsutfallDuration, behandlingsutfallTopics)} ms")
+                    no.nav.sykmeldinger.log.info(
+                        "total behandlingsutfall: $totalRecords, last $lastDate avg tot: ${
+                        getDurationPerRecord(
+                            totalDuration,
+                            totalRecords
+                        )
+                        } ms"
+                    )
                     delay(10000)
                 }
             }
             while (applicationState.ready) {
                 try {
-                    kafkaConsumer.subscribe(listOf(environment.historiskTopic))
+                    kafkaConsumer.subscribe(listOf(environment.behandlingsutfallTopic))
                     consume()
                 } catch (ex: Exception) {
                     log.error("error running behandlingsutfall-consumer", ex)
                 } finally {
                     kafkaConsumer.unsubscribe()
-                    log.info("Unsubscribed from topic ${environment.historiskTopic} and waiting for 10 seconds before trying again")
+                    log.info("Unsubscribed from topic ${environment.behandlingsutfallTopic} and waiting for 10 seconds before trying again")
                     delay(10_000)
                 }
             }
@@ -84,36 +91,34 @@ class BehandlingsutfallConsumer(
                         Instant.ofEpochMilli(consumerRecords.last().timestamp()),
                         ZoneOffset.UTC,
                     )
-                    val behandlingsutfallRecrods: List<ConsumerRecord<String, String>> = consumerRecords.filter {
-                        val topicHeader = it.headers().headers("topic").first()
-                        topicHeader.value().toString(Charsets.UTF_8) == environment.oldBehandlingsutfallTopicHeader
-                    }.filterNot { it.value() == null }
+                    val behandlingsutfallRecrods = consumerRecords.filterNot { it.value() == null }
 
                     if (behandlingsutfallRecrods.isNotEmpty()) {
-                        behandlingsutfallDuration += measureTime {
-                            handleBehandlingsutfall(behandlingsutfallRecrods)
-                            behandlingsutfallTopics += behandlingsutfallRecrods.count()
-                        }
+                        handleBehandlingsutfall(behandlingsutfallRecrods)
                     }
                 }
             }
         }
     }
+
     private fun getDurationPerRecord(duration: kotlin.time.Duration, records: Int): Long {
         return when (duration.inWholeMilliseconds == 0L || records == 0) {
+            false -> duration.div(records).inWholeMilliseconds
             false -> duration.div(records).inWholeMilliseconds
             else -> 0L
         }
     }
-    private suspend fun handleBehandlingsutfall(consumerRecords: List<ConsumerRecord<String, String>>) = withContext(Dispatchers.IO) {
-        val behandlingsutfalls = consumerRecords.map {
-            val validationResult: ValidationResult = objectMapper.readValue(it.value())
-            Behandlingsutfall(
-                ruleHits = validationResult.ruleHits,
-                sykmeldingId = it.key(),
-                status = validationResult.status.name,
-            )
+
+    private suspend fun handleBehandlingsutfall(consumerRecords: List<ConsumerRecord<String, String>>) =
+        withContext(Dispatchers.IO) {
+            val behandlingsutfalls = consumerRecords.map {
+                val validationResult: ValidationResult = objectMapper.readValue(it.value())
+                Behandlingsutfall(
+                    ruleHits = validationResult.ruleHits,
+                    sykmeldingId = it.key(),
+                    status = validationResult.status.name,
+                )
+            }
+            behandlingsutfallDb.insertOrUpdateBatch(behandlingsutfalls)
         }
-        behandlingsutfallDb.insertOrUpdateBatch(behandlingsutfalls)
-    }
 }
