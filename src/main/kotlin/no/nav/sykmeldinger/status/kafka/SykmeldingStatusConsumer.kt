@@ -3,8 +3,6 @@ package no.nav.sykmeldinger.status.kafka
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -81,11 +79,6 @@ class SykmeldingStatusConsumer(
     }
 
     private suspend fun updateStatus(statusEvents: List<SykmeldingStatusKafkaEventDTO>) = withContext(Dispatchers.IO) {
-        val chunks = statusEvents.chunked(25).map { chunk ->
-            async(Dispatchers.IO) {
-                database.insertStatus(chunk)
-            }
-        }
-        chunks.awaitAll()
+        database.insertStatus(statusEvents)
     }
 }
