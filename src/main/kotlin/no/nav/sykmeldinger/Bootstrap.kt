@@ -25,6 +25,9 @@ import no.nav.sykmeldinger.application.ApplicationState
 import no.nav.sykmeldinger.application.createApplicationEngine
 import no.nav.sykmeldinger.application.db.Database
 import no.nav.sykmeldinger.application.exception.ServiceUnavailableException
+import no.nav.sykmeldinger.arbeidsforhold.ArbeidsforholdService
+import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.client.ArbeidsforholdClient
+import no.nav.sykmeldinger.arbeidsforhold.client.organisasjon.client.OrganisasjonsinfoClient
 import no.nav.sykmeldinger.azuread.AccessTokenClient
 import no.nav.sykmeldinger.behandlingsutfall.db.BehandlingsutfallDB
 import no.nav.sykmeldinger.behandlingsutfall.kafka.BehandlingsutfallConsumer
@@ -114,6 +117,10 @@ fun main() {
 
     val navnendringConsumer = NavnendringConsumer(env.navnendringTopic, getNavnendringerConsumer(env), applicationState, narmestelederDb, pdlPersonService)
     navnendringConsumer.startConsumer()
+
+    val arbeidsforholdClient = ArbeidsforholdClient(httpClient, env.aaregUrl, accessTokenClient, env.aaregScope)
+    val organisasjonsinfoClient = OrganisasjonsinfoClient(httpClient, env.eregUrl)
+    val arbeidsforholdService = ArbeidsforholdService(arbeidsforholdClient, organisasjonsinfoClient)
 
     applicationServer.start()
 }

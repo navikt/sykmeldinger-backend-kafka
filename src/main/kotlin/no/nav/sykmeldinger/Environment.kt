@@ -26,6 +26,9 @@ data class Environment(
     val behandlingsutfallConsumer: String = "teamsykmelding.sykmelding-behandlingsutfall",
     val cluster: String = getEnvVar("NAIS_CLUSTER_NAME"),
     val oldBehandlingsutfallTopicHeader: String = "privat-syfo-sm2013-behandlingsUtfall",
+    val eregUrl: String = getEnvVar("EREG_URL"),
+    val aaregUrl: String = getEnvVar("AAREG_URL"),
+    val aaregScope: String = getEnvVar("AAREG_SCOPE")
 ) {
     fun jdbcUrl(): String {
         return "jdbc:postgresql://$dbHost:$dbPort/$dbName"
