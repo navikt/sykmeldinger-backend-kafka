@@ -17,7 +17,7 @@ class BehandlingsutfallDB(private val database: DatabaseInterface) {
                     var index = 1
                     ps.setString(index++, utfall.sykmeldingId)
                     ps.setString(index++, utfall.status)
-                    ps.setObject(index, toPGObject(utfall))
+                    ps.setObject(index, toPGObject(utfall.ruleHits))
                     ps.addBatch()
                 }
                 ps.executeBatch().also { connection.commit() }.size

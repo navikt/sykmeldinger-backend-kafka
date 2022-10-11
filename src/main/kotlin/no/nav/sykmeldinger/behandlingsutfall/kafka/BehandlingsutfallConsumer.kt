@@ -24,6 +24,8 @@ import java.time.Duration
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 private val objectMapper: ObjectMapper = jacksonObjectMapper().apply {
     registerModule(JavaTimeModule())
@@ -41,7 +43,8 @@ class BehandlingsutfallConsumer(
     companion object {
         private val log = LoggerFactory.getLogger(BehandlingsutfallConsumer::class.java)
     }
-
+    private var behandlingsutfallDuration = kotlin.time.Duration.ZERO
+    private var totalDuration = kotlin.time.Duration.ZERO
     private var totalRecords = 0
     private var lastDate = OffsetDateTime.MIN
     private var behandlingsutfallTopics = 0
@@ -50,7 +53,7 @@ class BehandlingsutfallConsumer(
         GlobalScope.launch(Dispatchers.IO) {
             GlobalScope.launch(Dispatchers.IO) {
                 while (applicationState.ready) {
-                    no.nav.sykmeldinger.log.info("total records: $totalRecords, behandlingsutfall: $behandlingsutfallTopics recods  last record was at $lastDate")
+                    no.nav.sykmeldinger.log.info("total: $totalRecords, behutfall: $behandlingsutfallTopics, last $lastDate avg tot: ${getDurationPerRecord(totalDuration, totalRecords)} ms, avg behutfall ${getDurationPerRecord(behandlingsutfallDuration, behandlingsutfallTopics)} ms")
                     delay(10000)
                 }
             }
@@ -69,27 +72,39 @@ class BehandlingsutfallConsumer(
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     private suspend fun consume() = withContext(Dispatchers.IO) {
         while (applicationState.ready) {
+
             val consumerRecords = kafkaConsumer.poll(Duration.ofSeconds(1))
             if (!consumerRecords.isEmpty) {
-                totalRecords += consumerRecords.count()
-                lastDate = OffsetDateTime.ofInstant(
-                    Instant.ofEpochMilli(consumerRecords.last().timestamp()),
-                    ZoneOffset.UTC,
-                )
-            }
-            val behandlingsutfallRecrods: List<ConsumerRecord<String, String>> = consumerRecords.filter {
-                val topicHeader = it.headers().headers("topic").first()
-                topicHeader.value().toString(Charsets.UTF_8) == environment.oldBehandlingsutfallTopicHeader
-            }
-            if (behandlingsutfallRecrods.isNotEmpty()) {
-                handleBehandlingsutfall(behandlingsutfallRecrods)
-                totalRecords += behandlingsutfallRecrods.count()
+                totalDuration += measureTime {
+                    totalRecords += consumerRecords.count()
+                    lastDate = OffsetDateTime.ofInstant(
+                        Instant.ofEpochMilli(consumerRecords.last().timestamp()),
+                        ZoneOffset.UTC,
+                    )
+                    val behandlingsutfallRecrods: List<ConsumerRecord<String, String>> = consumerRecords.filter {
+                        val topicHeader = it.headers().headers("topic").first()
+                        topicHeader.value().toString(Charsets.UTF_8) == environment.oldBehandlingsutfallTopicHeader
+                    }.filterNot { it.value() == null }
+
+                    if (behandlingsutfallRecrods.isNotEmpty()) {
+                        behandlingsutfallDuration += measureTime {
+                            handleBehandlingsutfall(behandlingsutfallRecrods)
+                            behandlingsutfallTopics += behandlingsutfallRecrods.count()
+                        }
+                    }
+                }
             }
         }
     }
-
+    private fun getDurationPerRecord(duration: kotlin.time.Duration, records: Int): Long {
+        return when (duration.inWholeMilliseconds == 0L || records == 0) {
+            false -> duration.div(records).inWholeMilliseconds
+            else -> 0L
+        }
+    }
     private suspend fun handleBehandlingsutfall(consumerRecords: List<ConsumerRecord<String, String>>) = withContext(Dispatchers.IO) {
         val behandlingsutfalls = consumerRecords.map {
             val validationResult: ValidationResult = objectMapper.readValue(it.value())
