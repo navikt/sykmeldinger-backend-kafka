@@ -22,7 +22,10 @@ data class Environment(
     val navnendringTopic: String = "pdl.leesah-v1",
     val schemaRegistryUrl: String = getEnvVar("KAFKA_SCHEMA_REGISTRY"),
     val kafkaSchemaRegistryUsername: String = getEnvVar("KAFKA_SCHEMA_REGISTRY_USER"),
-    val kafkaSchemaRegistryPassword: String = getEnvVar("KAFKA_SCHEMA_REGISTRY_PASSWORD")
+    val kafkaSchemaRegistryPassword: String = getEnvVar("KAFKA_SCHEMA_REGISTRY_PASSWORD"),
+    val eregUrl: String = getEnvVar("EREG_URL"),
+    val aaregUrl: String = getEnvVar("AAREG_URL"),
+    val aaregScope: String = getEnvVar("AAREG_SCOPE")
 ) {
     fun jdbcUrl(): String {
         return "jdbc:postgresql://$dbHost:$dbPort/$dbName"
