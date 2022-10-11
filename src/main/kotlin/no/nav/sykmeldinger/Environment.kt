@@ -23,9 +23,8 @@ data class Environment(
     val kafkaSchemaRegistryUsername: String = getEnvVar("KAFKA_SCHEMA_REGISTRY_USER"),
     val kafkaSchemaRegistryPassword: String = getEnvVar("KAFKA_SCHEMA_REGISTRY_PASSWORD"),
     val historiskTopic: String = "teamsykmelding.sykmelding-historisk",
-    val behandlingsutfallConsumer: String = "teamsykmelding.sykmelding-behandlingsutfall",
+    val behandlingsutfallTopic: String = "teamsykmelding.sykmelding-behandlingsutfall",
     val cluster: String = getEnvVar("NAIS_CLUSTER_NAME"),
-    val oldBehandlingsutfallTopicHeader: String = "privat-syfo-sm2013-behandlingsUtfall",
     val eregUrl: String = getEnvVar("EREG_URL"),
     val aaregUrl: String = getEnvVar("AAREG_URL"),
     val aaregScope: String = getEnvVar("AAREG_SCOPE")
