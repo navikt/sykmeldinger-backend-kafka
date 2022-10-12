@@ -13,14 +13,15 @@ import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Ident
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.IdentType
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Opplysningspliktig
 import no.nav.sykmeldinger.arbeidsforhold.client.organisasjon.client.OrganisasjonsinfoClient
+import no.nav.sykmeldinger.arbeidsforhold.db.ArbeidsforholdDb
 import org.amshove.kluent.shouldBeEqualTo
 import java.time.LocalDate
 
 object ArbeidsforholdServiceTest : FunSpec({
     val arbeidsforholdClient = mockk<ArbeidsforholdClient>()
     val organisasjonsinfoClient = mockk<OrganisasjonsinfoClient>()
-
-    val arbeidsforholdService = ArbeidsforholdService(arbeidsforholdClient, organisasjonsinfoClient)
+    val arbeidsforholdDb = mockk<ArbeidsforholdDb>()
+    val arbeidsforholdService = ArbeidsforholdService(arbeidsforholdClient, organisasjonsinfoClient, arbeidsforholdDb)
 
     beforeTest {
         clearMocks(

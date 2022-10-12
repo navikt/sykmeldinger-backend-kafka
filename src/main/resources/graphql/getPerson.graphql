@@ -5,5 +5,12 @@ query($ident: ID!){
   	  mellomnavn
   	  etternavn
     }
+  },
+  hentIdenter(ident: $ident, historikk: false) {
+      identer {
+        ident,
+        historisk,
+        gruppe
+      }
   }
 }

@@ -15,12 +15,12 @@ class NarmesteLederService(
         when (narmestelederLeesahKafkaMessage.aktivTom) {
             null -> {
                 try {
-                    val navn = pdlPersonService.getNavn(
+                    val pdlPerson = pdlPersonService.getPerson(
                         fnr = narmestelederLeesahKafkaMessage.narmesteLederFnr,
                         callId = narmestelederLeesahKafkaMessage.narmesteLederId.toString()
                     )
                     narmestelederDb.insertOrUpdate(
-                        narmestelederLeesahKafkaMessage.toNarmestelederDbModel(navn.toFormattedNameString())
+                        narmestelederLeesahKafkaMessage.toNarmestelederDbModel(pdlPerson.navn.toFormattedNameString())
                     )
                     NL_TOPIC_COUNTER.labels("ny").inc()
                 } catch (e: Exception) {

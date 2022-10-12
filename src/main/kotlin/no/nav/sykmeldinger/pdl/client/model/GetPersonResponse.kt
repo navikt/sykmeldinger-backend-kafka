@@ -6,7 +6,8 @@ data class GetPersonResponse(
 )
 
 data class ResponseData(
-    val person: PersonResponse?
+    val person: PersonResponse?,
+    val hentIdenter: Identliste?
 )
 
 data class PersonResponse(
@@ -17,6 +18,18 @@ data class Navn(
     val fornavn: String,
     val mellomnavn: String?,
     val etternavn: String
+)
+
+data class Identliste(
+    val identer: List<IdentInformasjon>
+) {
+    val fnr: String? = identer.firstOrNull { it.gruppe == "FOLKEREGISTERIDENT" && !it.historisk }?.ident
+}
+
+data class IdentInformasjon(
+    val ident: String,
+    val historisk: Boolean,
+    val gruppe: String
 )
 
 data class ResponseError(

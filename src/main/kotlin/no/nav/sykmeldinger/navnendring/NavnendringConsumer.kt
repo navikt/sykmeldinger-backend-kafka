@@ -55,10 +55,10 @@ class NavnendringConsumer(
             personhendelse.personidenter.forEach {
                 if (narmestelederDb.isNarmesteleder(it)) {
                     log.info("Oppdaterer navn med navn fra PDL for nærmeste leder for personhendelse ${personhendelse.hendelseId}")
-                    val navn = pdlPersonService.getNavn(it, personhendelse.hendelseId)
+                    val person = pdlPersonService.getPerson(it, personhendelse.hendelseId)
                     narmestelederDb.updateNavn(
                         it,
-                        navn.toFormattedNameString()
+                        person.navn.toFormattedNameString()
                     )
                     NL_NAVN_COUNTER.inc()
                 }

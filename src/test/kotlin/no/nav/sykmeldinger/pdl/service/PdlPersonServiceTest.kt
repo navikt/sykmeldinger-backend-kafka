@@ -7,6 +7,8 @@ import io.mockk.mockk
 import no.nav.sykmeldinger.azuread.AccessTokenClient
 import no.nav.sykmeldinger.pdl.client.PdlClient
 import no.nav.sykmeldinger.pdl.client.model.GetPersonResponse
+import no.nav.sykmeldinger.pdl.client.model.IdentInformasjon
+import no.nav.sykmeldinger.pdl.client.model.Identliste
 import no.nav.sykmeldinger.pdl.client.model.Navn
 import no.nav.sykmeldinger.pdl.client.model.PersonResponse
 import no.nav.sykmeldinger.pdl.client.model.ResponseData
@@ -26,30 +28,38 @@ object PdlPersonServiceTest : FunSpec({
     }
 
     context("PdlPersonService") {
-        test("Henter navn fra PDL") {
+        test("Henter person fra PDL") {
             coEvery { pdlClient.getPerson("fnr", "token") } returns GetPersonResponse(
                 data = ResponseData(
                     PersonResponse(
                         listOf(
                             Navn("Fornavn", null, "Etternavn")
+                        ),
+                    ),
+                    Identliste(
+                        listOf(
+                            IdentInformasjon("12345678910", true, "FOLKEREGISTERIDENT"),
+                            IdentInformasjon("xxxxx", false, "AKTOERID"),
+                            IdentInformasjon("10987654321", false, "FOLKEREGISTERIDENT"),
                         )
                     )
                 ),
                 errors = null
             )
 
-            val navn = pdlPersonService.getNavn("fnr", "callid")
+            val person = pdlPersonService.getPerson("fnr", "callid")
 
-            navn shouldBeEqualTo no.nav.sykmeldinger.pdl.model.Navn("Fornavn", null, "Etternavn")
+            person.navn shouldBeEqualTo no.nav.sykmeldinger.pdl.model.Navn("Fornavn", null, "Etternavn")
+            person.fnr shouldBeEqualTo "10987654321"
         }
         test("Feiler hvis vi ikke finner navn") {
             coEvery { pdlClient.getPerson("fnr", "token") } returns GetPersonResponse(
-                data = ResponseData(null),
+                data = ResponseData(null, null),
                 errors = listOf(ResponseError("Fant ikke person", emptyList(), null, null))
             )
 
             assertFailsWith<PersonNotFoundInPdl> {
-                pdlPersonService.getNavn("fnr", "callid")
+                pdlPersonService.getPerson("fnr", "callid")
             }
         }
     }

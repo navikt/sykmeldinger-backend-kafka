@@ -104,7 +104,6 @@ class BehandlingsutfallConsumer(
     private fun getDurationPerRecord(duration: kotlin.time.Duration, records: Int): Long {
         return when (duration.inWholeMilliseconds == 0L || records == 0) {
             false -> duration.div(records).inWholeMilliseconds
-            false -> duration.div(records).inWholeMilliseconds
             else -> 0L
         }
     }
