@@ -126,7 +126,7 @@ class SykmeldingConsumer(
     }
 
     private suspend fun handleSykmelding(sykmeldingId: String, receivedSykmelding: ReceivedSykmelding?) {
-        if (receivedSykmelding != null) {
+        if (sykmeldingId != "91be45d9-42ba-4689-ad90-2de4ca083570" && sykmeldingId != "f494bbee-0296-42b4-a016-b0ea7baed050" && receivedSykmelding != null) {
             val sykmelding = SykmeldingMapper.mapToSykmelding(receivedSykmelding)
             try {
                 val sykmeldt = pdlPersonService.getPerson(receivedSykmelding.personNrPasient, sykmeldingId).toSykmeldt()
@@ -141,7 +141,7 @@ class SykmeldingConsumer(
                     log.warn("Person not found in PDL, for sykmelding $sykmeldingId, skipping in dev")
                 }
             } catch (e: ClientRequestException) {
-                if(cluster != "dev-gcp") {
+                if (cluster != "dev-gcp") {
                     log.error("Error doing request $sykmeldingId", e)
                     throw e
                 } else {
@@ -150,6 +150,7 @@ class SykmeldingConsumer(
             }
         } else {
             sykmeldingService.deleteSykmelding(sykmeldingId)
+            log.info("Deleted sykmelding etc with sykmeldingId: $sykmeldingId")
         }
     }
 
