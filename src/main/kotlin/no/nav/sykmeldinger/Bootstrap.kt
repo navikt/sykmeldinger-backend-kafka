@@ -35,6 +35,8 @@ import no.nav.sykmeldinger.arbeidsforhold.db.ArbeidsforholdDb
 import no.nav.sykmeldinger.azuread.AccessTokenClient
 import no.nav.sykmeldinger.behandlingsutfall.db.BehandlingsutfallDB
 import no.nav.sykmeldinger.behandlingsutfall.kafka.BehandlingsutfallConsumer
+import no.nav.sykmeldinger.identendring.IdentendringService
+import no.nav.sykmeldinger.identendring.PdlAktorConsumer
 import no.nav.sykmeldinger.narmesteleder.NarmesteLederService
 import no.nav.sykmeldinger.narmesteleder.db.NarmestelederDb
 import no.nav.sykmeldinger.narmesteleder.kafka.NarmesteLederConsumer
@@ -137,9 +139,14 @@ fun main() {
     val organisasjonsinfoClient = OrganisasjonsinfoClient(httpClient, env.eregUrl)
     val arbeidsforholdService = ArbeidsforholdService(arbeidsforholdClient, organisasjonsinfoClient, arbeidsforholdDb)
 
-    val sykmeldingService = SykmeldingService(SykmeldingDb(database))
+    val sykmeldingDb = SykmeldingDb(database)
+    val sykmeldingService = SykmeldingService(sykmeldingDb)
     val sykmeldingConsumer = SykmeldingConsumer(getHistoriskKafkaConsumer(), env.historiskTopic, applicationState, pdlPersonService, arbeidsforholdService, sykmeldingService, env.cluster)
     sykmeldingConsumer.startConsumer()
+
+    val identendringService = IdentendringService(arbeidsforholdDb, sykmeldingDb, pdlPersonService)
+    val pdlAktorConsumer = PdlAktorConsumer(getIdentendringConsumer(env), applicationState, env.aktorV2Topic, identendringService)
+    pdlAktorConsumer.startConsumer()
 
     applicationServer.start()
 }

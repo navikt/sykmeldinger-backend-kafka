@@ -14,7 +14,6 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import java.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-@DelicateCoroutinesApi
 class PdlAktorConsumer(
     private val kafkaConsumer: KafkaConsumer<String, Aktor>,
     private val applicationState: ApplicationState,
@@ -26,6 +25,7 @@ class PdlAktorConsumer(
         private const val POLL_DURATION_SECONDS = 10L
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     fun startConsumer() {
         GlobalScope.launch(Dispatchers.IO) {
             while (applicationState.ready) {

@@ -44,7 +44,7 @@ class PdlPersonService(
         return PdlPerson(getNavn(pdlResponse.data.person.navn[0]), pdlResponse.data.hentIdenter.fnr)
     }
 
-    suspend fun erIdentAktiv(nyttFnr: String): Boolean {
+    suspend fun getNavnHvisIdentErAktiv(nyttFnr: String): Navn {
         val accessToken = accessTokenClient.getAccessToken(pdlScope)
         val pdlResponse = pdlClient.getPerson(nyttFnr, accessToken)
 
@@ -54,6 +54,10 @@ class PdlPersonService(
                 it.extensions?.details?.let { details -> log.error("Type: ${details.type}, cause: ${details.cause}, policy: ${details.policy}") }
             }
         }
+        if (pdlResponse.data.person == null || pdlResponse.data.person.navn.isNullOrEmpty()) {
+            log.warn("Fant ikke navn på person i PDL")
+            throw PersonNotFoundInPdl("Fant ikke navn på person i PDL")
+        }
         if (pdlResponse.data.hentIdenter == null || pdlResponse.data.hentIdenter.identer.isEmpty()) {
             log.warn("Fant ikke person i PDL")
             throw PersonNotFoundInPdl("Fant ikke person i PDL")
@@ -62,7 +66,7 @@ class PdlPersonService(
         if (pdlResponse.data.hentIdenter.fnr != nyttFnr || pdlResponse.data.hentIdenter.identer.any { it.ident == nyttFnr && it.historisk }) {
             throw InactiveIdentException("PDL svarer men ident er ikke aktiv")
         }
-        return true
+        return getNavn(pdlResponse.data.person.navn[0])
     }
 
     private fun getNavn(navn: no.nav.sykmeldinger.pdl.client.model.Navn): Navn {

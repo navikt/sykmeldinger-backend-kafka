@@ -1,16 +1,17 @@
 package no.nav.sykmeldinger.identendring
 
-import kotlinx.coroutines.DelicateCoroutinesApi
 import no.nav.person.pdl.aktor.v2.Identifikator
 import no.nav.person.pdl.aktor.v2.Type
 import no.nav.sykmeldinger.application.metrics.NYTT_FNR_COUNTER
 import no.nav.sykmeldinger.arbeidsforhold.db.ArbeidsforholdDb
 import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.pdl.service.PdlPersonService
+import no.nav.sykmeldinger.sykmelding.db.SykmeldingDb
+import no.nav.sykmeldinger.sykmelding.model.Sykmeldt
 
-@DelicateCoroutinesApi
 class IdentendringService(
     private val arbeidsforholdDb: ArbeidsforholdDb,
+    private val sykmeldingDb: SykmeldingDb,
     private val pdlService: PdlPersonService
 ) {
     suspend fun oppdaterIdent(identListe: List<Identifikator>) {
@@ -19,18 +20,36 @@ class IdentendringService(
                 ?: throw IllegalStateException("Mangler gyldig fnr!")
             val tidligereFnr = identListe.filter { it.type == Type.FOLKEREGISTERIDENT && !it.gjeldende }
 
-            // oppdater arbeidsforhold, sykmeldinger og sykmeldt (nærmeste leder oppdateres via kafka)
             val arbeidsforhold = tidligereFnr.flatMap { arbeidsforholdDb.getArbeidsforhold(it.idnummer) }
+            val sykmeldinger = tidligereFnr.flatMap { sykmeldingDb.getSykmeldingIds(it.idnummer) }
+            val sykmeldte = tidligereFnr.mapNotNull { sykmeldingDb.getSykmeldt(it.idnummer) }
 
-            if (arbeidsforhold.isNotEmpty()) {
-                pdlService.erIdentAktiv(nyttFnr)
-            }
-            arbeidsforhold.forEach {
-                arbeidsforholdDb.updateFnr(nyttFnr = nyttFnr, id = it.id)
-            }
-            log.info("Har oppdatert fnr for ${arbeidsforhold.size} arbeidsforhold")
+            if (arbeidsforhold.isNotEmpty() || sykmeldinger.isNotEmpty() || sykmeldte.isNotEmpty()) {
+                val navn = pdlService.getNavnHvisIdentErAktiv(nyttFnr)
 
-            if (arbeidsforhold.isNotEmpty()) {
+                arbeidsforhold.forEach {
+                    arbeidsforholdDb.updateFnr(nyttFnr = nyttFnr, id = it.id)
+                }
+                log.info("Har oppdatert fnr for ${arbeidsforhold.size} arbeidsforhold")
+
+                sykmeldinger.forEach {
+                    sykmeldingDb.updateFnr(nyttFnr = nyttFnr, sykmeldingId = it)
+                }
+                log.info("Har oppdatert fnr for ${sykmeldinger.size} sykmeldinger")
+
+                sykmeldingDb.saveOrUpdateSykmeldt(
+                    Sykmeldt(
+                        fnr = nyttFnr,
+                        fornavn = navn.fornavn,
+                        mellomnavn = navn.mellomnavn,
+                        etternavn = navn.etternavn
+                    )
+                )
+                sykmeldte.forEach {
+                    sykmeldingDb.deleteSykmeldt(it.fnr)
+                }
+                log.info("Har slettet ${sykmeldte.size} sykmeldte")
+
                 NYTT_FNR_COUNTER.inc()
             }
         }

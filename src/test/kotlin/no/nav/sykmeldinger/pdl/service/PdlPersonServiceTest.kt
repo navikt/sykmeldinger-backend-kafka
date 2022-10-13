@@ -104,8 +104,8 @@ object PdlPersonServiceTest : FunSpec({
         }
     }
 
-    context("PdlPersonService - erIdentAktiv") {
-        test("Returnerer true hvis ident er aktiv") {
+    context("PdlPersonService - getNavnHvisIdentErAktiv") {
+        test("Returnerer navn hvis ident er aktiv") {
             coEvery { pdlClient.getPerson("10987654321", "token") } returns GetPersonResponse(
                 data = ResponseData(
                     PersonResponse(
@@ -124,7 +124,7 @@ object PdlPersonServiceTest : FunSpec({
                 errors = null
             )
 
-            pdlPersonService.erIdentAktiv("10987654321") shouldBeEqualTo true
+            pdlPersonService.getNavnHvisIdentErAktiv("10987654321") shouldBeEqualTo no.nav.sykmeldinger.pdl.model.Navn("Fornavn", null, "Etternavn")
         }
         test("Kaster InactiveIdentException hvis ident ikke er aktiv") {
             coEvery { pdlClient.getPerson("12345678910", "token") } returns GetPersonResponse(
@@ -146,7 +146,7 @@ object PdlPersonServiceTest : FunSpec({
             )
 
             assertFailsWith<InactiveIdentException> {
-                pdlPersonService.erIdentAktiv("12345678910")
+                pdlPersonService.getNavnHvisIdentErAktiv("12345678910")
             }
         }
         test("Feiler hvis vi ikke finner identer") {
@@ -163,7 +163,7 @@ object PdlPersonServiceTest : FunSpec({
             )
 
             assertFailsWith<PersonNotFoundInPdl> {
-                pdlPersonService.erIdentAktiv("fnr")
+                pdlPersonService.getNavnHvisIdentErAktiv("fnr")
             }
         }
     }
