@@ -1,8 +1,10 @@
 package no.nav.sykmeldinger
 
 import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import io.confluent.kafka.serializers.KafkaAvroDeserializer
 import io.confluent.kafka.serializers.KafkaAvroSerializerConfig
@@ -29,6 +31,7 @@ import no.nav.sykmeldinger.application.exception.ServiceUnavailableException
 import no.nav.sykmeldinger.arbeidsforhold.ArbeidsforholdService
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.client.ArbeidsforholdClient
 import no.nav.sykmeldinger.arbeidsforhold.client.organisasjon.client.OrganisasjonsinfoClient
+import no.nav.sykmeldinger.arbeidsforhold.db.ArbeidsforholdDb
 import no.nav.sykmeldinger.azuread.AccessTokenClient
 import no.nav.sykmeldinger.behandlingsutfall.db.BehandlingsutfallDB
 import no.nav.sykmeldinger.behandlingsutfall.kafka.BehandlingsutfallConsumer
@@ -40,6 +43,9 @@ import no.nav.sykmeldinger.navnendring.NavnendringConsumer
 import no.nav.sykmeldinger.pdl.client.PdlClient
 import no.nav.sykmeldinger.pdl.service.PdlPersonService
 import no.nav.sykmeldinger.status.kafka.SykmeldingStatusConsumer
+import no.nav.sykmeldinger.sykmelding.SykmeldingService
+import no.nav.sykmeldinger.sykmelding.db.SykmeldingDb
+import no.nav.sykmeldinger.sykmelding.kafka.SykmeldingConsumer
 import no.nav.sykmeldinger.util.kafka.JacksonKafkaDeserializer
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.KafkaConsumer
@@ -48,6 +54,13 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 val log: Logger = LoggerFactory.getLogger("no.nav.sykmeldinger.sykmeldinger-backend-kafka")
+
+val objectMapper: ObjectMapper = jacksonObjectMapper().apply {
+    registerModule(JavaTimeModule())
+    configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+    configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true)
+}
 
 fun main() {
     val env = Environment()
@@ -63,13 +76,13 @@ fun main() {
     val config: HttpClientConfig<ApacheEngineConfig>.() -> Unit = {
         install(HttpRequestRetry) {
             constantDelay(100, 0, false)
-            retryOnExceptionIf(3) { _, throwable ->
-                log.warn("Caught exception ${throwable.message}")
+            retryOnExceptionIf(3) { request, throwable ->
+                log.warn("Caught exception ${throwable.message}, for url ${request.url}")
                 true
             }
-            retryIf(maxRetries) { _, response ->
+            retryIf(maxRetries) { request, response ->
                 if (response.status.value.let { it in 500..599 }) {
-                    log.warn("Retrying for statuscode ${response.status.value}")
+                    log.warn("Retrying for statuscode ${response.status.value}, for url ${request.url}")
                     true
                 } else {
                     false
@@ -120,8 +133,13 @@ fun main() {
     navnendringConsumer.startConsumer()
 
     val arbeidsforholdClient = ArbeidsforholdClient(httpClient, env.aaregUrl, accessTokenClient, env.aaregScope)
+    val arbeidsforholdDb = ArbeidsforholdDb(database)
     val organisasjonsinfoClient = OrganisasjonsinfoClient(httpClient, env.eregUrl)
-    val arbeidsforholdService = ArbeidsforholdService(arbeidsforholdClient, organisasjonsinfoClient)
+    val arbeidsforholdService = ArbeidsforholdService(arbeidsforholdClient, organisasjonsinfoClient, arbeidsforholdDb)
+
+    val sykmeldingService = SykmeldingService(SykmeldingDb(database))
+    val sykmeldingConsumer = SykmeldingConsumer(getHistoriskKafkaConsumer(), env.historiskTopic, applicationState, pdlPersonService, arbeidsforholdService, sykmeldingService, env.cluster)
+    sykmeldingConsumer.startConsumer()
 
     applicationServer.start()
 }
@@ -129,9 +147,20 @@ fun main() {
 private fun getBehandlingsutfallKafkaConsumer(): KafkaConsumer<String, String> {
     val kafkaConsumer = KafkaConsumer(
         KafkaUtils.getAivenKafkaConfig().also {
-            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
+            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
             it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
         }.toConsumerConfig("sykmeldinger-backend-kafka-consumer", StringDeserializer::class),
+        StringDeserializer(),
+        StringDeserializer()
+    )
+    return kafkaConsumer
+}
+private fun getHistoriskKafkaConsumer(): KafkaConsumer<String, String> {
+    val kafkaConsumer = KafkaConsumer(
+        KafkaUtils.getAivenKafkaConfig().also {
+            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
+            it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
+        }.toConsumerConfig("sykmeldinger-backend-historisk-consumer", StringDeserializer::class),
         StringDeserializer(),
         StringDeserializer()
     )
@@ -141,7 +170,7 @@ private fun getBehandlingsutfallKafkaConsumer(): KafkaConsumer<String, String> {
 private fun getSykmeldingStatusKafkaConsumer(): KafkaConsumer<String, SykmeldingStatusKafkaMessageDTO> {
     val kafkaConsumer = KafkaConsumer(
         KafkaUtils.getAivenKafkaConfig().also {
-            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
+            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
             it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
         }.toConsumerConfig("sykmeldinger-backend-kafka-consumer", JacksonKafkaDeserializer::class),
         StringDeserializer(),

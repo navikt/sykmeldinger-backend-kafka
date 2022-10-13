@@ -12,6 +12,7 @@ import no.nav.sykmeldinger.application.ApplicationState
 import no.nav.sykmeldinger.narmesteleder.db.NarmestelederDb
 import no.nav.sykmeldinger.narmesteleder.db.NarmestelederDbModel
 import no.nav.sykmeldinger.pdl.model.Navn
+import no.nav.sykmeldinger.pdl.model.PdlPerson
 import no.nav.sykmeldinger.pdl.service.PdlPersonService
 import org.amshove.kluent.shouldBeEqualTo
 import org.apache.kafka.clients.consumer.KafkaConsumer
@@ -34,7 +35,7 @@ object NavnendringConsumerTest : FunSpec({
 
     beforeEach {
         clearMocks(pdlPersonService)
-        coEvery { pdlPersonService.getNavn(any(), any()) } returns Navn("Fornavn", "Mellomnavn", "Etternavn")
+        coEvery { pdlPersonService.getPerson(any(), any()) } returns PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), "12345678910")
         TestDB.clearAllData()
     }
 
@@ -46,7 +47,7 @@ object NavnendringConsumerTest : FunSpec({
 
             navnendingConsumer.handlePersonhendelse(personhendelse)
 
-            coVerify(exactly = 1) { pdlPersonService.getNavn("12345678910", any()) }
+            coVerify(exactly = 1) { pdlPersonService.getPerson("12345678910", any()) }
             TestDB.getNarmesteleder(nlId)?.navn shouldBeEqualTo "Fornavn Mellomnavn Etternavn"
         }
         test("Oppdaterer ikke navn hvis personhendelse er relatert til navn men lederen ikke finnes i db") {
@@ -54,14 +55,14 @@ object NavnendringConsumerTest : FunSpec({
 
             navnendingConsumer.handlePersonhendelse(personhendelse)
 
-            coVerify(exactly = 0) { pdlPersonService.getNavn(any(), any()) }
+            coVerify(exactly = 0) { pdlPersonService.getPerson(any(), any()) }
         }
         test("Oppdaterer ikke navn hvis personhendelse ikke er relatert til navn") {
             val personhendelse = getPersonhendelse("12345678910", null)
 
             navnendingConsumer.handlePersonhendelse(personhendelse)
 
-            coVerify(exactly = 0) { pdlPersonService.getNavn(any(), any()) }
+            coVerify(exactly = 0) { pdlPersonService.getPerson(any(), any()) }
         }
     }
 })

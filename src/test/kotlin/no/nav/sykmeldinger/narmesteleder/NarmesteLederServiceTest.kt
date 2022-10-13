@@ -8,6 +8,7 @@ import no.nav.sykmeldinger.narmesteleder.db.NarmestelederDb
 import no.nav.sykmeldinger.narmesteleder.db.NarmestelederDbModel
 import no.nav.sykmeldinger.narmesteleder.kafka.NarmestelederLeesahKafkaMessage
 import no.nav.sykmeldinger.pdl.model.Navn
+import no.nav.sykmeldinger.pdl.model.PdlPerson
 import no.nav.sykmeldinger.pdl.service.PdlPersonService
 import org.amshove.kluent.shouldBeEqualTo
 import java.time.Clock
@@ -27,7 +28,7 @@ object NarmesteLederServiceTest : FunSpec({
     val timestamp = OffsetDateTime.now(Clock.tickMillis(ZoneOffset.UTC)).minusMinutes(5)
 
     beforeEach {
-        coEvery { pdlPersonService.getNavn(any(), any()) } returns Navn("Fornavn", "Mellomnavn", "Etternavn")
+        coEvery { pdlPersonService.getPerson(any(), any()) } returns PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), lederFnr)
         TestDB.clearAllData()
     }
 
@@ -60,9 +61,9 @@ object NarmesteLederServiceTest : FunSpec({
             )
         }
         test("Oppdaterer nærmeste leder") {
-            coEvery { pdlPersonService.getNavn(any(), any()) } returns
-                Navn("Fornavn", "Mellomnavn", "Etternavn") andThen
-                Navn("Nytt", null, "Navn")
+            coEvery { pdlPersonService.getPerson(any(), any()) } returns
+                PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), lederFnr) andThen
+                PdlPerson(Navn("Nytt", null, "Navn"), lederFnr)
 
             val nlId = UUID.randomUUID()
             narmesteLederService.updateNarmesteLeder(

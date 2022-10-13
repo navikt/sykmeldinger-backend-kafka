@@ -3,13 +3,19 @@ package no.nav.sykmeldinger.arbeidsforhold
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.client.ArbeidsforholdClient
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.ArbeidsstedType
 import no.nav.sykmeldinger.arbeidsforhold.client.organisasjon.client.OrganisasjonsinfoClient
+import no.nav.sykmeldinger.arbeidsforhold.db.ArbeidsforholdDb
 import no.nav.sykmeldinger.arbeidsforhold.model.Arbeidsforhold
 import java.time.LocalDate
 
 class ArbeidsforholdService(
     private val arbeidsforholdClient: ArbeidsforholdClient,
-    private val organisasjonsinfoClient: OrganisasjonsinfoClient
+    private val organisasjonsinfoClient: OrganisasjonsinfoClient,
+    private val arbeidsforholdDb: ArbeidsforholdDb,
 ) {
+    suspend fun insertOrUpdate(arbeidsforhold: Arbeidsforhold) {
+        arbeidsforholdDb.insertOrUpdate(arbeidsforhold)
+    }
+
     suspend fun getArbeidsforhold(fnr: String): List<Arbeidsforhold> {
         val ansettelsesperiodeFom = LocalDate.now().minusMonths(4)
         val arbeidsgivere = arbeidsforholdClient.getArbeidsforhold(fnr = fnr)
