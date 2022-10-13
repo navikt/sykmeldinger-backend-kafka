@@ -16,6 +16,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.network.sockets.SocketTimeoutException
 import io.ktor.serialization.jackson.jackson
 import io.prometheus.client.hotspot.DefaultExports
+import no.nav.person.pdl.aktor.v2.Aktor
 import no.nav.person.pdl.leesah.Personhendelse
 import no.nav.syfo.kafka.aiven.KafkaUtils
 import no.nav.syfo.kafka.toConsumerConfig
@@ -170,9 +171,23 @@ private fun getNavnendringerConsumer(environment: Environment): KafkaConsumer<St
         "sykmeldinger-backend-kafka-consumer",
         valueDeserializer = KafkaAvroDeserializer::class
     ).also {
+        it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
+        it["specific.avro.reader"] = true
+    }
+    return KafkaConsumer<String, Personhendelse>(consumerProperties)
+}
+
+private fun getIdentendringConsumer(environment: Environment): KafkaConsumer<String, Aktor> {
+    val consumerProperties = KafkaUtils.getAivenKafkaConfig().apply {
+        setProperty(KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG, environment.schemaRegistryUrl)
+        setProperty(KafkaAvroSerializerConfig.USER_INFO_CONFIG, "${environment.kafkaSchemaRegistryUsername}:${environment.kafkaSchemaRegistryPassword}")
+        setProperty(KafkaAvroSerializerConfig.BASIC_AUTH_CREDENTIALS_SOURCE, "USER_INFO")
+    }.toConsumerConfig(
+        "sykmeldinger-backend-kafka-consumer",
+        valueDeserializer = KafkaAvroDeserializer::class
+    ).also {
         it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "latest"
         it["specific.avro.reader"] = true
     }
-
-    return KafkaConsumer<String, Personhendelse>(consumerProperties)
+    return KafkaConsumer<String, Aktor>(consumerProperties)
 }

@@ -3,6 +3,7 @@ package no.nav.sykmeldinger.pdl.service
 import no.nav.sykmeldinger.azuread.AccessTokenClient
 import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.pdl.client.PdlClient
+import no.nav.sykmeldinger.pdl.error.InactiveIdentException
 import no.nav.sykmeldinger.pdl.error.PersonNotFoundInPdl
 import no.nav.sykmeldinger.pdl.model.Navn
 
@@ -32,6 +33,27 @@ class PdlPersonService(
         }
 
         return getNavn(pdlResponse.data.person.navn[0])
+    }
+
+    suspend fun erIdentAktiv(nyttFnr: String): Boolean {
+        val accessToken = accessTokenClient.getAccessToken(pdlScope)
+        val pdlResponse = pdlClient.getPerson(nyttFnr, accessToken)
+
+        if (pdlResponse.errors != null) {
+            pdlResponse.errors.forEach {
+                log.error("PDL returnerte feilmelding: ${it.message}, ${it.extensions?.code}, ")
+                it.extensions?.details?.let { details -> log.error("Type: ${details.type}, cause: ${details.cause}, policy: ${details.policy}") }
+            }
+        }
+        if (pdlResponse.data.hentIdenter == null || pdlResponse.data.hentIdenter.identer.isEmpty()) {
+            log.warn("Fant ikke person i PDL")
+            throw PersonNotFoundInPdl("Fant ikke person i PDL")
+        }
+        // Spørring mot PDL er satt opp til å bare returnere aktive identer, og denne sjekken forutsetter dette
+        if (pdlResponse.data.hentIdenter.fnr != nyttFnr || pdlResponse.data.hentIdenter.identer.any { it.ident == nyttFnr && it.historisk }) {
+            throw InactiveIdentException("PDL svarer men ident er ikke aktiv")
+        }
+        return true
     }
 
     private fun getNavn(navn: no.nav.sykmeldinger.pdl.client.model.Navn): Navn {
