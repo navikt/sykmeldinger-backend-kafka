@@ -5,6 +5,7 @@ import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.pdl.client.PdlClient
 import no.nav.sykmeldinger.pdl.error.PersonNotFoundInPdl
 import no.nav.sykmeldinger.pdl.model.Navn
+import no.nav.sykmeldinger.pdl.model.PdlPerson
 
 class PdlPersonService(
     private val pdlClient: PdlClient,
@@ -12,7 +13,7 @@ class PdlPersonService(
     private val pdlScope: String
 ) {
 
-    suspend fun getNavn(fnr: String, callId: String): Navn {
+    suspend fun getPerson(fnr: String, callId: String): PdlPerson {
         val accessToken = accessTokenClient.getAccessToken(pdlScope)
         val pdlResponse = pdlClient.getPerson(fnr, accessToken)
 
@@ -30,8 +31,16 @@ class PdlPersonService(
             log.error("Fant ikke navn på person i PDL {}", callId)
             throw PersonNotFoundInPdl("Fant ikke navn på person i PDL")
         }
+        if (pdlResponse.data.hentIdenter == null || pdlResponse.data.hentIdenter.identer.isEmpty()) {
+            log.warn("Fant ikke person i PDL")
+            throw PersonNotFoundInPdl("Fant ikke person i PDL")
+        }
+        if (pdlResponse.data.hentIdenter.fnr == null) {
+            log.error("Mangler gyldig fnr for person i PDL")
+            throw PersonNotFoundInPdl("Mangler gyldig fnr for person i PDL")
+        }
 
-        return getNavn(pdlResponse.data.person.navn[0])
+        return PdlPerson(getNavn(pdlResponse.data.person.navn[0]), pdlResponse.data.hentIdenter.fnr)
     }
 
     private fun getNavn(navn: no.nav.sykmeldinger.pdl.client.model.Navn): Navn {
