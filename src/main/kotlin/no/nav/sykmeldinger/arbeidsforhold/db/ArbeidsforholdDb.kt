@@ -3,8 +3,10 @@ package no.nav.sykmeldinger.arbeidsforhold.db
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import no.nav.sykmeldinger.application.db.DatabaseInterface
+import no.nav.sykmeldinger.application.db.toList
 import no.nav.sykmeldinger.arbeidsforhold.model.Arbeidsforhold
 import java.sql.Date
+import java.sql.ResultSet
 
 class ArbeidsforholdDb(
     private val database: DatabaseInterface
@@ -35,4 +37,43 @@ class ArbeidsforholdDb(
             connection.commit()
         }
     }
+
+    fun getArbeidsforhold(fnr: String): List<Arbeidsforhold> {
+        return database.connection.use {
+            it.prepareStatement(
+                """
+                    SELECT * FROM arbeidsforhold WHERE fnr = ?;
+                """
+            ).use { ps ->
+                ps.setString(1, fnr)
+                ps.executeQuery().toList { toArbeidsforhold() }
+            }
+        }
+    }
+
+    fun updateFnr(nyttFnr: String, id: Int) {
+        database.connection.use { connection ->
+            connection.prepareStatement(
+                """
+               update arbeidsforhold set fnr = ? where id = ?;
+            """
+            ).use { preparedStatement ->
+                preparedStatement.setString(1, nyttFnr)
+                preparedStatement.setString(2, id.toString())
+                preparedStatement.executeUpdate()
+            }
+            connection.commit()
+        }
+    }
 }
+
+fun ResultSet.toArbeidsforhold(): Arbeidsforhold =
+    Arbeidsforhold(
+        id = getString("id").toInt(),
+        fnr = getString("fnr"),
+        orgnummer = getString("orgnummer"),
+        juridiskOrgnummer = getString("juridisk_orgnummer"),
+        orgNavn = getString("orgnavn"),
+        fom = getDate("fom").toLocalDate(),
+        tom = getDate("tom")?.toLocalDate()
+    )

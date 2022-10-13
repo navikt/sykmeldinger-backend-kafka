@@ -4,7 +4,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import no.nav.person.pdl.aktor.v2.Identifikator
 import no.nav.person.pdl.aktor.v2.Type
 import no.nav.sykmeldinger.application.metrics.NYTT_FNR_COUNTER
-import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.db.ArbeidsforholdDb
+import no.nav.sykmeldinger.arbeidsforhold.db.ArbeidsforholdDb
 import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.pdl.service.PdlPersonService
 
@@ -19,7 +19,7 @@ class IdentendringService(
                 ?: throw IllegalStateException("Mangler gyldig fnr!")
             val tidligereFnr = identListe.filter { it.type == Type.FOLKEREGISTERIDENT && !it.gjeldende }
 
-            // oppdater arbeidsforhold, sykmeldinger og evt navn (nærmeste leder oppdateres via kafka)
+            // oppdater arbeidsforhold, sykmeldinger og sykmeldt (nærmeste leder oppdateres via kafka)
             val arbeidsforhold = tidligereFnr.flatMap { arbeidsforholdDb.getArbeidsforhold(it.idnummer) }
 
             if (arbeidsforhold.isNotEmpty()) {
