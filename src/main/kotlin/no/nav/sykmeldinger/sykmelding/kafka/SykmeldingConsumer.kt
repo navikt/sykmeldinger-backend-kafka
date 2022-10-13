@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import io.ktor.client.plugins.ClientRequestException
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -138,6 +139,13 @@ class SykmeldingConsumer(
                     throw e
                 } else {
                     log.warn("Person not found in PDL, for sykmelding $sykmeldingId, skipping in dev")
+                }
+            } catch (e: ClientRequestException) {
+                if (cluster != "dev-gcp") {
+                    log.error("Error doing request $sykmeldingId", e)
+                    throw e
+                } else {
+                    log.warn("Error doing request $sykmeldingId, skipping in dev", e)
                 }
             }
         } else {
