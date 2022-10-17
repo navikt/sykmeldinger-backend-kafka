@@ -39,7 +39,6 @@ private val objectMapper: ObjectMapper = jacksonObjectMapper().apply {
 
 class SykmeldingConsumer(
     private val kafkaConsumer: KafkaConsumer<String, String>,
-    private val topic: String,
     private val applicationState: ApplicationState,
     private val pdlPersonService: PdlPersonService,
     private val arbeidsforholdService: ArbeidsforholdService,
@@ -48,10 +47,13 @@ class SykmeldingConsumer(
 ) {
     companion object {
         private val log = LoggerFactory.getLogger(SykmeldingConsumer::class.java)
+        private const val OK_TOPIC = "teamsykmelding.ok-sykmelding"
+        private const val AVVIST_TOPIC = "teamsykmelding.avvist-sykmelding"
+        private const val MANUELL_TOPIC = "teamsykmelding.manuell-behandling-sykmelding"
     }
 
-    private val oldSykmeldingTopics =
-        listOf("privat-syfo-sm2013-automatiskBehandling", "privat-syfo-sm2013-manuellBehandling", "privat-syfo-sm2013-avvistBehandling")
+    private val sykmeldingTopics =
+        listOf(OK_TOPIC, AVVIST_TOPIC, MANUELL_TOPIC)
     private var totalDuration = kotlin.time.Duration.ZERO
     private val sykmeldingDuration = kotlin.time.Duration.ZERO
     private var totalRecords = 0
@@ -79,13 +81,13 @@ class SykmeldingConsumer(
             }
             while (applicationState.ready) {
                 try {
-                    kafkaConsumer.subscribe(listOf(topic))
+                    kafkaConsumer.subscribe(sykmeldingTopics)
                     consume()
                 } catch (ex: Exception) {
                     log.error("error running sykmelding-consumer", ex)
                 } finally {
                     kafkaConsumer.unsubscribe()
-                    log.info("Unsubscribed from topic $topic and waiting for 10 seconds before trying again")
+                    log.info("Unsubscribed from topic $sykmeldingTopics and waiting for 10 seconds before trying again")
                     delay(10_000)
                 }
             }
@@ -104,17 +106,14 @@ class SykmeldingConsumer(
                         Instant.ofEpochMilli(consumerRecords.last().timestamp()),
                         ZoneOffset.UTC,
                     )
-                    val sykmeldinger = consumerRecords.filter {
-                        val headerValue = it.headers().headers("topic").first().value().toString(Charsets.UTF_8)
-                        when (headerValue) {
-                            "privat-syfo-sm2013-automatiskBehandling" -> okRecords++
-                            "privat-syfo-sm2013-manuellBehandling" -> manuellRecords++
-                            "privat-syfo-sm2013-avvistBehandling" -> avvistRecords++
+
+                    val sykmeldinger = consumerRecords.map { cr ->
+                        val sykmelding: ReceivedSykmelding? = cr.value()?.let { objectMapper.readValue(it, ReceivedSykmelding::class.java) }
+                        when (cr.topic()) {
+                            OK_TOPIC -> okRecords++
+                            MANUELL_TOPIC -> manuellRecords++
+                            AVVIST_TOPIC -> avvistRecords++
                         }
-                        oldSykmeldingTopics.contains(headerValue)
-                    }.map { cr ->
-                        val sykmelding: ReceivedSykmelding? =
-                            cr.value()?.let { objectMapper.readValue(it, ReceivedSykmelding::class.java) }
                         cr.key() to sykmelding
                     }
                     sykmeldinger.forEach {
@@ -126,7 +125,7 @@ class SykmeldingConsumer(
     }
 
     private suspend fun handleSykmelding(sykmeldingId: String, receivedSykmelding: ReceivedSykmelding?) {
-        if (sykmeldingId != "91be45d9-42ba-4689-ad90-2de4ca083570" && sykmeldingId != "f494bbee-0296-42b4-a016-b0ea7baed050" && receivedSykmelding != null) {
+        if (receivedSykmelding != null) {
             val sykmelding = SykmeldingMapper.mapToSykmelding(receivedSykmelding)
             try {
                 val sykmeldt = pdlPersonService.getPerson(receivedSykmelding.personNrPasient, sykmeldingId).toSykmeldt()
