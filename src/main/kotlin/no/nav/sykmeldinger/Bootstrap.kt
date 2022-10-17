@@ -137,7 +137,7 @@ fun main() {
     val arbeidsforholdService = ArbeidsforholdService(arbeidsforholdClient, organisasjonsinfoClient, arbeidsforholdDb)
 
     val sykmeldingService = SykmeldingService(SykmeldingDb(database))
-    val sykmeldingConsumer = SykmeldingConsumer(getHistoriskKafkaConsumer(), env.historiskTopic, applicationState, pdlPersonService, arbeidsforholdService, sykmeldingService, env.cluster)
+    val sykmeldingConsumer = SykmeldingConsumer(getHistoriskKafkaConsumer(), applicationState, pdlPersonService, arbeidsforholdService, sykmeldingService, env.cluster)
     sykmeldingConsumer.startConsumer()
 
     applicationServer.start()
