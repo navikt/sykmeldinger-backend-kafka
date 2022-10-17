@@ -141,7 +141,7 @@ fun main() {
 
     val sykmeldingDb = SykmeldingDb(database)
     val sykmeldingService = SykmeldingService(sykmeldingDb)
-    val sykmeldingConsumer = SykmeldingConsumer(getHistoriskKafkaConsumer(), env.historiskTopic, applicationState, pdlPersonService, arbeidsforholdService, sykmeldingService, env.cluster)
+    val sykmeldingConsumer = SykmeldingConsumer(getHistoriskKafkaConsumer(), applicationState, pdlPersonService, arbeidsforholdService, sykmeldingService, env.cluster)
     sykmeldingConsumer.startConsumer()
 
     val identendringService = IdentendringService(arbeidsforholdDb, sykmeldingDb, pdlPersonService)
