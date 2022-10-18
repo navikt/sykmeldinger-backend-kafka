@@ -127,7 +127,7 @@ fun main() {
     val narmesteLederService = NarmesteLederService(pdlPersonService, narmestelederDb, env.cluster)
     val narmesteLederConsumer = NarmesteLederConsumer(env, narmesteLederKafkaConsumer, narmesteLederService, applicationState)
     val behandlingsutfallDB = BehandlingsutfallDB(database)
-    val behandlingsutfallConsumer = BehandlingsutfallConsumer(getBehandlingsutfallKafkaConsumer(), applicationState, env, behandlingsutfallDB)
+    val behandlingsutfallConsumer = BehandlingsutfallConsumer(getKafkaConsumer(), applicationState, env, behandlingsutfallDB)
     behandlingsutfallConsumer.startConsumer()
     narmesteLederConsumer.startConsumer()
 
@@ -141,7 +141,7 @@ fun main() {
 
     val sykmeldingDb = SykmeldingDb(database)
     val sykmeldingService = SykmeldingService(sykmeldingDb)
-    val sykmeldingConsumer = SykmeldingConsumer(getHistoriskKafkaConsumer(), applicationState, pdlPersonService, arbeidsforholdService, sykmeldingService, env.cluster)
+    val sykmeldingConsumer = SykmeldingConsumer(getKafkaConsumer(), applicationState, pdlPersonService, arbeidsforholdService, sykmeldingService, env.cluster)
     sykmeldingConsumer.startConsumer()
 
     val identendringService = IdentendringService(arbeidsforholdDb, sykmeldingDb, pdlPersonService)
@@ -151,23 +151,12 @@ fun main() {
     applicationServer.start()
 }
 
-private fun getBehandlingsutfallKafkaConsumer(): KafkaConsumer<String, String> {
+private fun getKafkaConsumer(): KafkaConsumer<String, String> {
     val kafkaConsumer = KafkaConsumer(
         KafkaUtils.getAivenKafkaConfig().also {
             it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
             it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
         }.toConsumerConfig("sykmeldinger-backend-kafka-consumer", StringDeserializer::class),
-        StringDeserializer(),
-        StringDeserializer()
-    )
-    return kafkaConsumer
-}
-private fun getHistoriskKafkaConsumer(): KafkaConsumer<String, String> {
-    val kafkaConsumer = KafkaConsumer(
-        KafkaUtils.getAivenKafkaConfig().also {
-            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
-            it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
-        }.toConsumerConfig("sykmeldinger-backend-historisk-consumer", StringDeserializer::class),
         StringDeserializer(),
         StringDeserializer()
     )
