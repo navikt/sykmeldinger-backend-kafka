@@ -27,7 +27,8 @@ data class Environment(
     val eregUrl: String = getEnvVar("EREG_URL"),
     val aaregUrl: String = getEnvVar("AAREG_URL"),
     val aaregScope: String = getEnvVar("AAREG_SCOPE"),
-    val aktorV2Topic: String = "pdl.aktor-v2"
+    val aktorV2Topic: String = "pdl.aktor-v2",
+    val arbeidsforholdTopic: String = "arbeidsforhold.aapen-aareg-arbeidsforholdhendelse-v1"
 ) {
     fun jdbcUrl(): String {
         return "jdbc:postgresql://$dbHost:$dbPort/$dbName"

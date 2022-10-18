@@ -32,6 +32,8 @@ import no.nav.sykmeldinger.arbeidsforhold.ArbeidsforholdService
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.client.ArbeidsforholdClient
 import no.nav.sykmeldinger.arbeidsforhold.client.organisasjon.client.OrganisasjonsinfoClient
 import no.nav.sykmeldinger.arbeidsforhold.db.ArbeidsforholdDb
+import no.nav.sykmeldinger.arbeidsforhold.kafka.ArbeidsforholdConsumer
+import no.nav.sykmeldinger.arbeidsforhold.kafka.ArbeidsforholdHendelse
 import no.nav.sykmeldinger.azuread.AccessTokenClient
 import no.nav.sykmeldinger.behandlingsutfall.db.BehandlingsutfallDB
 import no.nav.sykmeldinger.behandlingsutfall.kafka.BehandlingsutfallConsumer
@@ -148,6 +150,9 @@ fun main() {
     val pdlAktorConsumer = PdlAktorConsumer(getIdentendringConsumer(env), applicationState, env.aktorV2Topic, identendringService)
     pdlAktorConsumer.startConsumer()
 
+    val arbeidsforholdConsumer = ArbeidsforholdConsumer(getArbeidsforholdKafkaConsumer(), applicationState, env.arbeidsforholdTopic, sykmeldingDb, arbeidsforholdService, organisasjonsinfoClient)
+    arbeidsforholdConsumer.startConsumer()
+
     applicationServer.start()
 }
 
@@ -165,7 +170,7 @@ private fun getBehandlingsutfallKafkaConsumer(): KafkaConsumer<String, String> {
 private fun getHistoriskKafkaConsumer(): KafkaConsumer<String, String> {
     val kafkaConsumer = KafkaConsumer(
         KafkaUtils.getAivenKafkaConfig().also {
-            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
+            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
             it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
         }.toConsumerConfig("sykmeldinger-backend-historisk-consumer", StringDeserializer::class),
         StringDeserializer(),
@@ -222,8 +227,20 @@ private fun getIdentendringConsumer(environment: Environment): KafkaConsumer<Str
         "sykmeldinger-backend-kafka-consumer",
         valueDeserializer = KafkaAvroDeserializer::class
     ).also {
-        it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "latest"
+        it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
         it["specific.avro.reader"] = true
     }
     return KafkaConsumer<String, Aktor>(consumerProperties)
+}
+
+private fun getArbeidsforholdKafkaConsumer(): KafkaConsumer<String, ArbeidsforholdHendelse> {
+    val kafkaConsumer = KafkaConsumer(
+        KafkaUtils.getAivenKafkaConfig().also {
+            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "latest"
+            it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 10
+        }.toConsumerConfig("sykmeldinger-backend-kafka-consumer", JacksonKafkaDeserializer::class),
+        StringDeserializer(),
+        JacksonKafkaDeserializer(ArbeidsforholdHendelse::class)
+    )
+    return kafkaConsumer
 }

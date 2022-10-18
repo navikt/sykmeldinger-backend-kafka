@@ -65,6 +65,20 @@ class ArbeidsforholdDb(
             connection.commit()
         }
     }
+
+    fun deleteArbeidsforhold(id: Int) {
+        database.connection.use { connection ->
+            connection.prepareStatement(
+                """
+                    DELETE FROM arbeidsforhold WHERE id = ?;
+                """
+            ).use { ps ->
+                ps.setString(1, id.toString())
+                ps.executeUpdate()
+            }
+            connection.commit()
+        }
+    }
 }
 
 fun ResultSet.toArbeidsforhold(): Arbeidsforhold =
