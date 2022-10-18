@@ -26,7 +26,8 @@ data class Environment(
     val cluster: String = getEnvVar("NAIS_CLUSTER_NAME"),
     val eregUrl: String = getEnvVar("EREG_URL"),
     val aaregUrl: String = getEnvVar("AAREG_URL"),
-    val aaregScope: String = getEnvVar("AAREG_SCOPE")
+    val aaregScope: String = getEnvVar("AAREG_SCOPE"),
+    val aktorV2Topic: String = "pdl.aktor-v2"
 ) {
     fun jdbcUrl(): String {
         return "jdbc:postgresql://$dbHost:$dbPort/$dbName"

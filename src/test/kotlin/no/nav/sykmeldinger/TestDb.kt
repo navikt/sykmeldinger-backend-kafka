@@ -74,6 +74,9 @@ class TestDB private constructor() {
                     """
                     DELETE FROM narmesteleder;
                     DELETE FROM sykmeldingstatus;
+                    DELETE FROM arbeidsforhold;
+                    DELETE FROM sykmelding;
+                    DELETE FROM sykmeldt;
                 """
                 ).use { ps ->
                     ps.executeUpdate()

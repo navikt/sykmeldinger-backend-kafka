@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.FunSpec
 import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.mockk
+import no.nav.sykmeldinger.TestDB
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.client.ArbeidsforholdClient
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.AaregArbeidsforhold
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Ansettelsesperiode
@@ -14,23 +15,26 @@ import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.IdentType
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Opplysningspliktig
 import no.nav.sykmeldinger.arbeidsforhold.client.organisasjon.client.OrganisasjonsinfoClient
 import no.nav.sykmeldinger.arbeidsforhold.db.ArbeidsforholdDb
+import no.nav.sykmeldinger.arbeidsforhold.model.Arbeidsforhold
 import org.amshove.kluent.shouldBeEqualTo
 import java.time.LocalDate
 
 object ArbeidsforholdServiceTest : FunSpec({
+    val testDb = TestDB.database
     val arbeidsforholdClient = mockk<ArbeidsforholdClient>()
     val organisasjonsinfoClient = mockk<OrganisasjonsinfoClient>()
-    val arbeidsforholdDb = mockk<ArbeidsforholdDb>()
+    val arbeidsforholdDb = ArbeidsforholdDb(testDb)
     val arbeidsforholdService = ArbeidsforholdService(arbeidsforholdClient, organisasjonsinfoClient, arbeidsforholdDb)
 
     beforeTest {
+        TestDB.clearAllData()
         clearMocks(
             arbeidsforholdClient,
             organisasjonsinfoClient
         )
         coEvery { organisasjonsinfoClient.getOrganisasjonsnavn(any()) } returns getOrganisasjonsinfo()
     }
-    context("ArbeidsforholderService") {
+    context("ArbeidsforholderService - getArbeidsforhold") {
         test("getArbeidsforhold returnerer liste med arbeidsforhold") {
             coEvery { arbeidsforholdClient.getArbeidsforhold(any()) } returns listOf(
                 AaregArbeidsforhold(
@@ -189,6 +193,55 @@ object ArbeidsforholdServiceTest : FunSpec({
             arbeidsforhold[0].orgNavn shouldBeEqualTo "Navn 1"
             arbeidsforhold[0].fom shouldBeEqualTo LocalDate.now().minusMonths(6)
             arbeidsforhold[0].tom shouldBeEqualTo LocalDate.now().minusWeeks(3)
+        }
+    }
+    context("ArbeidsforholderService - insertOrUpdate") {
+        test("Lagrer nytt arbeidsforhold") {
+            val arbeidsforhold = Arbeidsforhold(
+                id = 1,
+                fnr = "12345678910",
+                orgnummer = "888888888",
+                juridiskOrgnummer = "999999999",
+                orgNavn = "Bedriften AS",
+                fom = LocalDate.of(2020, 5, 1),
+                tom = null
+            )
+
+            arbeidsforholdService.insertOrUpdate(arbeidsforhold)
+
+            val arbeidsforholdFraDb = arbeidsforholdDb.getArbeidsforhold("12345678910")
+            arbeidsforholdFraDb.size shouldBeEqualTo 1
+            arbeidsforholdFraDb[0].id shouldBeEqualTo 1
+            arbeidsforholdFraDb[0].fnr shouldBeEqualTo "12345678910"
+            arbeidsforholdFraDb[0].orgnummer shouldBeEqualTo "888888888"
+            arbeidsforholdFraDb[0].juridiskOrgnummer shouldBeEqualTo "999999999"
+            arbeidsforholdFraDb[0].orgNavn shouldBeEqualTo "Bedriften AS"
+            arbeidsforholdFraDb[0].fom shouldBeEqualTo LocalDate.of(2020, 5, 1)
+            arbeidsforholdFraDb[0].tom shouldBeEqualTo null
+        }
+        test("Oppdaterer arbeidsforhold") {
+            val arbeidsforhold = Arbeidsforhold(
+                id = 1,
+                fnr = "12345678910",
+                orgnummer = "888888888",
+                juridiskOrgnummer = "999999999",
+                orgNavn = "Bedriften AS",
+                fom = LocalDate.of(2020, 5, 1),
+                tom = null
+            )
+            arbeidsforholdService.insertOrUpdate(arbeidsforhold)
+
+            arbeidsforholdService.insertOrUpdate(arbeidsforhold.copy(tom = LocalDate.now()))
+
+            val arbeidsforholdFraDb = arbeidsforholdDb.getArbeidsforhold("12345678910")
+            arbeidsforholdFraDb.size shouldBeEqualTo 1
+            arbeidsforholdFraDb[0].id shouldBeEqualTo 1
+            arbeidsforholdFraDb[0].fnr shouldBeEqualTo "12345678910"
+            arbeidsforholdFraDb[0].orgnummer shouldBeEqualTo "888888888"
+            arbeidsforholdFraDb[0].juridiskOrgnummer shouldBeEqualTo "999999999"
+            arbeidsforholdFraDb[0].orgNavn shouldBeEqualTo "Bedriften AS"
+            arbeidsforholdFraDb[0].fom shouldBeEqualTo LocalDate.of(2020, 5, 1)
+            arbeidsforholdFraDb[0].tom shouldBeEqualTo LocalDate.now()
         }
     }
 })
