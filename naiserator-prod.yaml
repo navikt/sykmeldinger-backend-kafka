@@ -60,3 +60,5 @@ spec:
       value: https://aareg-services.prod-fss-pub.nais.io
     - name: AAREG_SCOPE
       value: api://prod-fss.arbeidsforhold.aareg-services-nais/.default
+    - name: ARBEIDSFORHOLD_TOPIC
+      value: arbeidsforhold.aapen-aareg-arbeidsforholdhendelse-v1
