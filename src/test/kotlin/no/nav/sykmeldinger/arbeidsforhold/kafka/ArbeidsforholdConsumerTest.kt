@@ -13,13 +13,16 @@ import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.AaregArbei
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Ansettelsesperiode
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Arbeidssted
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.ArbeidsstedType
-import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Arbeidstaker
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Ident
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.IdentType
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Opplysningspliktig
 import no.nav.sykmeldinger.arbeidsforhold.client.organisasjon.client.OrganisasjonsinfoClient
 import no.nav.sykmeldinger.arbeidsforhold.db.ArbeidsforholdDb
 import no.nav.sykmeldinger.arbeidsforhold.getOrganisasjonsinfo
+import no.nav.sykmeldinger.arbeidsforhold.kafka.model.ArbeidsforholdHendelse
+import no.nav.sykmeldinger.arbeidsforhold.kafka.model.ArbeidsforholdKafka
+import no.nav.sykmeldinger.arbeidsforhold.kafka.model.Arbeidstaker
+import no.nav.sykmeldinger.arbeidsforhold.kafka.model.Endringstype
 import no.nav.sykmeldinger.arbeidsforhold.model.Arbeidsforhold
 import no.nav.sykmeldinger.sykmelding.db.SykmeldingDb
 import no.nav.sykmeldinger.sykmelding.model.Sykmeldt
@@ -33,34 +36,39 @@ object ArbeidsforholdConsumerTest : FunSpec({
     val sykmeldingDb = SykmeldingDb(testDb)
     val kafkaConsumer = mockk<KafkaConsumer<String, ArbeidsforholdHendelse>>()
     val organisasjonsinfoClient = mockk<OrganisasjonsinfoClient>()
-    val arbeidsforholdService = ArbeidsforholdService(mockk<ArbeidsforholdClient>(), organisasjonsinfoClient, arbeidsforholdDb)
+    val arbeidsforholdClient = mockk<ArbeidsforholdClient>()
+    val arbeidsforholdService = ArbeidsforholdService(arbeidsforholdClient, organisasjonsinfoClient, arbeidsforholdDb)
     val arbeidsforholdConsumer = ArbeidsforholdConsumer(
         kafkaConsumer,
         ApplicationState(alive = true, ready = true),
         "topic",
         sykmeldingDb,
-        arbeidsforholdService,
-        organisasjonsinfoClient
+        arbeidsforholdService
     )
 
     beforeEach {
         TestDB.clearAllData()
-        clearMocks(organisasjonsinfoClient)
+        clearMocks(organisasjonsinfoClient, arbeidsforholdClient)
         coEvery { organisasjonsinfoClient.getOrganisasjonsnavn(any()) } returns getOrganisasjonsinfo()
     }
 
     context("ArbeidsforholdConsumer - handleArbeidsforholdHendelse") {
         test("Lagrer nytt arbeidsforhold") {
+            coEvery { arbeidsforholdClient.getArbeidsforhold(any()) } returns listOf(
+                AaregArbeidsforhold(
+                    1,
+                    Arbeidssted(ArbeidsstedType.Underenhet, listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))),
+                    Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))),
+                    Ansettelsesperiode(startdato = LocalDate.now().minusYears(3), sluttdato = null)
+                )
+            )
             sykmeldingDb.saveOrUpdateSykmeldt(Sykmeldt("12345678901", "Per", null, "Person"))
             val arbeidsforholdHendelse = ArbeidsforholdHendelse(
                 id = 34L,
                 endringstype = Endringstype.Opprettelse,
-                arbeidsforhold = AaregArbeidsforhold(
+                arbeidsforhold = ArbeidsforholdKafka(
                     1,
-                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true))),
-                    Arbeidssted(ArbeidsstedType.Underenhet, listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))),
-                    Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))),
-                    Ansettelsesperiode(startdato = LocalDate.now().minusYears(3), sluttdato = null)
+                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true)))
                 )
             )
 
@@ -76,28 +84,41 @@ object ArbeidsforholdConsumerTest : FunSpec({
             arbeidsforhold[0].fom shouldBeEqualTo LocalDate.now().minusYears(3)
             arbeidsforhold[0].tom shouldBeEqualTo null
 
-            coVerify { organisasjonsinfoClient.getOrganisasjonsnavn(any()) }
+            coVerify { arbeidsforholdClient.getArbeidsforhold(any()) }
         }
         test("Lagrer ikke utdatert arbeidsforhold") {
+            coEvery { arbeidsforholdClient.getArbeidsforhold(any()) } returns listOf(
+                AaregArbeidsforhold(
+                    1,
+                    Arbeidssted(ArbeidsstedType.Underenhet, listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))),
+                    Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))),
+                    Ansettelsesperiode(startdato = LocalDate.now().minusYears(3), sluttdato = LocalDate.now().minusYears(1))
+                )
+            )
             sykmeldingDb.saveOrUpdateSykmeldt(Sykmeldt("12345678901", "Per", null, "Person"))
             val arbeidsforholdHendelse = ArbeidsforholdHendelse(
                 id = 34L,
                 endringstype = Endringstype.Opprettelse,
-                arbeidsforhold = AaregArbeidsforhold(
+                arbeidsforhold = ArbeidsforholdKafka(
                     1,
-                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true))),
-                    Arbeidssted(ArbeidsstedType.Underenhet, listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))),
-                    Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))),
-                    Ansettelsesperiode(startdato = LocalDate.now().minusYears(3), sluttdato = LocalDate.now().minusYears(1))
+                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true)))
                 )
             )
 
             arbeidsforholdConsumer.handleArbeidsforholdHendelse(arbeidsforholdHendelse)
 
             arbeidsforholdService.getArbeidsforholdFromDb("12345678901").size shouldBeEqualTo 0
-            coVerify(exactly = 0) { organisasjonsinfoClient.getOrganisasjonsnavn(any()) }
+            coVerify { arbeidsforholdClient.getArbeidsforhold(any()) }
         }
         test("Oppdaterer eksisterende arbeidsforhold") {
+            coEvery { arbeidsforholdClient.getArbeidsforhold(any()) } returns listOf(
+                AaregArbeidsforhold(
+                    1,
+                    Arbeidssted(ArbeidsstedType.Underenhet, listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))),
+                    Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))),
+                    Ansettelsesperiode(startdato = LocalDate.now().minusYears(3), sluttdato = null)
+                )
+            )
             sykmeldingDb.saveOrUpdateSykmeldt(Sykmeldt("12345678901", "Per", null, "Person"))
             arbeidsforholdService.insertOrUpdate(
                 Arbeidsforhold(
@@ -113,12 +134,9 @@ object ArbeidsforholdConsumerTest : FunSpec({
             val arbeidsforholdHendelse = ArbeidsforholdHendelse(
                 id = 34L,
                 endringstype = Endringstype.Endring,
-                arbeidsforhold = AaregArbeidsforhold(
+                arbeidsforhold = ArbeidsforholdKafka(
                     1,
-                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true))),
-                    Arbeidssted(ArbeidsstedType.Underenhet, listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))),
-                    Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))),
-                    Ansettelsesperiode(startdato = LocalDate.now().minusYears(3), sluttdato = null)
+                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true)))
                 )
             )
 
@@ -134,7 +152,7 @@ object ArbeidsforholdConsumerTest : FunSpec({
             arbeidsforhold[0].fom shouldBeEqualTo LocalDate.now().minusYears(3)
             arbeidsforhold[0].tom shouldBeEqualTo null
 
-            coVerify { organisasjonsinfoClient.getOrganisasjonsnavn(any()) }
+            coVerify { arbeidsforholdClient.getArbeidsforhold(any()) }
         }
         test("Sletter arbeidsforhold") {
             sykmeldingDb.saveOrUpdateSykmeldt(Sykmeldt("12345678901", "Per", null, "Person"))
@@ -152,37 +170,31 @@ object ArbeidsforholdConsumerTest : FunSpec({
             val arbeidsforholdHendelse = ArbeidsforholdHendelse(
                 id = 34L,
                 endringstype = Endringstype.Sletting,
-                arbeidsforhold = AaregArbeidsforhold(
+                arbeidsforhold = ArbeidsforholdKafka(
                     1,
-                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true))),
-                    Arbeidssted(ArbeidsstedType.Underenhet, listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))),
-                    Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))),
-                    Ansettelsesperiode(startdato = LocalDate.now().minusYears(3), sluttdato = null)
+                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true)))
                 )
             )
 
             arbeidsforholdConsumer.handleArbeidsforholdHendelse(arbeidsforholdHendelse)
 
             arbeidsforholdService.getArbeidsforholdFromDb("12345678901").size shouldBeEqualTo 0
-            coVerify(exactly = 0) { organisasjonsinfoClient.getOrganisasjonsnavn(any()) }
+            coVerify(exactly = 0) { arbeidsforholdClient.getArbeidsforhold(any()) }
         }
         test("Ignorerer hendelse hvis fnr ikke finnes i databasen fra før") {
             val arbeidsforholdHendelse = ArbeidsforholdHendelse(
                 id = 34L,
                 endringstype = Endringstype.Opprettelse,
-                arbeidsforhold = AaregArbeidsforhold(
+                arbeidsforhold = ArbeidsforholdKafka(
                     15,
-                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true))),
-                    Arbeidssted(ArbeidsstedType.Underenhet, listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))),
-                    Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))),
-                    Ansettelsesperiode(startdato = LocalDate.now().minusYears(3), sluttdato = null)
+                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true)))
                 )
             )
 
             arbeidsforholdConsumer.handleArbeidsforholdHendelse(arbeidsforholdHendelse)
 
             arbeidsforholdService.getArbeidsforholdFromDb("12345678901").size shouldBeEqualTo 0
-            coVerify(exactly = 0) { organisasjonsinfoClient.getOrganisasjonsnavn(any()) }
+            coVerify(exactly = 0) { arbeidsforholdClient.getArbeidsforhold(any()) }
         }
     }
 })

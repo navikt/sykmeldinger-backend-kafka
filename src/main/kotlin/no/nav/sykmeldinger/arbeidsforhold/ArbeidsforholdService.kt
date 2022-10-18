@@ -57,7 +57,7 @@ class ArbeidsforholdService(
         arbeidsforholdDb.deleteArbeidsforhold(id)
     }
 
-    fun arbeidsforholdErGyldig(ansettelsesperiode: Ansettelsesperiode): Boolean {
+    private fun arbeidsforholdErGyldig(ansettelsesperiode: Ansettelsesperiode): Boolean {
         val ansettelsesperiodeFom = LocalDate.now().minusMonths(4)
         return ansettelsesperiode.sluttdato == null || ansettelsesperiode.sluttdato.isAfter(ansettelsesperiodeFom)
     }

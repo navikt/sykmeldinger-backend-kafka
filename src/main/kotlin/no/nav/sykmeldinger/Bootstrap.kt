@@ -33,7 +33,7 @@ import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.client.Arbeidsfo
 import no.nav.sykmeldinger.arbeidsforhold.client.organisasjon.client.OrganisasjonsinfoClient
 import no.nav.sykmeldinger.arbeidsforhold.db.ArbeidsforholdDb
 import no.nav.sykmeldinger.arbeidsforhold.kafka.ArbeidsforholdConsumer
-import no.nav.sykmeldinger.arbeidsforhold.kafka.ArbeidsforholdHendelse
+import no.nav.sykmeldinger.arbeidsforhold.kafka.model.ArbeidsforholdHendelse
 import no.nav.sykmeldinger.azuread.AccessTokenClient
 import no.nav.sykmeldinger.behandlingsutfall.db.BehandlingsutfallDB
 import no.nav.sykmeldinger.behandlingsutfall.kafka.BehandlingsutfallConsumer
@@ -150,7 +150,7 @@ fun main() {
     val pdlAktorConsumer = PdlAktorConsumer(getIdentendringConsumer(env), applicationState, env.aktorV2Topic, identendringService)
     pdlAktorConsumer.startConsumer()
 
-    val arbeidsforholdConsumer = ArbeidsforholdConsumer(getArbeidsforholdKafkaConsumer(), applicationState, env.arbeidsforholdTopic, sykmeldingDb, arbeidsforholdService, organisasjonsinfoClient)
+    val arbeidsforholdConsumer = ArbeidsforholdConsumer(getArbeidsforholdKafkaConsumer(), applicationState, env.arbeidsforholdTopic, sykmeldingDb, arbeidsforholdService)
     arbeidsforholdConsumer.startConsumer()
 
     applicationServer.start()

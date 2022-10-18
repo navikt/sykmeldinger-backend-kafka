@@ -7,9 +7,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import no.nav.sykmeldinger.application.ApplicationState
 import no.nav.sykmeldinger.arbeidsforhold.ArbeidsforholdService
-import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.AaregArbeidsforhold
-import no.nav.sykmeldinger.arbeidsforhold.client.organisasjon.client.OrganisasjonsinfoClient
-import no.nav.sykmeldinger.arbeidsforhold.model.Arbeidsforhold
+import no.nav.sykmeldinger.arbeidsforhold.kafka.model.ArbeidsforholdHendelse
+import no.nav.sykmeldinger.arbeidsforhold.kafka.model.Endringstype
 import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.sykmelding.db.SykmeldingDb
 import org.apache.kafka.clients.consumer.KafkaConsumer
@@ -21,8 +20,7 @@ class ArbeidsforholdConsumer(
     private val applicationState: ApplicationState,
     private val topic: String,
     private val sykmeldingDb: SykmeldingDb,
-    private val arbeidsforholdService: ArbeidsforholdService,
-    private val organisasjonsinfoClient: OrganisasjonsinfoClient
+    private val arbeidsforholdService: ArbeidsforholdService
 ) {
     companion object {
         private const val DELAY_ON_ERROR_SECONDS = 60L
@@ -68,25 +66,13 @@ class ArbeidsforholdConsumer(
             if (arbeidsforholdHendelse.endringstype == Endringstype.Sletting) {
                 log.info("Sletter arbeidsforhold med id ${arbeidsforholdHendelse.arbeidsforhold.navArbeidsforholdId} hvis det finnes")
                 arbeidsforholdService.deleteArbeidsforhold(arbeidsforholdHendelse.arbeidsforhold.navArbeidsforholdId)
-            } else if (arbeidsforholdService.arbeidsforholdErGyldig(arbeidsforholdHendelse.arbeidsforhold.ansettelsesperiode)) {
-                arbeidsforholdService.insertOrUpdate(arbeidsforholdHendelse.arbeidsforhold.toArbeidsforhold(fnr))
-                log.info("Opprettet eller oppdatert arbeidsforhold med id ${arbeidsforholdHendelse.arbeidsforhold.navArbeidsforholdId}")
             } else {
-                log.info("Ingen relevante endringer for arbeidsforholdhendelse med id ${arbeidsforholdHendelse.id}")
+                val arbeidsforhold = arbeidsforholdService.getArbeidsforhold(fnr)
+                arbeidsforhold.forEach {
+                    arbeidsforholdService.insertOrUpdate(it)
+                    log.info("Opprettet eller oppdatert ${arbeidsforhold.size} etter mottak av hendelse med id ${arbeidsforholdHendelse.id}")
+                }
             }
         }
-    }
-
-    private suspend fun AaregArbeidsforhold.toArbeidsforhold(fnr: String): Arbeidsforhold {
-        val organisasjonsinfo = organisasjonsinfoClient.getOrganisasjonsnavn(arbeidssted.getOrgnummer())
-        return Arbeidsforhold(
-            id = navArbeidsforholdId,
-            fnr = fnr,
-            orgnummer = arbeidssted.getOrgnummer(),
-            juridiskOrgnummer = opplysningspliktig.getJuridiskOrgnummer(),
-            orgNavn = organisasjonsinfo.navn.getNameAsString(),
-            fom = ansettelsesperiode.startdato,
-            tom = ansettelsesperiode.sluttdato
-        )
     }
 }

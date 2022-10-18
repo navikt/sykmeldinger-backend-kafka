@@ -10,7 +10,6 @@ import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.AaregArbei
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Ansettelsesperiode
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Arbeidssted
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.ArbeidsstedType
-import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Arbeidstaker
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Ident
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.IdentType
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Opplysningspliktig
@@ -40,14 +39,12 @@ object ArbeidsforholdServiceTest : FunSpec({
             coEvery { arbeidsforholdClient.getArbeidsforhold(any()) } returns listOf(
                 AaregArbeidsforhold(
                     1,
-                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true))),
                     Arbeidssted(ArbeidsstedType.Underenhet, listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))),
                     Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))),
                     Ansettelsesperiode(startdato = LocalDate.now().minusYears(3), sluttdato = null)
                 ),
                 AaregArbeidsforhold(
                     2,
-                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true))),
                     Arbeidssted(ArbeidsstedType.Underenhet, listOf(Ident(IdentType.ORGANISASJONSNUMMER, "88888888", true))),
                     Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "999999999", true))),
                     Ansettelsesperiode(
@@ -57,7 +54,6 @@ object ArbeidsforholdServiceTest : FunSpec({
                 ),
                 AaregArbeidsforhold(
                     3,
-                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true))),
                     Arbeidssted(ArbeidsstedType.Underenhet, listOf(Ident(IdentType.ORGANISASJONSNUMMER, "88888888", true))),
                     Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "999999999", true))),
                     Ansettelsesperiode(
@@ -108,14 +104,12 @@ object ArbeidsforholdServiceTest : FunSpec({
             coEvery { arbeidsforholdClient.getArbeidsforhold(any()) } returns listOf(
                 AaregArbeidsforhold(
                     1,
-                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true))),
                     Arbeidssted(ArbeidsstedType.Person, listOf(Ident(IdentType.FOLKEREGISTERIDENT, "fnr", true))),
                     Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))),
                     Ansettelsesperiode(startdato = LocalDate.now().minusYears(3), sluttdato = null)
                 ),
                 AaregArbeidsforhold(
                     2,
-                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true))),
                     Arbeidssted(ArbeidsstedType.Underenhet, listOf(Ident(IdentType.ORGANISASJONSNUMMER, "88888888", true))),
                     Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "999999999", true))),
                     Ansettelsesperiode(
@@ -140,7 +134,6 @@ object ArbeidsforholdServiceTest : FunSpec({
             coEvery { arbeidsforholdClient.getArbeidsforhold(any()) } returns listOf(
                 AaregArbeidsforhold(
                     1,
-                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true))),
                     Arbeidssted(ArbeidsstedType.Underenhet, listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))),
                     Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))),
                     Ansettelsesperiode(
@@ -150,7 +143,6 @@ object ArbeidsforholdServiceTest : FunSpec({
                 ),
                 AaregArbeidsforhold(
                     2,
-                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true))),
                     Arbeidssted(ArbeidsstedType.Underenhet, listOf(Ident(IdentType.ORGANISASJONSNUMMER, "88888888", true))),
                     Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "999999999", true))),
                     Ansettelsesperiode(
@@ -174,7 +166,6 @@ object ArbeidsforholdServiceTest : FunSpec({
             coEvery { arbeidsforholdClient.getArbeidsforhold(any()) } returns listOf(
                 AaregArbeidsforhold(
                     1,
-                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true))),
                     Arbeidssted(ArbeidsstedType.Underenhet, listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))),
                     Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))),
                     Ansettelsesperiode(
@@ -184,7 +175,6 @@ object ArbeidsforholdServiceTest : FunSpec({
                 ),
                 AaregArbeidsforhold(
                     2,
-                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true))),
                     Arbeidssted(ArbeidsstedType.Underenhet, listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))),
                     Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))),
                     Ansettelsesperiode(
