@@ -1,6 +1,7 @@
 package no.nav.sykmeldinger.arbeidsforhold
 
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.client.ArbeidsforholdClient
+import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Ansettelsesperiode
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.ArbeidsstedType
 import no.nav.sykmeldinger.arbeidsforhold.client.organisasjon.client.OrganisasjonsinfoClient
 import no.nav.sykmeldinger.arbeidsforhold.db.ArbeidsforholdDb
@@ -17,7 +18,6 @@ class ArbeidsforholdService(
     }
 
     suspend fun getArbeidsforhold(fnr: String): List<Arbeidsforhold> {
-        val ansettelsesperiodeFom = LocalDate.now().minusMonths(4)
         val arbeidsgivere = arbeidsforholdClient.getArbeidsforhold(fnr = fnr)
 
         if (arbeidsgivere.isEmpty()) {
@@ -26,12 +26,7 @@ class ArbeidsforholdService(
 
         val arbeidsgiverList = ArrayList<Arbeidsforhold>()
         arbeidsgivere.filter {
-            it.arbeidssted.type == ArbeidsstedType.Underenhet &&
-                (
-                    it.ansettelsesperiode.sluttdato == null || it.ansettelsesperiode.sluttdato.isAfter(
-                        ansettelsesperiodeFom
-                    )
-                    )
+            it.arbeidssted.type == ArbeidsstedType.Underenhet && arbeidsforholdErGyldig(it.ansettelsesperiode)
         }.sortedWith(
             compareByDescending(nullsLast()) {
                 it.ansettelsesperiode.sluttdato
@@ -52,5 +47,18 @@ class ArbeidsforholdService(
             )
         }
         return arbeidsgiverList.distinctBy { listOf(it.fnr, it.orgnummer, it.juridiskOrgnummer, it.orgNavn, it.fom, it.tom) }
+    }
+
+    fun getArbeidsforholdFromDb(fnr: String): List<Arbeidsforhold> {
+        return arbeidsforholdDb.getArbeidsforhold(fnr)
+    }
+
+    fun deleteArbeidsforhold(id: Int) {
+        arbeidsforholdDb.deleteArbeidsforhold(id)
+    }
+
+    private fun arbeidsforholdErGyldig(ansettelsesperiode: Ansettelsesperiode): Boolean {
+        val ansettelsesperiodeFom = LocalDate.now().minusMonths(4)
+        return ansettelsesperiode.sluttdato == null || ansettelsesperiode.sluttdato.isAfter(ansettelsesperiodeFom)
     }
 }
