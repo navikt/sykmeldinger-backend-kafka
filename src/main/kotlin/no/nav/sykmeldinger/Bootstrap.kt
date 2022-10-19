@@ -18,6 +18,7 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.network.sockets.SocketTimeoutException
 import io.ktor.serialization.jackson.jackson
 import io.prometheus.client.hotspot.DefaultExports
+import kotlinx.coroutines.DelicateCoroutinesApi
 import no.nav.person.pdl.aktor.v2.Aktor
 import no.nav.person.pdl.leesah.Personhendelse
 import no.nav.syfo.kafka.aiven.KafkaUtils
@@ -28,10 +29,12 @@ import no.nav.sykmeldinger.application.ApplicationState
 import no.nav.sykmeldinger.application.createApplicationEngine
 import no.nav.sykmeldinger.application.db.Database
 import no.nav.sykmeldinger.application.exception.ServiceUnavailableException
+import no.nav.sykmeldinger.application.leaderelection.LeaderElection
 import no.nav.sykmeldinger.arbeidsforhold.ArbeidsforholdService
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.client.ArbeidsforholdClient
 import no.nav.sykmeldinger.arbeidsforhold.client.organisasjon.client.OrganisasjonsinfoClient
 import no.nav.sykmeldinger.arbeidsforhold.db.ArbeidsforholdDb
+import no.nav.sykmeldinger.arbeidsforhold.delete.DeleteArbeidsforholdService
 import no.nav.sykmeldinger.arbeidsforhold.kafka.ArbeidsforholdConsumer
 import no.nav.sykmeldinger.arbeidsforhold.kafka.model.ArbeidsforholdHendelse
 import no.nav.sykmeldinger.azuread.AccessTokenClient
@@ -66,6 +69,7 @@ val objectMapper: ObjectMapper = jacksonObjectMapper().apply {
     configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true)
 }
 
+@OptIn(DelicateCoroutinesApi::class)
 fun main() {
     val env = Environment()
     DefaultExports.initialize()
@@ -152,6 +156,10 @@ fun main() {
 
     val arbeidsforholdConsumer = ArbeidsforholdConsumer(getArbeidsforholdKafkaConsumer(), applicationState, env.arbeidsforholdTopic, sykmeldingDb, arbeidsforholdService)
     arbeidsforholdConsumer.startConsumer()
+
+    val leaderElection = LeaderElection(httpClient, env.electorPath)
+    val deleteArbeidsforholdService = DeleteArbeidsforholdService(arbeidsforholdDb, leaderElection, applicationState)
+    deleteArbeidsforholdService.start()
 
     applicationServer.start()
 }

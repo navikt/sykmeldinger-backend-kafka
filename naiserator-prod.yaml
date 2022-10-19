@@ -45,6 +45,7 @@ spec:
     application:
       enabled: true
       tenant: nav.no
+  leaderElection: true
   envFrom:
     - secret: google-sql-sykmeldinger-backend-sykmeldinger-sykmeldin-7ee1e806
   env:

@@ -7,6 +7,7 @@ import no.nav.sykmeldinger.application.db.toList
 import no.nav.sykmeldinger.arbeidsforhold.model.Arbeidsforhold
 import java.sql.Date
 import java.sql.ResultSet
+import java.time.LocalDate
 
 class ArbeidsforholdDb(
     private val database: DatabaseInterface
@@ -77,6 +78,21 @@ class ArbeidsforholdDb(
                 ps.executeUpdate()
             }
             connection.commit()
+        }
+    }
+
+    fun deleteOldArbeidsforhold(date: LocalDate): Int {
+        database.connection.use { connection ->
+            val result = connection.prepareStatement(
+                """
+                    DELETE FROM arbeidsforhold WHERE tom < ?;
+                """
+            ).use { ps ->
+                ps.setDate(1, Date.valueOf(date))
+                ps.executeUpdate()
+            }
+            connection.commit()
+            return result
         }
     }
 }
