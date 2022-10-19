@@ -58,7 +58,7 @@ class ArbeidsforholdConsumer(
     }
 
     suspend fun handleArbeidsforholdHendelse(arbeidsforholdHendelse: ArbeidsforholdHendelse) {
-        log.info("Mottatt arbeidsforhold-hendelse med id ${arbeidsforholdHendelse.id} og type ${arbeidsforholdHendelse.endringstype}")
+        log.debug("Mottatt arbeidsforhold-hendelse med id ${arbeidsforholdHendelse.id} og type ${arbeidsforholdHendelse.endringstype}")
         val fnr = arbeidsforholdHendelse.arbeidsforhold.arbeidstaker.getFnr()
         val sykmeldt = sykmeldingDb.getSykmeldt(fnr)
 
