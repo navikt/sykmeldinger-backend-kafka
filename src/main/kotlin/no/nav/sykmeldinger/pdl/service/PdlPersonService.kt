@@ -50,7 +50,7 @@ class PdlPersonService(
 
         if (pdlResponse.errors != null) {
             pdlResponse.errors.forEach {
-                log.error("PDL returnerte feilmelding: ${it.message}, ${it.extensions?.code}, ")
+                log.warn("PDL returnerte feilmelding: ${it.message}, ${it.extensions?.code}, ")
                 it.extensions?.details?.let { details -> log.error("Type: ${details.type}, cause: ${details.cause}, policy: ${details.policy}") }
             }
         }
