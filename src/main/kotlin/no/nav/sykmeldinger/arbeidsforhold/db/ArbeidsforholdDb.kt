@@ -85,7 +85,7 @@ class ArbeidsforholdDb(
         database.connection.use { connection ->
             val result = connection.prepareStatement(
                 """
-                    DELETE FROM arbeidsforhold WHERE tom < ?;
+                    DELETE FROM arbeidsforhold where tom is not null and tom < ?;
                 """
             ).use { ps ->
                 ps.setDate(1, Date.valueOf(date))
