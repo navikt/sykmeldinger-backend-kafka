@@ -10,8 +10,11 @@ import no.nav.sykmeldinger.application.leaderelection.LeaderElection
 import no.nav.sykmeldinger.application.metrics.SLETTET_ARBFORHOLD_COUNTER
 import no.nav.sykmeldinger.arbeidsforhold.db.ArbeidsforholdDb
 import no.nav.sykmeldinger.log
+import java.time.Duration
 import java.time.LocalDate
-import kotlin.time.Duration.Companion.hours
+import java.time.LocalTime
+import java.time.OffsetTime
+import java.time.ZoneOffset
 
 class DeleteArbeidsforholdService(
     private val arbeidsforholdDb: ArbeidsforholdDb,
@@ -19,7 +22,6 @@ class DeleteArbeidsforholdService(
     private val applicationState: ApplicationState
 ) {
     companion object {
-        private const val DELAY_HOURS = 24
         private const val MONTHS_FOR_ARBEIDSFORHOLD = 4L
     }
 
@@ -36,10 +38,21 @@ class DeleteArbeidsforholdService(
                         log.error("Could not delete arbeidsforhold", ex)
                     }
                 }
-                delay(DELAY_HOURS.hours)
+                delay(getDelayTime())
             }
         }
     }
 
     private fun getDateForDeletion() = LocalDate.now().minusMonths(MONTHS_FOR_ARBEIDSFORHOLD)
+
+    private fun getDelayTime(): Long {
+        val start = OffsetTime.of(LocalTime.of(7, 0), ZoneOffset.UTC)
+        val now = OffsetTime.now(ZoneOffset.UTC)
+        val duration = Duration.between(now, start).toMillis()
+        return if (duration >= 0) {
+            duration
+        } else {
+            Duration.between(start, now).toMillis()
+        }
+    }
 }
