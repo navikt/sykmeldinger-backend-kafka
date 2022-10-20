@@ -36,6 +36,7 @@ class TestDatabase(val connectionName: String, val dbUsername: String, val dbPas
     }
     private fun runFlywayMigrations() = Flyway.configure().run {
         locations("db")
+        configuration(mapOf("flyway.postgresql.transactional.lock" to "false"))
         dataSource(connectionName, dbUsername, dbPassword)
         load().migrate()
     }
