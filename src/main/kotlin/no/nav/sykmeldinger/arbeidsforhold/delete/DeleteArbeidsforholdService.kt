@@ -35,8 +35,8 @@ class DeleteArbeidsforholdService(
                     } catch (ex: Exception) {
                         log.error("Could not delete arbeidsforhold", ex)
                     }
-                    delay(DELAY_HOURS.hours)
                 }
+                delay(DELAY_HOURS.hours)
             }
         }
     }
