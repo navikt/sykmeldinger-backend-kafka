@@ -9,6 +9,7 @@ import no.nav.sykmeldinger.application.ApplicationState
 import no.nav.sykmeldinger.arbeidsforhold.ArbeidsforholdService
 import no.nav.sykmeldinger.arbeidsforhold.kafka.model.ArbeidsforholdHendelse
 import no.nav.sykmeldinger.arbeidsforhold.kafka.model.Endringstype
+import no.nav.sykmeldinger.arbeidsforhold.model.Arbeidsforhold
 import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.sykmelding.db.SykmeldingDb
 import org.apache.kafka.clients.consumer.KafkaConsumer
@@ -68,11 +69,32 @@ class ArbeidsforholdConsumer(
                 arbeidsforholdService.deleteArbeidsforhold(arbeidsforholdHendelse.arbeidsforhold.navArbeidsforholdId)
             } else {
                 val arbeidsforhold = arbeidsforholdService.getArbeidsforhold(fnr)
+                val arbeidsforholdFraDb = arbeidsforholdService.getArbeidsforholdFromDb(fnr)
+
+                val slettesfraDb = getArbeidsforholdSomSkalSlettes(arbeidsforholdDb = arbeidsforholdFraDb, arbeidsforholdAareg = arbeidsforhold)
+
+                if (slettesfraDb.isNotEmpty()) {
+                    slettesfraDb.forEach {
+                        log.info("Sletter utdatert arbeidsforhold med id $it")
+                        arbeidsforholdService.deleteArbeidsforhold(it)
+                    }
+                }
                 arbeidsforhold.forEach {
                     arbeidsforholdService.insertOrUpdate(it)
                 }
                 log.info("Opprettet eller oppdatert ${arbeidsforhold.size} etter mottak av hendelse med id ${arbeidsforholdHendelse.id}")
             }
         }
+    }
+
+    fun getArbeidsforholdSomSkalSlettes(arbeidsforholdAareg: List<Arbeidsforhold>, arbeidsforholdDb: List<Arbeidsforhold>): List<Int> {
+        if (arbeidsforholdDb.size == arbeidsforholdAareg.size && arbeidsforholdDb.toHashSet() == arbeidsforholdAareg.toHashSet()) {
+            return emptyList()
+        }
+
+        val arbeidsforholdAaregMap: HashMap<Int, Arbeidsforhold> = HashMap(arbeidsforholdAareg.associateBy { it.id })
+        val arbeidsforholdDbMap: HashMap<Int, Arbeidsforhold> = HashMap(arbeidsforholdDb.associateBy { it.id })
+
+        return arbeidsforholdDbMap.filter { arbeidsforholdAaregMap[it.key] == null }.keys.toList()
     }
 }
