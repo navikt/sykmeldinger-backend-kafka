@@ -11,7 +11,6 @@ import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.narmesteleder.NarmesteLederService
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import java.time.Duration
-import java.time.OffsetDateTime
 
 class NarmesteLederConsumer(
     private val environment: Environment,
@@ -19,18 +18,10 @@ class NarmesteLederConsumer(
     private val narmesteLederService: NarmesteLederService,
     private val applicationState: ApplicationState
 ) {
-    private var totalRecords = 0
-    private var lastDate = OffsetDateTime.MIN
 
     @OptIn(DelicateCoroutinesApi::class)
     fun startConsumer() {
         GlobalScope.launch(Dispatchers.IO) {
-            GlobalScope.launch(Dispatchers.IO) {
-                while (applicationState.ready) {
-                    log.info("$totalRecords nl-records processed, last record was at $lastDate")
-                    delay(10000)
-                }
-            }
             while (applicationState.ready) {
                 try {
                     kafkaConsumer.subscribe(listOf(environment.narmestelederLeesahTopic))
@@ -50,11 +41,10 @@ class NarmesteLederConsumer(
         while (applicationState.ready) {
             val records = kafkaConsumer.poll(Duration.ofSeconds(1)).mapNotNull { it.value() }
             if (records.isNotEmpty()) {
-                lastDate = records.last().timestamp
                 records.forEach {
+                    log.info("Mottatt nærmesteleder-oppdatering for kobling med id ${it.narmesteLederId}")
                     narmesteLederService.updateNarmesteLeder(it)
                 }
-                totalRecords += records.count()
             }
         }
     }
