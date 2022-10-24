@@ -1,0 +1,1 @@
+create index concurrently arbeidsforhold_tom_idx on arbeidsforhold (tom);
