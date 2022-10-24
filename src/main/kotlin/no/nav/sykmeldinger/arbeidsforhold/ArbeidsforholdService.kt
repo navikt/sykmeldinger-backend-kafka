@@ -6,6 +6,7 @@ import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Arbeidsste
 import no.nav.sykmeldinger.arbeidsforhold.client.organisasjon.client.OrganisasjonsinfoClient
 import no.nav.sykmeldinger.arbeidsforhold.db.ArbeidsforholdDb
 import no.nav.sykmeldinger.arbeidsforhold.model.Arbeidsforhold
+import no.nav.sykmeldinger.log
 import java.time.LocalDate
 
 class ArbeidsforholdService(
@@ -19,6 +20,7 @@ class ArbeidsforholdService(
 
     suspend fun getArbeidsforhold(fnr: String): List<Arbeidsforhold> {
         val arbeidsgivere = arbeidsforholdClient.getArbeidsforhold(fnr = fnr)
+        log.info("Hentet ${arbeidsgivere.size} fra aareg")
 
         if (arbeidsgivere.isEmpty()) {
             return emptyList()
@@ -46,6 +48,7 @@ class ArbeidsforholdService(
                 )
             )
         }
+        log.info("Har ${arbeidsgiverList.size} arbeidsgivere etter filtrering")
         return arbeidsgiverList.distinctBy { listOf(it.fnr, it.orgnummer, it.juridiskOrgnummer, it.orgNavn, it.fom, it.tom) }
     }
 
