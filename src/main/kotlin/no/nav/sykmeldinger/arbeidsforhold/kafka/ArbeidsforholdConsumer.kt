@@ -59,7 +59,7 @@ class ArbeidsforholdConsumer(
     }
 
     suspend fun handleArbeidsforholdHendelse(arbeidsforholdHendelse: ArbeidsforholdHendelse) {
-        log.debug("Mottatt arbeidsforhold-hendelse med id ${arbeidsforholdHendelse.id} og type ${arbeidsforholdHendelse.endringstype}")
+        log.info("Mottatt arbeidsforhold-hendelse med id ${arbeidsforholdHendelse.id} og type ${arbeidsforholdHendelse.endringstype}")
         val fnr = arbeidsforholdHendelse.arbeidsforhold.arbeidstaker.getFnr()
         val sykmeldt = sykmeldingDb.getSykmeldt(fnr)
 
@@ -69,6 +69,11 @@ class ArbeidsforholdConsumer(
                 arbeidsforholdService.deleteArbeidsforhold(arbeidsforholdHendelse.arbeidsforhold.navArbeidsforholdId)
             } else {
                 val arbeidsforhold = arbeidsforholdService.getArbeidsforhold(fnr)
+                var ids = ""
+                arbeidsforhold.forEach {
+                    ids += "${it.id}, "
+                }
+                log.info("Hentet ${arbeidsforhold.size} arbeidsforhold fra aareg: $ids")
                 val arbeidsforholdFraDb = arbeidsforholdService.getArbeidsforholdFromDb(fnr)
 
                 val slettesfraDb = getArbeidsforholdSomSkalSlettes(arbeidsforholdDb = arbeidsforholdFraDb, arbeidsforholdAareg = arbeidsforhold)
