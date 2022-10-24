@@ -192,7 +192,7 @@ private fun getNarmesteLederKafkaConsumer(): KafkaConsumer<String, Narmesteleder
     val kafkaConsumer = KafkaConsumer(
         KafkaUtils.getAivenKafkaConfig().also {
             it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
-            it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
+            it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 10
         }.toConsumerConfig("sykmeldinger-backend-kafka-consumer", JacksonKafkaDeserializer::class),
         StringDeserializer(),
         JacksonKafkaDeserializer(NarmestelederLeesahKafkaMessage::class)
@@ -233,7 +233,7 @@ private fun getIdentendringConsumer(environment: Environment): KafkaConsumer<Str
 private fun getArbeidsforholdKafkaConsumer(): KafkaConsumer<String, ArbeidsforholdHendelse> {
     val kafkaConsumer = KafkaConsumer(
         KafkaUtils.getAivenKafkaConfig().also {
-            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "latest"
+            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
             it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 10
         }.toConsumerConfig("sykmeldinger-backend-kafka-consumer", JacksonKafkaDeserializer::class),
         StringDeserializer(),
