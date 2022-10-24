@@ -40,7 +40,7 @@ class DeleteArbeidsforholdService(
                 }
                 delay(
                     getDelayTime(
-                        start = OffsetTime.of(LocalTime.of(8, 0), ZoneOffset.UTC),
+                        start = OffsetTime.of(LocalTime.of(5, 0), ZoneOffset.UTC),
                         now = OffsetTime.now(ZoneOffset.UTC)
                     )
                 )
