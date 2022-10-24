@@ -82,7 +82,7 @@ class ArbeidsforholdConsumer(
                 arbeidsforhold.forEach {
                     arbeidsforholdService.insertOrUpdate(it)
                 }
-                log.info("Opprettet eller oppdatert ${arbeidsforhold.size} etter mottak av hendelse med id ${arbeidsforholdHendelse.id}")
+                log.info("Opprettet eller oppdatert ${arbeidsforhold.size} arbeidsforhold etter mottak av hendelse med id ${arbeidsforholdHendelse.id}")
             }
         }
     }
