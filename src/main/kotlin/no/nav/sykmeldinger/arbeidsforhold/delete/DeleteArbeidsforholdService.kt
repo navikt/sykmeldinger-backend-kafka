@@ -38,21 +38,25 @@ class DeleteArbeidsforholdService(
                         log.error("Could not delete arbeidsforhold", ex)
                     }
                 }
-                delay(getDelayTime())
+                delay(
+                    getDelayTime(
+                        start = OffsetTime.of(LocalTime.of(7, 0), ZoneOffset.UTC),
+                        now = OffsetTime.now(ZoneOffset.UTC)
+                    )
+                )
             }
         }
     }
 
     private fun getDateForDeletion() = LocalDate.now().minusMonths(MONTHS_FOR_ARBEIDSFORHOLD)
+}
 
-    private fun getDelayTime(): Long {
-        val start = OffsetTime.of(LocalTime.of(7, 0), ZoneOffset.UTC)
-        val now = OffsetTime.now(ZoneOffset.UTC)
-        val duration = Duration.between(now, start).toMillis()
-        return if (duration >= 0) {
-            duration
-        } else {
-            Duration.between(start, now).toMillis()
-        }
+fun getDelayTime(start: OffsetTime, now: OffsetTime): Long {
+    val duration = Duration.between(now, start).toMillis()
+    val etDogn = 86_400_000L
+    return if (duration >= 0) {
+        duration
+    } else {
+        etDogn + duration
     }
 }
