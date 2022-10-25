@@ -129,7 +129,7 @@ class SykmeldingConsumer(
             val sykmelding = SykmeldingMapper.mapToSykmelding(receivedSykmelding)
             try {
                 val sykmeldt = pdlPersonService.getPerson(receivedSykmelding.personNrPasient, sykmeldingId).toSykmeldt()
-                val arbeidsforhold = arbeidsforholdService.getArbeidsforhold(receivedSykmelding.personNrPasient)
+                val arbeidsforhold = arbeidsforholdService.getArbeidsforhold(sykmeldt.fnr)
                 arbeidsforhold.forEach { arbeidsforholdService.insertOrUpdate(it) }
                 sykmeldingService.saveOrUpdate(sykmeldingId, sykmelding, sykmeldt)
             } catch (e: PersonNotFoundInPdl) {
