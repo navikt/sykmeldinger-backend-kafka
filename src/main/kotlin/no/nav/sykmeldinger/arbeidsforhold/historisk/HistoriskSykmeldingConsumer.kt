@@ -1,10 +1,5 @@
-package no.nav.sykmeldinger.sykmelding.kafka
+package no.nav.sykmeldinger.arbeidsforhold.historisk
 
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.ktor.client.plugins.ClientRequestException
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -15,11 +10,10 @@ import kotlinx.coroutines.withContext
 import no.nav.syfo.model.ReceivedSykmelding
 import no.nav.sykmeldinger.application.ApplicationState
 import no.nav.sykmeldinger.arbeidsforhold.ArbeidsforholdService
+import no.nav.sykmeldinger.objectMapper
 import no.nav.sykmeldinger.pdl.error.PersonNotFoundInPdl
 import no.nav.sykmeldinger.pdl.model.PdlPerson
 import no.nav.sykmeldinger.pdl.service.PdlPersonService
-import no.nav.sykmeldinger.sykmelding.SykmeldingMapper
-import no.nav.sykmeldinger.sykmelding.SykmeldingService
 import no.nav.sykmeldinger.sykmelding.model.Sykmeldt
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.LoggerFactory
@@ -30,32 +24,21 @@ import java.time.ZoneOffset
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
-private val objectMapper: ObjectMapper = jacksonObjectMapper().apply {
-    registerModule(JavaTimeModule())
-    configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-    configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-    configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true)
-}
-
-class SykmeldingConsumer(
+class HistoriskSykmeldingConsumer(
     private val kafkaConsumer: KafkaConsumer<String, String>,
     private val applicationState: ApplicationState,
+    private val topic: String,
     private val pdlPersonService: PdlPersonService,
     private val arbeidsforholdService: ArbeidsforholdService,
-    private val sykmeldingService: SykmeldingService,
     private val cluster: String,
 ) {
     companion object {
-        private val log = LoggerFactory.getLogger(SykmeldingConsumer::class.java)
-        private const val OK_TOPIC = "teamsykmelding.ok-sykmelding"
-        private const val AVVIST_TOPIC = "teamsykmelding.avvist-sykmelding"
-        private const val MANUELL_TOPIC = "teamsykmelding.manuell-behandling-sykmelding"
+        private val log = LoggerFactory.getLogger(HistoriskSykmeldingConsumer::class.java)
     }
 
-    private val sykmeldingTopics =
-        listOf(OK_TOPIC, AVVIST_TOPIC, MANUELL_TOPIC)
+    private val oldSykmeldingTopics =
+        listOf("privat-syfo-sm2013-automatiskBehandling", "privat-syfo-sm2013-manuellBehandling", "privat-syfo-sm2013-avvistBehandling")
     private var totalDuration = kotlin.time.Duration.ZERO
-    private val sykmeldingDuration = kotlin.time.Duration.ZERO
     private var totalRecords = 0
     private var okRecords = 0
     private var avvistRecords = 0
@@ -81,13 +64,13 @@ class SykmeldingConsumer(
             }
             while (applicationState.ready) {
                 try {
-                    kafkaConsumer.subscribe(sykmeldingTopics)
+                    kafkaConsumer.subscribe(listOf(topic))
                     consume()
                 } catch (ex: Exception) {
-                    log.error("error running sykmelding-consumer", ex)
+                    log.error("error running sykmelding-historisk-arbf-consumer", ex)
                 } finally {
                     kafkaConsumer.unsubscribe()
-                    log.info("Unsubscribed from topic $sykmeldingTopics and waiting for 10 seconds before trying again")
+                    log.info("Unsubscribed from topic $topic and waiting for 10 seconds before trying again")
                     delay(10_000)
                 }
             }
@@ -107,13 +90,17 @@ class SykmeldingConsumer(
                         ZoneOffset.UTC,
                     )
 
-                    val sykmeldinger = consumerRecords.map { cr ->
-                        val sykmelding: ReceivedSykmelding? = cr.value()?.let { objectMapper.readValue(it, ReceivedSykmelding::class.java) }
-                        when (cr.topic()) {
-                            OK_TOPIC -> okRecords++
-                            MANUELL_TOPIC -> manuellRecords++
-                            AVVIST_TOPIC -> avvistRecords++
+                    val sykmeldinger = consumerRecords.filter {
+                        val headerValue = it.headers().headers("topic").first().value().toString(Charsets.UTF_8)
+                        when (headerValue) {
+                            "privat-syfo-sm2013-automatiskBehandling" -> okRecords++
+                            "privat-syfo-sm2013-manuellBehandling" -> manuellRecords++
+                            "privat-syfo-sm2013-avvistBehandling" -> avvistRecords++
                         }
+                        oldSykmeldingTopics.contains(headerValue)
+                    }.map { cr ->
+                        val sykmelding: ReceivedSykmelding? =
+                            cr.value()?.let { objectMapper.readValue(it, ReceivedSykmelding::class.java) }
                         cr.key() to sykmelding
                     }
                     sykmeldinger.forEach {
@@ -125,13 +112,11 @@ class SykmeldingConsumer(
     }
 
     private suspend fun handleSykmelding(sykmeldingId: String, receivedSykmelding: ReceivedSykmelding?) {
-        if (receivedSykmelding != null) {
-            val sykmelding = SykmeldingMapper.mapToSykmelding(receivedSykmelding)
+        if (sykmeldingId != "91be45d9-42ba-4689-ad90-2de4ca083570" && sykmeldingId != "f494bbee-0296-42b4-a016-b0ea7baed050" && receivedSykmelding != null) {
             try {
                 val sykmeldt = pdlPersonService.getPerson(receivedSykmelding.personNrPasient, sykmeldingId).toSykmeldt()
                 val arbeidsforhold = arbeidsforholdService.getArbeidsforhold(sykmeldt.fnr)
                 arbeidsforhold.forEach { arbeidsforholdService.insertOrUpdate(it) }
-                sykmeldingService.saveOrUpdate(sykmeldingId, sykmelding, sykmeldt)
             } catch (e: PersonNotFoundInPdl) {
                 if (cluster != "dev-gcp") {
                     log.error("Person not found in PDL, for sykmelding $sykmeldingId", e)
@@ -147,9 +132,6 @@ class SykmeldingConsumer(
                     log.warn("Error doing request $sykmeldingId, skipping in dev", e)
                 }
             }
-        } else {
-            sykmeldingService.deleteSykmelding(sykmeldingId)
-            log.info("Deleted sykmelding etc with sykmeldingId: $sykmeldingId")
         }
     }
 

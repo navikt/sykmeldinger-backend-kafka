@@ -35,6 +35,7 @@ import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.client.Arbeidsfo
 import no.nav.sykmeldinger.arbeidsforhold.client.organisasjon.client.OrganisasjonsinfoClient
 import no.nav.sykmeldinger.arbeidsforhold.db.ArbeidsforholdDb
 import no.nav.sykmeldinger.arbeidsforhold.delete.DeleteArbeidsforholdService
+import no.nav.sykmeldinger.arbeidsforhold.historisk.HistoriskSykmeldingConsumer
 import no.nav.sykmeldinger.arbeidsforhold.kafka.ArbeidsforholdConsumer
 import no.nav.sykmeldinger.arbeidsforhold.kafka.model.ArbeidsforholdHendelse
 import no.nav.sykmeldinger.azuread.AccessTokenClient
@@ -161,7 +162,22 @@ fun main() {
     val deleteArbeidsforholdService = DeleteArbeidsforholdService(arbeidsforholdDb, leaderElection, applicationState)
     deleteArbeidsforholdService.start()
 
+    val historiskSykmeldingConsumer = HistoriskSykmeldingConsumer(getHistoriskKafkaConsumer(), applicationState, env.historiskTopic, pdlPersonService, arbeidsforholdService, env.cluster)
+    historiskSykmeldingConsumer.startConsumer()
+
     applicationServer.start()
+}
+
+private fun getHistoriskKafkaConsumer(): KafkaConsumer<String, String> {
+    val kafkaConsumer = KafkaConsumer(
+        KafkaUtils.getAivenKafkaConfig().also {
+            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
+            it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
+        }.toConsumerConfig("sykmeldinger-backend-historisk-arbf-consumer", StringDeserializer::class),
+        StringDeserializer(),
+        StringDeserializer()
+    )
+    return kafkaConsumer
 }
 
 private fun getKafkaConsumer(): KafkaConsumer<String, String> {

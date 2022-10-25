@@ -19,7 +19,6 @@ class ArbeidsforholdClient(
 
     private val arbeidsforholdPath = "$url/api/v2/arbeidstaker/arbeidsforhold"
     private val navPersonident = "Nav-Personident"
-    private val sporingsinformasjon = "sporingsinformasjon"
 
     suspend fun getArbeidsforhold(fnr: String): List<AaregArbeidsforhold> {
         val token = accessTokenClient.getAccessToken(scope)
@@ -27,7 +26,8 @@ class ArbeidsforholdClient(
         try {
             return httpClient.get(
                 "$arbeidsforholdPath?" +
-                    "$sporingsinformasjon=false"
+                    "sporingsinformasjon=false&" +
+                    "arbeidsforholdstatus=AKTIV,FREMTIDIG,AVSLUTTET"
             ) {
                 header(navPersonident, fnr)
                 header(HttpHeaders.Authorization, "Bearer $token")
