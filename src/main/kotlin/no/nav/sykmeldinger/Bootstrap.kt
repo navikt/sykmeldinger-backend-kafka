@@ -14,6 +14,7 @@ import io.ktor.client.engine.apache.Apache
 import io.ktor.client.engine.apache.ApacheEngineConfig
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpResponseValidator
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.network.sockets.SocketTimeoutException
 import io.ktor.serialization.jackson.jackson
@@ -97,6 +98,11 @@ fun main() {
                     false
                 }
             }
+        }
+        install(HttpTimeout) {
+            socketTimeoutMillis = 40_000
+            connectTimeoutMillis = 40_000
+            requestTimeoutMillis = 40_000
         }
         install(ContentNegotiation) {
             jackson {
