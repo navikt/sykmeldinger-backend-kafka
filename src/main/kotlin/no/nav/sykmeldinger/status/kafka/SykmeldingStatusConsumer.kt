@@ -10,8 +10,7 @@ import no.nav.syfo.model.sykmeldingstatus.SykmeldingStatusKafkaEventDTO
 import no.nav.syfo.model.sykmeldingstatus.SykmeldingStatusKafkaMessageDTO
 import no.nav.sykmeldinger.Environment
 import no.nav.sykmeldinger.application.ApplicationState
-import no.nav.sykmeldinger.application.db.DatabaseInterface
-import no.nav.sykmeldinger.status.db.insertStatus
+import no.nav.sykmeldinger.status.db.SykmeldingStatusDB
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.LoggerFactory
 import java.time.Duration
@@ -22,7 +21,7 @@ import kotlin.time.measureTime
 class SykmeldingStatusConsumer(
     private val environment: Environment,
     private val kafkaConsumer: KafkaConsumer<String, SykmeldingStatusKafkaMessageDTO>,
-    private val database: DatabaseInterface,
+    private val database: SykmeldingStatusDB,
     private val applicationState: ApplicationState,
 ) {
     companion object {

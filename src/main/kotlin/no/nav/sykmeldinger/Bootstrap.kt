@@ -51,7 +51,10 @@ import no.nav.sykmeldinger.narmesteleder.kafka.NarmestelederLeesahKafkaMessage
 import no.nav.sykmeldinger.navnendring.NavnendringConsumer
 import no.nav.sykmeldinger.pdl.client.PdlClient
 import no.nav.sykmeldinger.pdl.service.PdlPersonService
+import no.nav.sykmeldinger.status.db.SykmeldingStatusDB
+import no.nav.sykmeldinger.status.kafka.SykmeldingKafkaMessage
 import no.nav.sykmeldinger.status.kafka.SykmeldingStatusConsumer
+import no.nav.sykmeldinger.status.kafka.SykmeldingStatusFixer
 import no.nav.sykmeldinger.sykmelding.SykmeldingService
 import no.nav.sykmeldinger.sykmelding.db.SykmeldingDb
 import no.nav.sykmeldinger.sykmelding.kafka.SykmeldingConsumer
@@ -132,7 +135,8 @@ fun main() {
     val pdlPersonService = PdlPersonService(pdlClient, accessTokenClient, env.pdlScope)
 
     val kafkaConsumer = getSykmeldingStatusKafkaConsumer()
-    val sykmeldingStatusConsumer = SykmeldingStatusConsumer(env, kafkaConsumer, database, applicationState)
+    val sykmeldingStatusDB = SykmeldingStatusDB(database)
+    val sykmeldingStatusConsumer = SykmeldingStatusConsumer(env, kafkaConsumer, sykmeldingStatusDB, applicationState)
     sykmeldingStatusConsumer.startConsumer()
 
     val narmesteLederKafkaConsumer = getNarmesteLederKafkaConsumer()
@@ -170,6 +174,9 @@ fun main() {
 
     val historiskSykmeldingConsumer = HistoriskSykmeldingConsumer(getHistoriskKafkaConsumer(), applicationState, env.historiskTopic, pdlPersonService, arbeidsforholdService, env.cluster)
     historiskSykmeldingConsumer.startConsumer()
+
+    val sykmeldingStatusFixer = SykmeldingStatusFixer(getSykmeldingConsumer(), env, sykmeldingStatusDB, applicationState)
+    sykmeldingStatusFixer.startConsumer()
 
     applicationServer.start()
 }
@@ -209,7 +216,17 @@ private fun getSykmeldingStatusKafkaConsumer(): KafkaConsumer<String, Sykmelding
     )
     return kafkaConsumer
 }
-
+private fun getSykmeldingConsumer(): KafkaConsumer<String, SykmeldingKafkaMessage?> {
+    val kafkaConsumer = KafkaConsumer(
+        KafkaUtils.getAivenKafkaConfig().also {
+            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
+            it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
+        }.toConsumerConfig("sykmeldinger-backend-kafka-fix-consumer", JacksonKafkaDeserializer::class),
+        StringDeserializer(),
+        JacksonKafkaDeserializer(SykmeldingKafkaMessage::class)
+    )
+    return kafkaConsumer
+}
 private fun getNarmesteLederKafkaConsumer(): KafkaConsumer<String, NarmestelederLeesahKafkaMessage> {
     val kafkaConsumer = KafkaConsumer(
         KafkaUtils.getAivenKafkaConfig().also {
