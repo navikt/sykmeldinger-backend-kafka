@@ -9,6 +9,7 @@ import no.nav.syfo.model.sykmeldingstatus.SykmeldingStatusKafkaEventDTO
 import no.nav.sykmeldinger.application.db.DatabaseInterface
 import org.postgresql.util.PGobject
 import java.sql.Timestamp
+import java.time.OffsetDateTime
 
 private val objectMapper: ObjectMapper = jacksonObjectMapper().apply {
     registerModule(JavaTimeModule())
@@ -21,25 +22,51 @@ fun toPGObject(jsonObject: Any) = PGobject().also {
     it.value = objectMapper.writeValueAsString(jsonObject)
 }
 
-fun DatabaseInterface.insertStatus(statusEvent: List<SykmeldingStatusKafkaEventDTO>): Int {
-    connection.use { connection ->
-        connection.prepareStatement(
-            """
+class SykmeldingStatusDB(
+    private val database: DatabaseInterface
+) {
+    fun insertStatus(statusEvent: List<SykmeldingStatusKafkaEventDTO>): Int {
+        database.connection.use { connection ->
+            connection.prepareStatement(
+                """
             insert into sykmeldingstatus(sykmelding_id, event, timestamp, arbeidsgiver, sporsmal) values(?, ?, ?, ?, ?) on conflict do nothing;
         """
-        ).use { ps ->
-            for (event in statusEvent) {
-                var index = 1
-                ps.setString(index++, event.sykmeldingId)
-                ps.setString(index++, event.statusEvent)
-                ps.setTimestamp(index++, Timestamp.from(event.timestamp.toInstant()))
-                ps.setObject(index++, event.arbeidsgiver?.let { toPGObject(it) })
-                ps.setObject(index, event.sporsmals?.let { toPGObject(it) })
-                ps.addBatch()
+            ).use { ps ->
+                for (event in statusEvent) {
+                    var index = 1
+                    ps.setString(index++, event.sykmeldingId)
+                    ps.setString(index++, event.statusEvent)
+                    ps.setTimestamp(index++, Timestamp.from(event.timestamp.toInstant()))
+                    ps.setObject(index++, event.arbeidsgiver?.let { toPGObject(it) })
+                    ps.setObject(index, event.sporsmals?.let { toPGObject(it) })
+                    ps.addBatch()
+                }
+                return ps.executeBatch().also {
+                    connection.commit()
+                }.size
             }
-            return ps.executeBatch().also {
-                connection.commit()
-            }.size
+        }
+    }
+
+    fun updateStatusTimestamp(
+        id: String,
+        statusTime: OffsetDateTime,
+        adjustedTimestamp: OffsetDateTime,
+        statusEvent: String
+    ) {
+        database.connection.use { connection ->
+            connection.prepareStatement(
+                """
+                UPDATE sykmeldingstatus SET timestamp = ? where sykmelding_id = ? and event = ? and timestamp = ?
+                """
+            ).use {
+                it.setTimestamp(1, Timestamp.from(adjustedTimestamp.toInstant()))
+                it.setString(2, id)
+                it.setString(3, statusEvent)
+                it.setTimestamp(4, Timestamp.from(statusTime.toInstant()))
+                it.executeUpdate()
+            }
+            connection.commit()
         }
     }
 }
