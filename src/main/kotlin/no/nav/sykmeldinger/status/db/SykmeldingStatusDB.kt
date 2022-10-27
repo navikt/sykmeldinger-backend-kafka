@@ -10,6 +10,7 @@ import no.nav.sykmeldinger.application.db.DatabaseInterface
 import org.postgresql.util.PGobject
 import java.sql.Timestamp
 import java.time.OffsetDateTime
+import java.time.ZoneOffset
 
 private val objectMapper: ObjectMapper = jacksonObjectMapper().apply {
     registerModule(JavaTimeModule())
@@ -67,6 +68,24 @@ class SykmeldingStatusDB(
                 it.executeUpdate()
             }
             connection.commit()
+        }
+    }
+
+    fun getFirstApenStatus(id: String): OffsetDateTime? {
+        return database.connection.use { connection ->
+            connection.prepareStatement(
+                """
+                SELECT * FROM sykmeldingstatus WHERE sykmelding_id = ? AND event = 'APEN' ORDER BY timestamp ASC LIMIT 1
+                """
+            ).use {
+                it.setString(1, id)
+                it.executeQuery().let { rs ->
+                    if (rs.next()) {
+                        return rs.getTimestamp("timestamp")?.toInstant()?.atOffset(ZoneOffset.UTC)
+                    } else
+                        null
+                }
+            }
         }
     }
 }

@@ -93,6 +93,7 @@ class SykmeldingStatusFixer(
                 }
                 duration += time
                 totalRecords += records.count()
+                lastDate = records.last().value()!!.event.timestamp
             }
         }
     }
@@ -111,7 +112,8 @@ class SykmeldingStatusFixer(
         statusEvent: String
     ) {
         val adjustedTimestamp = adjustTimestamp(statusTime)
-        if (adjustedTimestamp.isBefore(mottattTimestamp)) {
+        val apenStatus = sykmeldingStatusDb.getFirstApenStatus(id) ?: throw java.lang.IllegalArgumentException("sykelding $id has no apen status")
+        if (adjustedTimestamp.isBefore(mottattTimestamp) && adjustedTimestamp.isBefore(apenStatus)) {
             if (environment.cluster == "dev-gcp") {
                 log.warn("Adjusted timestamp is before mottatt timestamp for sykmeldingId $id, ignoring in dev")
             } else {
