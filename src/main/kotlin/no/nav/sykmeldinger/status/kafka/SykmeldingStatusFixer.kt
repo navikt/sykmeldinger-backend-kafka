@@ -31,16 +31,17 @@ class SykmeldingStatusFixer(
     private var totalRecords = 0
     private var updatedRecords = 0
     private var lastDate = OffsetDateTime.MIN
+    private var isDone = false
     private var lastOffset = mutableMapOf(
         0 to 0,
         1 to 0,
         2 to 0
     )
 
-    private val maxOffsetBekreftet = mapOf(
-        0 to 168733,
-        1 to 168415,
-        2 to 168824
+    private val maxOffsetSendt = mapOf(
+        0 to 2069348,
+        1 to 2068817,
+        2 to 2067218
     )
 
     @OptIn(DelicateCoroutinesApi::class)
@@ -54,13 +55,13 @@ class SykmeldingStatusFixer(
             }
             while (applicationState.ready) {
                 try {
-                    kafkaConsumer.subscribe(listOf(environment.bekreftetTopic))
+                    kafkaConsumer.subscribe(listOf(environment.sendtTopic))
                     consume()
                 } catch (ex: Exception) {
                     log.error("error running consumer", ex)
                 } finally {
                     kafkaConsumer.unsubscribe()
-                    log.info("Unsubscribed from topic ${environment.bekreftetTopic} and waiting for 10 seconds before trying again")
+                    log.info("Unsubscribed from topic ${environment.sendtTopic} and waiting for 10 seconds before trying again")
                     delay(10_000)
                 }
             }
@@ -69,12 +70,12 @@ class SykmeldingStatusFixer(
 
     @OptIn(ExperimentalTime::class)
     private suspend fun consume() {
-        while (applicationState.ready) {
+        while (applicationState.ready && !isDone) {
             val records = kafkaConsumer.poll(Duration.ofSeconds(1)).filter { it.value() != null }
             if (records.isNotEmpty()) {
                 val time = measureTime {
                     records.forEach {
-                        if (it.offset() <= maxOffsetBekreftet[it.partition()]!!) {
+                        if (it.offset() <= maxOffsetSendt[it.partition()]!!) {
                             val kafkaMessage = it.value()!!
                             val mottattTidspunkt = kafkaMessage.sykmelding.mottattTidspunkt
                             val statusTime = kafkaMessage.event.timestamp
@@ -87,6 +88,8 @@ class SykmeldingStatusFixer(
                                 )
                                 updatedRecords++
                             }
+                        } else {
+                            isDone = true
                         }
                         lastOffset[it.partition()] = it.offset().toInt()
                     }
