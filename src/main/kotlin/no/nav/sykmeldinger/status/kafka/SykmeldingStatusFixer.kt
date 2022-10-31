@@ -38,12 +38,6 @@ class SykmeldingStatusFixer(
         2 to 0
     )
 
-    private val maxOffsetSendt = mapOf(
-        0 to 2069348,
-        1 to 2068817,
-        2 to 2067218
-    )
-
     @OptIn(DelicateCoroutinesApi::class)
     fun startConsumer() {
         GlobalScope.launch(Dispatchers.IO) {
@@ -75,22 +69,19 @@ class SykmeldingStatusFixer(
             if (records.isNotEmpty()) {
                 val time = measureTime {
                     records.forEach {
-                        if (it.offset() <= maxOffsetSendt[it.partition()]!!) {
-                            val kafkaMessage = it.value()!!
-                            val mottattTidspunkt = kafkaMessage.sykmelding.mottattTidspunkt
-                            val statusTime = kafkaMessage.event.timestamp
-                            if (statusTime.isBefore(mottattTidspunkt)) {
-                                updateStatusTimstamp(
-                                    kafkaMessage.sykmelding.id,
-                                    statusTime,
-                                    mottattTidspunkt,
-                                    kafkaMessage.event.statusEvent
-                                )
-                                updatedRecords++
-                            }
-                        } else {
-                            isDone = true
+                        val kafkaMessage = it.value()!!
+                        val mottattTidspunkt = kafkaMessage.sykmelding.mottattTidspunkt
+                        val statusTime = kafkaMessage.event.timestamp
+                        if (statusTime.isBefore(mottattTidspunkt)) {
+                            updateStatusTimstamp(
+                                kafkaMessage.sykmelding.id,
+                                statusTime,
+                                mottattTidspunkt,
+                                kafkaMessage.event.statusEvent
+                            )
+                            updatedRecords++
                         }
+
                         lastOffset[it.partition()] = it.offset().toInt()
                     }
                 }
@@ -115,7 +106,8 @@ class SykmeldingStatusFixer(
         statusEvent: String
     ) {
         val adjustedTimestamp = adjustTimestamp(statusTime)
-        val apenStatus = sykmeldingStatusDb.getFirstApenStatus(id) ?: throw java.lang.IllegalArgumentException("sykelding $id has no apen status")
+        val apenStatus = sykmeldingStatusDb.getFirstApenStatus(id)
+            ?: throw java.lang.IllegalArgumentException("sykelding $id has no apen status")
         if (adjustedTimestamp.isBefore(mottattTimestamp) && adjustedTimestamp.isBefore(apenStatus)) {
             if (environment.cluster == "dev-gcp") {
                 log.warn("Adjusted timestamp is before mottatt timestamp for sykmeldingId $id, ignoring in dev")
@@ -123,7 +115,12 @@ class SykmeldingStatusFixer(
                 throw IllegalArgumentException("Adjusted timestamp is before mottatt timestamp for sykmeldingId $id")
             }
         }
-        sykmeldingStatusDb.updateStatusTimestamp(id = id, adjustedTimestamp = adjustedTimestamp, statusTime = statusTime, statusEvent = statusEvent)
+        sykmeldingStatusDb.updateStatusTimestamp(
+            id = id,
+            adjustedTimestamp = adjustedTimestamp,
+            statusTime = statusTime,
+            statusEvent = statusEvent
+        )
     }
 }
 
