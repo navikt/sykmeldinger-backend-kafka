@@ -8,8 +8,8 @@ metadata:
 spec:
   image: {{ image }}
   replicas:
-    min: 10
-    max: 10
+    min: 3
+    max: 3
     cpuThresholdPercentage: 90
   port: 8080
   kafka:
@@ -40,7 +40,7 @@ spec:
       memory: 2Gi
     requests:
       cpu: 200m
-      memory: 512Mi
+      memory: 1Gi
   azure:
     application:
       enabled: true
