@@ -221,7 +221,7 @@ private fun getSykmeldingConsumer(): KafkaConsumer<String, SykmeldingKafkaMessag
         KafkaUtils.getAivenKafkaConfig().also {
             it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
             it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
-        }.toConsumerConfig("sykmeldinger-backend-kafka-fix-consumer", JacksonKafkaDeserializer::class),
+        }.toConsumerConfig("sykmeldinger-backend-kafka-fix-2-consumer", JacksonKafkaDeserializer::class),
         StringDeserializer(),
         JacksonKafkaDeserializer(SykmeldingKafkaMessage::class)
     )

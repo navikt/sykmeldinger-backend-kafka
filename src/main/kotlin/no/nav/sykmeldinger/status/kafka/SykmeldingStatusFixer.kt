@@ -27,11 +27,12 @@ class SykmeldingStatusFixer(
         private val log = LoggerFactory.getLogger(SykmeldingStatusFixer::class.java)
     }
 
+    private val stopTimestamp = OffsetDateTime.of(2020, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC)
     private var duration = kotlin.time.Duration.ZERO
     private var totalRecords = 0
     private var updatedRecords = 0
     private var lastDate = OffsetDateTime.MIN
-    private var isDone = false
+
     private var lastOffset = mutableMapOf(
         0 to 0,
         1 to 0,
@@ -49,13 +50,13 @@ class SykmeldingStatusFixer(
             }
             while (applicationState.ready) {
                 try {
-                    kafkaConsumer.subscribe(listOf(environment.sendtTopic))
+                    kafkaConsumer.subscribe(listOf(environment.bekreftetTopic))
                     consume()
                 } catch (ex: Exception) {
                     log.error("error running consumer", ex)
                 } finally {
                     kafkaConsumer.unsubscribe()
-                    log.info("Unsubscribed from topic ${environment.sendtTopic} and waiting for 10 seconds before trying again")
+                    log.info("Unsubscribed from topic ${environment.bekreftetTopic} and waiting for 10 seconds before trying again")
                     delay(10_000)
                 }
             }
@@ -64,7 +65,7 @@ class SykmeldingStatusFixer(
 
     @OptIn(ExperimentalTime::class)
     private suspend fun consume() {
-        while (applicationState.ready && !isDone) {
+        while (applicationState.ready) {
             val records = kafkaConsumer.poll(Duration.ofSeconds(1)).filter { it.value() != null }
             if (records.isNotEmpty()) {
                 val time = measureTime {
@@ -72,16 +73,13 @@ class SykmeldingStatusFixer(
                         val kafkaMessage = it.value()!!
                         val mottattTidspunkt = kafkaMessage.sykmelding.mottattTidspunkt
                         val statusTime = kafkaMessage.event.timestamp
-                        if (statusTime.isBefore(mottattTidspunkt)) {
+                        if (statusTime.isBefore(stopTimestamp) && !statusTime.isBefore(mottattTidspunkt)) {
                             updateStatusTimstamp(
                                 kafkaMessage.sykmelding.id,
                                 statusTime,
-                                mottattTidspunkt,
                                 kafkaMessage.event.statusEvent
                             )
-                            updatedRecords++
                         }
-
                         lastOffset[it.partition()] = it.offset().toInt()
                     }
                 }
@@ -102,25 +100,28 @@ class SykmeldingStatusFixer(
     private fun updateStatusTimstamp(
         id: String,
         statusTime: OffsetDateTime,
-        mottattTimestamp: OffsetDateTime,
         statusEvent: String
     ) {
-        val adjustedTimestamp = adjustTimestamp(statusTime)
+
         val apenStatus = sykmeldingStatusDb.getFirstApenStatus(id)
             ?: throw java.lang.IllegalArgumentException("sykelding $id has no apen status")
-        if (adjustedTimestamp.isBefore(mottattTimestamp) && adjustedTimestamp.isBefore(apenStatus)) {
-            if (environment.cluster == "dev-gcp") {
-                log.warn("Adjusted timestamp is before mottatt timestamp for sykmeldingId $id, ignoring in dev")
-            } else {
-                throw IllegalArgumentException("Adjusted timestamp is before mottatt timestamp for sykmeldingId $id")
+        if (statusTime.isBefore(apenStatus)) {
+            val adjustedTimestamp = adjustTimestamp(statusTime)
+            if (adjustedTimestamp.isBefore(apenStatus)) {
+                if (environment.cluster == "dev-gcp") {
+                    log.warn("Adjusted timestamp is before mottatt timestamp for sykmeldingId $id, ignoring in dev")
+                } else {
+                    throw IllegalArgumentException("Adjusted timestamp is before mottatt timestamp for sykmeldingId $id")
+                }
             }
+            sykmeldingStatusDb.updateStatusTimestamp(
+                id = id,
+                adjustedTimestamp = adjustedTimestamp,
+                statusTime = statusTime,
+                statusEvent = statusEvent
+            )
+            updatedRecords++
         }
-        sykmeldingStatusDb.updateStatusTimestamp(
-            id = id,
-            adjustedTimestamp = adjustedTimestamp,
-            statusTime = statusTime,
-            statusEvent = statusEvent
-        )
     }
 }
 
