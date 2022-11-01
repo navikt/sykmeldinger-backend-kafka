@@ -92,7 +92,10 @@ class HistoriskSykmeldingConsumer(
                         ZoneOffset.UTC,
                     )
 
-                    val sykmeldinger = consumerRecords.map { cr ->
+                    val sykmeldinger = consumerRecords.filter {
+                        OffsetDateTime.ofInstant(Instant.ofEpochMilli(it.timestamp()), ZoneOffset.UTC)
+                            .isBefore(OffsetDateTime.of(LocalDate.of(2022, 10, 28).atStartOfDay(), ZoneOffset.UTC))
+                    }.map { cr ->
                         val sykmelding: ReceivedSykmelding? = cr.value()?.let { objectMapper.readValue(it, ReceivedSykmelding::class.java) }
                         when (cr.topic()) {
                             OK_TOPIC -> okRecords++
@@ -101,10 +104,8 @@ class HistoriskSykmeldingConsumer(
                         }
                         cr.key() to sykmelding
                     }
-                    if (lastDate.isBefore(OffsetDateTime.of(LocalDate.of(2022, 10, 28).atStartOfDay(), ZoneOffset.UTC))) {
-                        sykmeldinger.forEach {
-                            handleSykmelding(it.first, it.second)
-                        }
+                    sykmeldinger.forEach {
+                        handleSykmelding(it.first, it.second)
                     }
                 }
             }
