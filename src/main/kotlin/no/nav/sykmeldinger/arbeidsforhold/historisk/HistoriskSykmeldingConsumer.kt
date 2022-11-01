@@ -19,6 +19,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.time.Instant
+import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import kotlin.time.ExperimentalTime
@@ -27,17 +28,18 @@ import kotlin.time.measureTime
 class HistoriskSykmeldingConsumer(
     private val kafkaConsumer: KafkaConsumer<String, String>,
     private val applicationState: ApplicationState,
-    private val topic: String,
     private val pdlPersonService: PdlPersonService,
     private val arbeidsforholdService: ArbeidsforholdService,
     private val cluster: String,
 ) {
     companion object {
         private val log = LoggerFactory.getLogger(HistoriskSykmeldingConsumer::class.java)
+        private const val OK_TOPIC = "teamsykmelding.ok-sykmelding"
+        private const val AVVIST_TOPIC = "teamsykmelding.avvist-sykmelding"
+        private const val MANUELL_TOPIC = "teamsykmelding.manuell-behandling-sykmelding"
     }
 
-    private val oldSykmeldingTopics =
-        listOf("privat-syfo-sm2013-automatiskBehandling", "privat-syfo-sm2013-manuellBehandling", "privat-syfo-sm2013-avvistBehandling")
+    private val sykmeldingTopics = listOf(OK_TOPIC, AVVIST_TOPIC, MANUELL_TOPIC)
     private var totalDuration = kotlin.time.Duration.ZERO
     private var totalRecords = 0
     private var okRecords = 0
@@ -64,13 +66,13 @@ class HistoriskSykmeldingConsumer(
             }
             while (applicationState.ready) {
                 try {
-                    kafkaConsumer.subscribe(listOf(topic))
+                    kafkaConsumer.subscribe(sykmeldingTopics)
                     consume()
                 } catch (ex: Exception) {
                     log.error("error running sykmelding-historisk-arbf-consumer", ex)
                 } finally {
                     kafkaConsumer.unsubscribe()
-                    log.info("Unsubscribed from topic $topic and waiting for 10 seconds before trying again")
+                    log.info("Unsubscribed from topic $sykmeldingTopics and waiting for 10 seconds before trying again")
                     delay(10_000)
                 }
             }
@@ -90,17 +92,19 @@ class HistoriskSykmeldingConsumer(
                         ZoneOffset.UTC,
                     )
 
-                    val sykmeldinger = consumerRecords.filter {
-                        val headerValue = it.headers().headers("topic").first().value().toString(Charsets.UTF_8)
-                        when (headerValue) {
-                            "privat-syfo-sm2013-automatiskBehandling" -> okRecords++
-                            "privat-syfo-sm2013-manuellBehandling" -> manuellRecords++
-                            "privat-syfo-sm2013-avvistBehandling" -> avvistRecords++
+                    if (lastDate.isAfter(OffsetDateTime.of(LocalDate.of(2022, 10, 28).atStartOfDay(), ZoneOffset.UTC))) {
+                        kafkaConsumer.unsubscribe()
+                        log.info("Ferdig med å legge inn arbeidsforhold for gamle sykmeldinger")
+                        return@withContext
+                    }
+
+                    val sykmeldinger = consumerRecords.map { cr ->
+                        val sykmelding: ReceivedSykmelding? = cr.value()?.let { objectMapper.readValue(it, ReceivedSykmelding::class.java) }
+                        when (cr.topic()) {
+                            OK_TOPIC -> okRecords++
+                            MANUELL_TOPIC -> manuellRecords++
+                            AVVIST_TOPIC -> avvistRecords++
                         }
-                        oldSykmeldingTopics.contains(headerValue)
-                    }.map { cr ->
-                        val sykmelding: ReceivedSykmelding? =
-                            cr.value()?.let { objectMapper.readValue(it, ReceivedSykmelding::class.java) }
                         cr.key() to sykmelding
                     }
                     sykmeldinger.forEach {
@@ -112,7 +116,7 @@ class HistoriskSykmeldingConsumer(
     }
 
     private suspend fun handleSykmelding(sykmeldingId: String, receivedSykmelding: ReceivedSykmelding?) {
-        if (sykmeldingId != "91be45d9-42ba-4689-ad90-2de4ca083570" && sykmeldingId != "f494bbee-0296-42b4-a016-b0ea7baed050" && receivedSykmelding != null) {
+        if (receivedSykmelding != null) {
             try {
                 val sykmeldt = pdlPersonService.getPerson(receivedSykmelding.personNrPasient, sykmeldingId).toSykmeldt()
                 val arbeidsforhold = arbeidsforholdService.getArbeidsforhold(sykmeldt.fnr)
