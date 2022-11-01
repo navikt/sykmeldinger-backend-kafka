@@ -92,13 +92,10 @@ class HistoriskSykmeldingConsumer(
                         ZoneOffset.UTC,
                     )
 
-                    if (lastDate.isAfter(OffsetDateTime.of(LocalDate.of(2022, 10, 28).atStartOfDay(), ZoneOffset.UTC))) {
-                        kafkaConsumer.unsubscribe()
-                        log.info("Ferdig med å legge inn arbeidsforhold for gamle sykmeldinger")
-                        return@withContext
-                    }
-
-                    val sykmeldinger = consumerRecords.map { cr ->
+                    val sykmeldinger = consumerRecords.filter {
+                        OffsetDateTime.ofInstant(Instant.ofEpochMilli(it.timestamp()), ZoneOffset.UTC)
+                            .isBefore(OffsetDateTime.of(LocalDate.of(2022, 10, 28).atStartOfDay(), ZoneOffset.UTC))
+                    }.map { cr ->
                         val sykmelding: ReceivedSykmelding? = cr.value()?.let { objectMapper.readValue(it, ReceivedSykmelding::class.java) }
                         when (cr.topic()) {
                             OK_TOPIC -> okRecords++
