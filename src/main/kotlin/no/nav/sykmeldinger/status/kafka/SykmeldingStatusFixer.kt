@@ -27,10 +27,12 @@ class SykmeldingStatusFixer(
         private val log = LoggerFactory.getLogger(SykmeldingStatusFixer::class.java)
     }
 
+    private val stopTimestamp = OffsetDateTime.of(2020, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC)
     private var duration = kotlin.time.Duration.ZERO
     private var totalRecords = 0
     private var updatedRecords = 0
     private var lastDate = OffsetDateTime.MIN
+
     private var lastOffset = mutableMapOf(
         0 to 0,
         1 to 0,
@@ -71,7 +73,7 @@ class SykmeldingStatusFixer(
                         val kafkaMessage = it.value()!!
                         val mottattTidspunkt = kafkaMessage.sykmelding.mottattTidspunkt
                         val statusTime = kafkaMessage.event.timestamp
-                        if (!statusTime.isBefore(mottattTidspunkt)) {
+                        if (statusTime.isBefore(stopTimestamp) && !statusTime.isBefore(mottattTidspunkt)) {
                             updateStatusTimstamp(
                                 kafkaMessage.sykmelding.id,
                                 statusTime,
