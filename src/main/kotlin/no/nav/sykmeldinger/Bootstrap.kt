@@ -172,7 +172,7 @@ fun main() {
     val deleteArbeidsforholdService = DeleteArbeidsforholdService(arbeidsforholdDb, leaderElection, applicationState)
     deleteArbeidsforholdService.start()
 
-    val historiskSykmeldingConsumer = HistoriskSykmeldingConsumer(getHistoriskKafkaConsumer(), applicationState, env.historiskTopic, pdlPersonService, arbeidsforholdService, env.cluster)
+    val historiskSykmeldingConsumer = HistoriskSykmeldingConsumer(getHistoriskKafkaConsumer(), applicationState, pdlPersonService, arbeidsforholdService, env.cluster)
     historiskSykmeldingConsumer.startConsumer()
 
     val sykmeldingStatusFixer = SykmeldingStatusFixer(getSykmeldingConsumer(), env, sykmeldingStatusDB, applicationState)
