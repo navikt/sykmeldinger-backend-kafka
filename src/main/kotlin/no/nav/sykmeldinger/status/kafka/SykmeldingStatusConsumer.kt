@@ -12,7 +12,6 @@ import no.nav.sykmeldinger.Environment
 import no.nav.sykmeldinger.application.ApplicationState
 import no.nav.sykmeldinger.status.db.SykmeldingStatusDB
 import org.apache.kafka.clients.consumer.KafkaConsumer
-import org.postgresql.util.PSQLException
 import org.slf4j.LoggerFactory
 import java.sql.BatchUpdateException
 import java.time.Duration

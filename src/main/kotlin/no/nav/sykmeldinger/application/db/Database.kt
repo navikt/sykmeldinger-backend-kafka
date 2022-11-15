@@ -29,7 +29,7 @@ class Database(
                 idleTimeout = 10000
                 maxLifetime = 300000
                 isAutoCommit = false
-                transactionIsolation = "TRANSACTION_REPEATABLE_READ"
+                transactionIsolation = "TRANSACTION_READ_COMMITTED"
                 validate()
             }
         )
