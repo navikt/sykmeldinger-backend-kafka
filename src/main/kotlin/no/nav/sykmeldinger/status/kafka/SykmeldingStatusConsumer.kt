@@ -12,6 +12,7 @@ import no.nav.sykmeldinger.Environment
 import no.nav.sykmeldinger.application.ApplicationState
 import no.nav.sykmeldinger.status.db.SykmeldingStatusDB
 import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.postgresql.util.PSQLException
 import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.time.OffsetDateTime
@@ -78,6 +79,18 @@ class SykmeldingStatusConsumer(
     }
 
     private suspend fun updateStatus(statusEvents: List<SykmeldingStatusKafkaEventDTO>) = withContext(Dispatchers.IO) {
-        database.insertStatus(statusEvents)
+        while (!tryUpdateStatus(statusEvents)) {
+            delay(100)
+            log.info("waiting and trying to update status")
+        }
+    }
+
+    private fun tryUpdateStatus(statusEvents: List<SykmeldingStatusKafkaEventDTO>): Boolean {
+        return try {
+            database.insertStatus(statusEvents)
+            true
+        } catch (ex: PSQLException) {
+            false
+        }
     }
 }
