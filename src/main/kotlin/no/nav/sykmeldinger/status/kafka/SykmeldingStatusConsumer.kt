@@ -14,6 +14,7 @@ import no.nav.sykmeldinger.status.db.SykmeldingStatusDB
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.postgresql.util.PSQLException
 import org.slf4j.LoggerFactory
+import java.sql.BatchUpdateException
 import java.time.Duration
 import java.time.OffsetDateTime
 import kotlin.time.ExperimentalTime
@@ -89,7 +90,7 @@ class SykmeldingStatusConsumer(
         return try {
             database.insertStatus(statusEvents)
             true
-        } catch (ex: PSQLException) {
+        } catch (ex: BatchUpdateException) {
             false
         }
     }
