@@ -8,8 +8,8 @@ metadata:
 spec:
   image: {{ image }}
   replicas:
-    min: 10
-    max: 10
+    min: 1
+    max: 3
     cpuThresholdPercentage: 90
   port: 8080
   kafka:
@@ -36,11 +36,11 @@ spec:
     path: /internal/prometheus
   resources:
     limits:
-      cpu: 2000m
-      memory: 2Gi
-    requests:
-      cpu: 200m
+      cpu: 500m
       memory: 1Gi
+    requests:
+      cpu: 100m
+      memory: 600Mi
   azure:
     application:
       enabled: true
