@@ -75,7 +75,8 @@ class SykmeldingMapper private constructor() {
                 egenmeldt = receivedSykmelding.sykmelding.avsenderSystem.navn == "Egenmeldt",
                 papirsykmelding = receivedSykmelding.sykmelding.avsenderSystem.navn == "Papirsykmelding",
                 harRedusertArbeidsgiverperiode = receivedSykmelding.sykmelding.medisinskVurdering.getHarRedusertArbeidsgiverperiode(receivedSykmelding.sykmelding.perioder),
-                merknader = receivedSykmelding.merknader?.map { Merknad(beskrivelse = it.beskrivelse, type = it.type) }
+                merknader = receivedSykmelding.merknader?.map { Merknad(beskrivelse = it.beskrivelse, type = it.type) },
+                rulesetVersion = receivedSykmelding.rulesetVersion
             )
         }
 
