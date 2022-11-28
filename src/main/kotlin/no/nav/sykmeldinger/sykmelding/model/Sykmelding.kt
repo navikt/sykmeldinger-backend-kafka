@@ -25,5 +25,6 @@ data class Sykmelding(
     val papirsykmelding: Boolean?,
     val harRedusertArbeidsgiverperiode: Boolean?,
     val merknader: List<Merknad>?,
-    val rulesetVersion: String?
+    val rulesetVersion: String?,
+    val utenlandskSykmelding: UtenlandskSykmelding?,
 )
