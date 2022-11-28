@@ -26,6 +26,7 @@ import no.nav.sykmeldinger.sykmelding.model.SporsmalSvar
 import no.nav.sykmeldinger.sykmelding.model.SvarRestriksjon
 import no.nav.sykmeldinger.sykmelding.model.Sykmelding
 import no.nav.sykmeldinger.sykmelding.model.Sykmeldingsperiode
+import no.nav.sykmeldinger.sykmelding.model.UtenlandskSykmelding
 import java.time.LocalDate
 import java.time.Month
 import java.time.ZoneOffset
@@ -76,7 +77,8 @@ class SykmeldingMapper private constructor() {
                 papirsykmelding = receivedSykmelding.sykmelding.avsenderSystem.navn == "Papirsykmelding",
                 harRedusertArbeidsgiverperiode = receivedSykmelding.sykmelding.medisinskVurdering.getHarRedusertArbeidsgiverperiode(receivedSykmelding.sykmelding.perioder),
                 merknader = receivedSykmelding.merknader?.map { Merknad(beskrivelse = it.beskrivelse, type = it.type) },
-                rulesetVersion = receivedSykmelding.rulesetVersion
+                rulesetVersion = receivedSykmelding.rulesetVersion,
+                utenlandskSykmelding = receivedSykmelding.utenlandskSykmelding?.let { UtenlandskSykmelding(it.land) },
             )
         }
 
