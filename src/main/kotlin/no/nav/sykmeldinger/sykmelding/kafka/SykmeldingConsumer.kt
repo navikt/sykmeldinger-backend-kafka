@@ -161,6 +161,6 @@ class SykmeldingConsumer(
     }
 }
 
-private fun PdlPerson.toSykmeldt(): Sykmeldt {
+fun PdlPerson.toSykmeldt(): Sykmeldt {
     return Sykmeldt(fnr = fnr, fornavn = navn.fornavn, mellomnavn = navn.mellomnavn, etternavn = navn.etternavn)
 }
