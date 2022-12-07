@@ -23,7 +23,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 data class SykmeldingMedBehandlingsutfall(
-    val sykmelding: ReceivedSykmelding,
+    val receivedSykmelding: ReceivedSykmelding,
     val behandlingsutfall: Behandlingsutfall
 )
 
@@ -99,10 +99,10 @@ class GamleSykmeldingerConsumer(
         sykmeldingId: String,
         sykmeldingMedBehandlingsutfall: SykmeldingMedBehandlingsutfall
     ) {
-        val sykmelding = SykmeldingMapper.mapToSykmelding(sykmeldingMedBehandlingsutfall.sykmelding)
+        val sykmelding = SykmeldingMapper.mapToSykmelding(sykmeldingMedBehandlingsutfall.receivedSykmelding)
         try {
             val sykmeldt =
-                pdlPersonService.getPerson(sykmeldingMedBehandlingsutfall.sykmelding.personNrPasient, sykmeldingId)
+                pdlPersonService.getPerson(sykmeldingMedBehandlingsutfall.receivedSykmelding.personNrPasient, sykmeldingId)
                     .toSykmeldt()
             val arbeidsforhold = arbeidsforholdService.getArbeidsforhold(sykmeldt.fnr)
             arbeidsforhold.forEach { arbeidsforholdService.insertOrUpdate(it) }
