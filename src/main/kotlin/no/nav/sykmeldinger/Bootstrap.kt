@@ -54,7 +54,9 @@ import no.nav.sykmeldinger.status.db.SykmeldingStatusDB
 import no.nav.sykmeldinger.status.kafka.SykmeldingStatusConsumer
 import no.nav.sykmeldinger.sykmelding.SykmeldingService
 import no.nav.sykmeldinger.sykmelding.db.SykmeldingDb
+import no.nav.sykmeldinger.sykmelding.kafka.GamleSykmeldingerConsumer
 import no.nav.sykmeldinger.sykmelding.kafka.SykmeldingConsumer
+import no.nav.sykmeldinger.sykmelding.kafka.SykmeldingMedBehandlingsutfall
 import no.nav.sykmeldinger.util.kafka.JacksonKafkaDeserializer
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.KafkaConsumer
@@ -169,7 +171,31 @@ fun main() {
     val deleteArbeidsforholdService = DeleteArbeidsforholdService(arbeidsforholdDb, leaderElection, applicationState)
     deleteArbeidsforholdService.start()
 
+    val gamleSykmeldingConsumer = getGamleSykmeldingConsumer()
+    val gamleSykmeldingerConsumer = GamleSykmeldingerConsumer(
+        gamleSykmeldingerConsumer = gamleSykmeldingConsumer,
+        applicationState = applicationState,
+        sykmeldingService = sykmeldingService,
+        arbeidsforholdService = arbeidsforholdService,
+        pdlPersonService = pdlPersonService,
+        topic = env.gamleSykmeldingTopic,
+        behandlingsutfallDB = behandlingsutfallDB,
+        cluster = env.cluster
+    )
+    gamleSykmeldingerConsumer.startConsumer()
     applicationServer.start()
+}
+
+private fun getGamleSykmeldingConsumer(): KafkaConsumer<String, SykmeldingMedBehandlingsutfall> {
+    val kafkaConsumer = KafkaConsumer(
+        KafkaUtils.getAivenKafkaConfig().also {
+            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "earliest"
+            it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 10
+        }.toConsumerConfig("sykmeldinger-backend-kafka-consumer", JacksonKafkaDeserializer::class),
+        StringDeserializer(),
+        JacksonKafkaDeserializer(SykmeldingMedBehandlingsutfall::class)
+    )
+    return kafkaConsumer
 }
 
 private fun getKafkaConsumer(): KafkaConsumer<String, String> {
