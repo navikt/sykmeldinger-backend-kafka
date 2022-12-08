@@ -171,18 +171,6 @@ fun main() {
     val deleteArbeidsforholdService = DeleteArbeidsforholdService(arbeidsforholdDb, leaderElection, applicationState)
     deleteArbeidsforholdService.start()
 
-    val gamleSykmeldingConsumer = getGamleSykmeldingConsumer()
-    val gamleSykmeldingerConsumer = GamleSykmeldingerConsumer(
-        gamleSykmeldingerConsumer = gamleSykmeldingConsumer,
-        applicationState = applicationState,
-        sykmeldingService = sykmeldingService,
-        arbeidsforholdService = arbeidsforholdService,
-        pdlPersonService = pdlPersonService,
-        topic = env.gamleSykmeldingTopic,
-        behandlingsutfallDB = behandlingsutfallDB,
-        cluster = env.cluster
-    )
-    gamleSykmeldingerConsumer.startConsumer()
     applicationServer.start()
 }
 
