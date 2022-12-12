@@ -27,8 +27,7 @@ data class Environment(
     val aaregScope: String = getEnvVar("AAREG_SCOPE"),
     val aktorV2Topic: String = "pdl.aktor-v2",
     val arbeidsforholdTopic: String = getEnvVar("ARBEIDSFORHOLD_TOPIC"),
-    val electorPath: String = getEnvVar("ELECTOR_PATH"),
-    val gamleSykmeldingTopic: String = "teamsykmelding.gamle-sykmeldinger",
+    val electorPath: String = getEnvVar("ELECTOR_PATH")
 )
 
 fun getEnvVar(varName: String, defaultValue: String? = null) =
