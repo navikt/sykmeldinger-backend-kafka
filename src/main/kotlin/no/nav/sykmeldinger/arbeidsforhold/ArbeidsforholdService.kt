@@ -11,7 +11,7 @@ import java.time.LocalDate
 class ArbeidsforholdService(
     private val arbeidsforholdClient: ArbeidsforholdClient,
     private val organisasjonsinfoClient: OrganisasjonsinfoClient,
-    private val arbeidsforholdDb: ArbeidsforholdDb,
+    private val arbeidsforholdDb: ArbeidsforholdDb
 ) {
     suspend fun insertOrUpdate(arbeidsforhold: Arbeidsforhold) {
         arbeidsforholdDb.insertOrUpdate(arbeidsforhold)

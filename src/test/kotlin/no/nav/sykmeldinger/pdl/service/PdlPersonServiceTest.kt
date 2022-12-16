@@ -35,13 +35,13 @@ class PdlPersonServiceTest : FunSpec({
                     PersonResponse(
                         listOf(
                             Navn("Fornavn", null, "Etternavn")
-                        ),
+                        )
                     ),
                     Identliste(
                         listOf(
                             IdentInformasjon("12345678910", true, "FOLKEREGISTERIDENT"),
                             IdentInformasjon("xxxxx", false, "AKTOERID"),
-                            IdentInformasjon("10987654321", false, "FOLKEREGISTERIDENT"),
+                            IdentInformasjon("10987654321", false, "FOLKEREGISTERIDENT")
                         )
                     )
                 ),
@@ -69,7 +69,7 @@ class PdlPersonServiceTest : FunSpec({
                     PersonResponse(
                         listOf(
                             Navn("Fornavn", null, "Etternavn")
-                        ),
+                        )
                     ),
                     Identliste(emptyList())
                 ),
@@ -86,7 +86,7 @@ class PdlPersonServiceTest : FunSpec({
                     PersonResponse(
                         listOf(
                             Navn("Fornavn", null, "Etternavn")
-                        ),
+                        )
                     ),
                     Identliste(
                         listOf(
@@ -111,13 +111,13 @@ class PdlPersonServiceTest : FunSpec({
                     PersonResponse(
                         listOf(
                             Navn("Fornavn", null, "Etternavn")
-                        ),
+                        )
                     ),
                     Identliste(
                         listOf(
                             IdentInformasjon("12345678910", true, "FOLKEREGISTERIDENT"),
                             IdentInformasjon("xxxxx", false, "AKTOERID"),
-                            IdentInformasjon("10987654321", false, "FOLKEREGISTERIDENT"),
+                            IdentInformasjon("10987654321", false, "FOLKEREGISTERIDENT")
                         )
                     )
                 ),
@@ -132,13 +132,13 @@ class PdlPersonServiceTest : FunSpec({
                     PersonResponse(
                         listOf(
                             Navn("Fornavn", null, "Etternavn")
-                        ),
+                        )
                     ),
                     Identliste(
                         listOf(
                             IdentInformasjon("12345678910", true, "FOLKEREGISTERIDENT"),
                             IdentInformasjon("xxxxx", false, "AKTOERID"),
-                            IdentInformasjon("10987654321", false, "FOLKEREGISTERIDENT"),
+                            IdentInformasjon("10987654321", false, "FOLKEREGISTERIDENT")
                         )
                     )
                 ),
@@ -155,7 +155,7 @@ class PdlPersonServiceTest : FunSpec({
                     PersonResponse(
                         listOf(
                             Navn("Fornavn", null, "Etternavn")
-                        ),
+                        )
                     ),
                     Identliste(emptyList())
                 ),

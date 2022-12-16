@@ -23,7 +23,7 @@ class SykmeldingStatusConsumer(
     private val environment: Environment,
     private val kafkaConsumer: KafkaConsumer<String, SykmeldingStatusKafkaMessageDTO>,
     private val database: SykmeldingStatusDB,
-    private val applicationState: ApplicationState,
+    private val applicationState: ApplicationState
 ) {
     companion object {
         private val log = LoggerFactory.getLogger(SykmeldingStatusConsumer::class.java)

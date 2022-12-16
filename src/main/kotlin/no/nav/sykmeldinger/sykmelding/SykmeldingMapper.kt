@@ -47,7 +47,7 @@ class SykmeldingMapper private constructor() {
                 legekontorOrgnummer = receivedSykmelding.legekontorOrgNr,
                 arbeidsgiver = Arbeidsgiver(
                     navn = receivedSykmelding.sykmelding.arbeidsgiver.navn,
-                    stillingsprosent = receivedSykmelding.sykmelding.arbeidsgiver.stillingsprosent,
+                    stillingsprosent = receivedSykmelding.sykmelding.arbeidsgiver.stillingsprosent
                 ),
                 sykmeldingsperioder = receivedSykmelding.sykmelding.perioder.map { it.toSykmeldingsPeriode(receivedSykmelding.sykmelding.id) },
                 medisinskVurdering = if (skjermesForPasient) { null } else { receivedSykmelding.sykmelding.medisinskVurdering.toMedisinskVurdering() },
@@ -78,7 +78,7 @@ class SykmeldingMapper private constructor() {
                 harRedusertArbeidsgiverperiode = receivedSykmelding.sykmelding.medisinskVurdering.getHarRedusertArbeidsgiverperiode(receivedSykmelding.sykmelding.perioder),
                 merknader = receivedSykmelding.merknader?.map { Merknad(beskrivelse = it.beskrivelse, type = it.type) },
                 rulesetVersion = receivedSykmelding.rulesetVersion,
-                utenlandskSykmelding = receivedSykmelding.utenlandskSykmelding?.let { UtenlandskSykmelding(it.land) },
+                utenlandskSykmelding = receivedSykmelding.utenlandskSykmelding?.let { UtenlandskSykmelding(it.land) }
             )
         }
 
