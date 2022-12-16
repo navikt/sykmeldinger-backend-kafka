@@ -43,7 +43,7 @@ class SykmeldingConsumer(
     private val pdlPersonService: PdlPersonService,
     private val arbeidsforholdService: ArbeidsforholdService,
     private val sykmeldingService: SykmeldingService,
-    private val cluster: String,
+    private val cluster: String
 ) {
     companion object {
         private val log = LoggerFactory.getLogger(SykmeldingConsumer::class.java)
@@ -97,14 +97,13 @@ class SykmeldingConsumer(
     @OptIn(ExperimentalTime::class)
     private suspend fun consume() = withContext(Dispatchers.IO) {
         while (applicationState.ready) {
-
             val consumerRecords = kafkaConsumer.poll(Duration.ofSeconds(1))
             if (!consumerRecords.isEmpty) {
                 totalDuration += measureTime {
                     totalRecords += consumerRecords.count()
                     lastDate = OffsetDateTime.ofInstant(
                         Instant.ofEpochMilli(consumerRecords.last().timestamp()),
-                        ZoneOffset.UTC,
+                        ZoneOffset.UTC
                     )
 
                     val sykmeldinger = consumerRecords.map { cr ->

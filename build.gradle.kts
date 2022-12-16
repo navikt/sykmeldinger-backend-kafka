@@ -6,30 +6,31 @@ group = "no.nav.sykmeldinger"
 version = "1.0.0"
 
 val coroutinesVersion = "1.6.4"
-val jacksonVersion = "2.13.4"
-val kluentVersion = "1.68"
-val ktorVersion = "2.1.2"
-val logbackVersion = "1.4.3"
+val jacksonVersion = "2.14.1"
+val kluentVersion = "1.72"
+val ktorVersion = "2.2.1"
+val logbackVersion = "1.4.5"
 val logstashEncoderVersion = "7.2"
 val prometheusVersion = "0.16.0"
 val mockkVersion = "1.13.2"
-val testContainerVersion = "1.17.4"
-val kotlinVersion = "1.7.21"
-val kotestVersion = "5.5.0"
-val postgresVersion = "42.5.0"
+val testContainerVersion = "1.17.6"
+val kotlinVersion = "1.7.22"
+val kotestVersion = "5.5.4"
+val postgresVersion = "42.5.1"
 val hikariVersion = "5.0.1"
-val googlePostgresVersion = "1.7.0"
-val smCommonVersion = "1.ad6b50d"
-val flywayVersion = "9.4.0"
+val googlePostgresVersion = "1.7.2"
+val smCommonVersion = "1.1490275"
+val flywayVersion = "9.8.3"
 val confluentVersion = "7.2.1"
+val nettyCodecVersion = "4.1.86.Final"
 
 tasks.withType<Jar> {
     manifest.attributes["Main-Class"] = "no.nav.sykmeldinger.BootstrapKt"
 }
 
 plugins {
-    id("org.jmailen.kotlinter") version "3.10.0"
-    kotlin("jvm") version "1.7.21"
+    id("org.jmailen.kotlinter") version "3.12.0"
+    kotlin("jvm") version "1.7.22"
     id("com.diffplug.spotless") version "6.5.0"
     id("com.github.johnrengelman.shadow") version "7.1.2"
     id("com.github.davidmc24.gradle.plugin.avro") version "1.5.0"
@@ -65,6 +66,9 @@ dependencies {
 
     implementation("io.ktor:ktor-server-core:$ktorVersion")
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
+    // This is to override version that is in io.ktor:ktor-server-netty
+    // https://www.cve.org/CVERecord?id=CVE-2022-41915
+    implementation("io.netty:netty-codec:$nettyCodecVersion")
     implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
     implementation("io.ktor:ktor-client-core:$ktorVersion")
     implementation("io.ktor:ktor-client-apache:$ktorVersion")

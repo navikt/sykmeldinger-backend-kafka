@@ -84,6 +84,6 @@ fun getSykmelding(): Sykmelding {
         harRedusertArbeidsgiverperiode = false,
         merknader = null,
         rulesetVersion = null,
-        utenlandskSykmelding = null,
+        utenlandskSykmelding = null
     )
 }
