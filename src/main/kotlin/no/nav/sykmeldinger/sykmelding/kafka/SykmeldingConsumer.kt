@@ -43,7 +43,7 @@ class SykmeldingConsumer(
     private val pdlPersonService: PdlPersonService,
     private val arbeidsforholdService: ArbeidsforholdService,
     private val sykmeldingService: SykmeldingService,
-    private val cluster: String
+    private val cluster: String,
 ) {
     companion object {
         private val log = LoggerFactory.getLogger(SykmeldingConsumer::class.java)
@@ -70,10 +70,10 @@ class SykmeldingConsumer(
                 while (applicationState.ready) {
                     no.nav.sykmeldinger.log.info(
                         "total: $totalRecords, ok: $okRecords, manuell: $manuellRecords, avvist: $avvistRecords, last $lastDate avg tot: ${
-                        getDurationPerRecord(
-                            totalDuration,
-                            totalRecords
-                        )
+                            getDurationPerRecord(
+                                totalDuration,
+                                totalRecords
+                            )
                         } ms"
                     )
                     delay(10000)
@@ -107,14 +107,25 @@ class SykmeldingConsumer(
                     )
 
                     val sykmeldinger = consumerRecords.map { cr ->
-                        val sykmelding: ReceivedSykmelding? = cr.value()?.let { objectMapper.readValue(it, ReceivedSykmelding::class.java) }
+                        if (listOf(
+                                "da814cdc-3a1e-4026-a22d-35fd58eba234",
+                                "8e7bfaed-d7e5-47c9-85dd-4283db9bbe4e",
+                            ).contains(cr.key())
+                        ) {
+                            log.warn("Ignoring sykmelding with id ${cr.key()} because it is broken, dev only")
+                            return@map null
+                        }
+
+                        val sykmelding: ReceivedSykmelding? =
+                            cr.value()?.let { objectMapper.readValue(it, ReceivedSykmelding::class.java) }
                         when (cr.topic()) {
                             OK_TOPIC -> okRecords++
                             MANUELL_TOPIC -> manuellRecords++
                             AVVIST_TOPIC -> avvistRecords++
                         }
                         cr.key() to sykmelding
-                    }
+                    }.filterNotNull()
+
                     sykmeldinger.forEach {
                         handleSykmelding(it.first, it.second)
                     }
