@@ -14,7 +14,7 @@ val logstashEncoderVersion = "7.2"
 val prometheusVersion = "0.16.0"
 val mockkVersion = "1.13.2"
 val testContainerVersion = "1.17.6"
-val kotlinVersion = "1.7.22"
+val kotlinVersion = "1.8.0"
 val kotestVersion = "5.5.4"
 val postgresVersion = "42.5.1"
 val hikariVersion = "5.0.1"
@@ -23,6 +23,7 @@ val smCommonVersion = "1.1490275"
 val flywayVersion = "9.8.3"
 val confluentVersion = "7.2.1"
 val nettyCodecVersion = "4.1.86.Final"
+val commonsCodecVersion = "1.15"
 
 tasks.withType<Jar> {
     manifest.attributes["Main-Class"] = "no.nav.sykmeldinger.BootstrapKt"
@@ -30,7 +31,7 @@ tasks.withType<Jar> {
 
 plugins {
     id("org.jmailen.kotlinter") version "3.12.0"
-    kotlin("jvm") version "1.7.22"
+    kotlin("jvm") version "1.8.0"
     id("com.diffplug.spotless") version "6.5.0"
     id("com.github.johnrengelman.shadow") version "7.1.2"
     id("com.github.davidmc24.gradle.plugin.avro") version "1.5.0"
@@ -75,6 +76,9 @@ dependencies {
     implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
 
+    implementation("commons-codec:commons-codec:$commonsCodecVersion")
+    // override transient version 1.10 from io.ktor:ktor-client-apache
+
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("net.logstash.logback:logstash-logback-encoder:$logstashEncoderVersion")
 
@@ -112,6 +116,7 @@ tasks {
 
     withType<KotlinCompile> {
         kotlinOptions.jvmTarget = "17"
+        dependsOn("generateTestAvroJava")
     }
 
     withType<ShadowJar> {
