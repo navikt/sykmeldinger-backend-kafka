@@ -48,6 +48,8 @@ spec:
   leaderElection: true
   envFrom:
     - secret: google-sql-sykmeldinger-backend-sykmeldinger-sykmeldin-7ee1e806
+  secureLogs:
+    enabled: true
   env:
     - name: CLOUD_SQL_INSTANCE
       value: teamsykmelding-prod-2acd:europe-north1:sykmeldinger-db-instance

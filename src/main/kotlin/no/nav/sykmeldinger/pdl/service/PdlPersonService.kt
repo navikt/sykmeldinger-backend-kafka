@@ -7,6 +7,7 @@ import no.nav.sykmeldinger.pdl.error.InactiveIdentException
 import no.nav.sykmeldinger.pdl.error.PersonNotFoundInPdl
 import no.nav.sykmeldinger.pdl.model.Navn
 import no.nav.sykmeldinger.pdl.model.PdlPerson
+import no.nav.sykmeldinger.sikkerlogg
 
 class PdlPersonService(
     private val pdlClient: PdlClient,
@@ -25,14 +26,17 @@ class PdlPersonService(
             }
         }
         if (pdlResponse.data.person == null) {
+            sikkerlogg.info("Fant ikke person i PDL, fnr: $fnr")
             log.error("Fant ikke person i PDL {}", callId)
             throw PersonNotFoundInPdl("Fant ikke person i PDL")
         }
         if (pdlResponse.data.person.navn.isNullOrEmpty()) {
+            sikkerlogg.info("Fant ikke navn på person i PDL, fnr: $fnr")
             log.error("Fant ikke navn på person i PDL {}", callId)
             throw PersonNotFoundInPdl("Fant ikke navn på person i PDL")
         }
         if (pdlResponse.data.hentIdenter == null || pdlResponse.data.hentIdenter.identer.isEmpty()) {
+            sikkerlogg.info("Fant ikke person i PDL, fnr: $fnr")
             log.warn("Fant ikke person i PDL")
             throw PersonNotFoundInPdl("Fant ikke person i PDL")
         }
@@ -55,6 +59,7 @@ class PdlPersonService(
             }
         }
         if (pdlResponse.data.person == null || pdlResponse.data.person.navn.isNullOrEmpty()) {
+            sikkerlogg.info("Fant ikke navn på person i PDL, nyttFnr: $nyttFnr")
             log.warn("Fant ikke navn på person i PDL")
             throw PersonNotFoundInPdl("Fant ikke navn på person i PDL")
         }

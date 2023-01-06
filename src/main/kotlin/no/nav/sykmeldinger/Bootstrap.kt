@@ -63,6 +63,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 val log: Logger = LoggerFactory.getLogger("no.nav.sykmeldinger.sykmeldinger-backend-kafka")
+val sikkerlogg = LoggerFactory.getLogger("securelog")
 
 val objectMapper: ObjectMapper = jacksonObjectMapper().apply {
     registerModule(JavaTimeModule())
@@ -127,7 +128,7 @@ fun main() {
     val pdlClient = PdlClient(
         httpClient,
         env.pdlGraphqlPath,
-        PdlClient::class.java.getResource("/graphql/getPerson.graphql").readText().replace(Regex("[\n\t]"), "")
+        PdlClient::class.java.getResource("/graphql/getPerson.graphql")!!.readText().replace(Regex("[\n\t]"), "")
     )
     val pdlPersonService = PdlPersonService(pdlClient, accessTokenClient, env.pdlScope)
 
