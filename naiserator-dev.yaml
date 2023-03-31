@@ -50,6 +50,12 @@ spec:
     - secret: google-sql-sykmeldinger-backend-sykmeldinger-sykmeldin-7ee1e806
   secureLogs:
     enabled: true
+  accessPolicy:
+    outbound:
+      external:
+        - host: pdl-api.dev-fss-pub.nais.io
+        - host: ereg-services-q1.dev-fss-pub.nais.io
+        - host: aareg-services-q1.dev-fss-pub.nais.io
   env:
     - name: CLOUD_SQL_INSTANCE
       value: teamsykmelding-dev-1d34:europe-north1:sykmeldinger-db-instance
