@@ -6,7 +6,7 @@ group = "no.nav.sykmeldinger"
 version = "1.0.0"
 
 val coroutinesVersion = "1.6.4"
-val jacksonVersion = "2.14.1"
+val jacksonVersion = "2.14.2"
 val kluentVersion = "1.72"
 val ktorVersion = "2.2.3"
 val logbackVersion = "1.4.5"
