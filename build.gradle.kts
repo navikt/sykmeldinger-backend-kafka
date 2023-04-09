@@ -22,7 +22,7 @@ val googlePostgresVersion = "1.7.2"
 val smCommonVersion = "1.4d2de6e"
 val flywayVersion = "9.8.3"
 val confluentVersion = "7.2.1"
-val nettyCodecVersion = "4.1.86.Final"
+val nettyCodecVersion = "4.1.91.Final"
 val commonsCodecVersion = "1.15"
 
 tasks.withType<Jar> {
