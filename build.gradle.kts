@@ -22,7 +22,6 @@ val googlePostgresVersion = "1.7.2"
 val smCommonVersion = "1.4d2de6e"
 val flywayVersion = "9.8.3"
 val confluentVersion = "7.2.1"
-val nettyCodecVersion = "4.1.86.Final"
 val commonsCodecVersion = "1.15"
 
 tasks.withType<Jar> {
@@ -67,9 +66,6 @@ dependencies {
 
     implementation("io.ktor:ktor-server-core:$ktorVersion")
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
-    // This is to override version that is in io.ktor:ktor-server-netty
-    // https://www.cve.org/CVERecord?id=CVE-2022-41915
-    implementation("io.netty:netty-codec:$nettyCodecVersion")
     implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
     implementation("io.ktor:ktor-client-core:$ktorVersion")
     implementation("io.ktor:ktor-client-apache:$ktorVersion")
