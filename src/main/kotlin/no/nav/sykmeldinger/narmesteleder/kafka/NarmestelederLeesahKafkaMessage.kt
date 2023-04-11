@@ -15,7 +15,7 @@ data class NarmestelederLeesahKafkaMessage(
     val aktivFom: LocalDate,
     val aktivTom: LocalDate?,
     val arbeidsgiverForskutterer: Boolean?,
-    val timestamp: OffsetDateTime
+    val timestamp: OffsetDateTime,
 ) {
     fun toNarmestelederDbModel(navn: String): NarmestelederDbModel {
         return NarmestelederDbModel(
@@ -24,7 +24,7 @@ data class NarmestelederLeesahKafkaMessage(
             brukerFnr = fnr,
             lederFnr = narmesteLederFnr,
             navn = navn,
-            timestamp = timestamp
+            timestamp = timestamp,
         )
     }
 }

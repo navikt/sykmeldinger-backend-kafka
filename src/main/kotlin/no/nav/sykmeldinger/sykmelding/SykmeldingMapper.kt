@@ -47,7 +47,7 @@ class SykmeldingMapper private constructor() {
                 legekontorOrgnummer = receivedSykmelding.legekontorOrgNr,
                 arbeidsgiver = Arbeidsgiver(
                     navn = receivedSykmelding.sykmelding.arbeidsgiver.navn,
-                    stillingsprosent = receivedSykmelding.sykmelding.arbeidsgiver.stillingsprosent
+                    stillingsprosent = receivedSykmelding.sykmelding.arbeidsgiver.stillingsprosent,
                 ),
                 sykmeldingsperioder = receivedSykmelding.sykmelding.perioder.map { it.toSykmeldingsPeriode(receivedSykmelding.sykmelding.id) },
                 medisinskVurdering = if (skjermesForPasient) { null } else { receivedSykmelding.sykmelding.medisinskVurdering.toMedisinskVurdering() },
@@ -61,13 +61,13 @@ class SykmeldingMapper private constructor() {
                 } else {
                     MeldingTilNav(
                         bistandUmiddelbart = receivedSykmelding.sykmelding.meldingTilNAV?.bistandUmiddelbart ?: false,
-                        beskrivBistand = receivedSykmelding.sykmelding.meldingTilNAV?.beskrivBistand
+                        beskrivBistand = receivedSykmelding.sykmelding.meldingTilNAV?.beskrivBistand,
                     )
                 },
                 meldingTilArbeidsgiver = receivedSykmelding.sykmelding.meldingTilArbeidsgiver,
                 kontaktMedPasient = KontaktMedPasient(
                     kontaktDato = receivedSykmelding.sykmelding.kontaktMedPasient.kontaktDato,
-                    begrunnelseIkkeKontakt = receivedSykmelding.sykmelding.kontaktMedPasient.begrunnelseIkkeKontakt
+                    begrunnelseIkkeKontakt = receivedSykmelding.sykmelding.kontaktMedPasient.begrunnelseIkkeKontakt,
                 ),
                 behandletTidspunkt = receivedSykmelding.sykmelding.behandletTidspunkt.atOffset(ZoneOffset.UTC),
                 behandler = toBehandler(receivedSykmelding),
@@ -78,7 +78,7 @@ class SykmeldingMapper private constructor() {
                 harRedusertArbeidsgiverperiode = receivedSykmelding.sykmelding.medisinskVurdering.getHarRedusertArbeidsgiverperiode(receivedSykmelding.sykmelding.perioder),
                 merknader = receivedSykmelding.merknader?.map { Merknad(beskrivelse = it.beskrivelse, type = it.type) },
                 rulesetVersion = receivedSykmelding.rulesetVersion,
-                utenlandskSykmelding = receivedSykmelding.utenlandskSykmelding?.let { UtenlandskSykmelding(it.land) }
+                utenlandskSykmelding = receivedSykmelding.utenlandskSykmelding?.let { UtenlandskSykmelding(it.land) },
             )
         }
 
@@ -91,20 +91,20 @@ class SykmeldingMapper private constructor() {
                 innspillTilArbeidsgiver = avventendeInnspillTilArbeidsgiver,
                 type = finnPeriodetype(this, sykmelidngId),
                 aktivitetIkkeMulig = aktivitetIkkeMulig?.let { toAktivietIkkeMulig(it) },
-                reisetilskudd = reisetilskudd
+                reisetilskudd = reisetilskudd,
             )
         }
 
         private fun toAktivietIkkeMulig(it: no.nav.syfo.model.AktivitetIkkeMulig): AktivitetIkkeMulig {
             return AktivitetIkkeMulig(
                 medisinskArsak = it.medisinskArsak?.toMedisinskArsak(),
-                arbeidsrelatertArsak = it.arbeidsrelatertArsak?.toArbeidsrelatertArsakDto()
+                arbeidsrelatertArsak = it.arbeidsrelatertArsak?.toArbeidsrelatertArsakDto(),
             )
         }
         private fun no.nav.syfo.model.ArbeidsrelatertArsak.toArbeidsrelatertArsakDto(): ArbeidsrelatertArsak {
             return ArbeidsrelatertArsak(
                 beskrivelse = beskrivelse,
-                arsak = arsak.map { toArbeidsrelatertArsakType(it) }
+                arsak = arsak.map { toArbeidsrelatertArsakType(it) },
             )
         }
 
@@ -118,7 +118,7 @@ class SykmeldingMapper private constructor() {
         private fun no.nav.syfo.model.MedisinskArsak.toMedisinskArsak(): MedisinskArsak {
             return MedisinskArsak(
                 beskrivelse = beskrivelse,
-                arsak = arsak.map { toMedisinskArsakTypeDto(it) }
+                arsak = arsak.map { toMedisinskArsakTypeDto(it) },
             )
         }
 
@@ -150,9 +150,9 @@ class SykmeldingMapper private constructor() {
                 postnummer = receivedSykmelding.sykmelding.behandler.adresse.postnummer,
                 kommune = receivedSykmelding.sykmelding.behandler.adresse.kommune,
                 postboks = receivedSykmelding.sykmelding.behandler.adresse.postboks,
-                land = receivedSykmelding.sykmelding.behandler.adresse.land
+                land = receivedSykmelding.sykmelding.behandler.adresse.land,
             ),
-            tlf = receivedSykmelding.sykmelding.behandler.tlf
+            tlf = receivedSykmelding.sykmelding.behandler.tlf,
         )
 
         private fun no.nav.syfo.model.MedisinskVurdering.getHarRedusertArbeidsgiverperiode(sykmeldingsperioder: List<Periode>): Boolean {
@@ -184,7 +184,7 @@ class SykmeldingMapper private constructor() {
                         egetArbeidPaSikt = erIArbeid!!.egetArbeidPaSikt,
                         annetArbeidPaSikt = erIArbeid!!.annetArbeidPaSikt,
                         arbeidFOM = erIArbeid!!.arbeidFOM,
-                        vurderingsdato = erIArbeid!!.vurderingsdato
+                        vurderingsdato = erIArbeid!!.vurderingsdato,
                     )
                 } else {
                     null
@@ -193,11 +193,11 @@ class SykmeldingMapper private constructor() {
                     ErIkkeIArbeid(
                         arbeidsforPaSikt = erIkkeIArbeid!!.arbeidsforPaSikt,
                         arbeidsforFOM = erIkkeIArbeid!!.arbeidsforFOM,
-                        vurderingsdato = erIkkeIArbeid!!.vurderingsdato
+                        vurderingsdato = erIkkeIArbeid!!.vurderingsdato,
                     )
                 } else {
                     null
-                }
+                },
             )
         }
 
@@ -212,7 +212,7 @@ class SykmeldingMapper private constructor() {
             return SporsmalSvar(
                 sporsmal = sporsmal,
                 svar = svar,
-                restriksjoner = restriksjoner.map { it.toSvarRestriksjon() }
+                restriksjoner = restriksjoner.map { it.toSvarRestriksjon() },
 
             )
         }
@@ -234,12 +234,12 @@ class SykmeldingMapper private constructor() {
                 } else {
                     AnnenFraversArsak(
                         beskrivelse = annenFraversArsak!!.beskrivelse,
-                        grunn = annenFraversArsak!!.grunn.map { it.toAnnenFraverGrunn() }
+                        grunn = annenFraversArsak!!.grunn.map { it.toAnnenFraverGrunn() },
                     )
                 },
                 svangerskap = svangerskap,
                 yrkesskade = yrkesskade,
-                yrkesskadeDato = yrkesskadeDato
+                yrkesskadeDato = yrkesskadeDato,
             )
         }
 
@@ -247,7 +247,7 @@ class SykmeldingMapper private constructor() {
             return Diagnose(
                 kode = kode,
                 system = system,
-                tekst = tekst
+                tekst = tekst,
             )
         }
 

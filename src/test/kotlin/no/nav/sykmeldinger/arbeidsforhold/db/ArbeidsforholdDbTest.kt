@@ -24,7 +24,7 @@ object ArbeidsforholdDbTest : FunSpec({
                 juridiskOrgnummer = "999999999",
                 orgNavn = "Bedriften AS",
                 fom = LocalDate.of(2020, 5, 1),
-                tom = LocalDate.now().minusMonths(5)
+                tom = LocalDate.now().minusMonths(5),
             )
             arbeidsforholdDb.insertOrUpdate(arbeidsforhold)
 
@@ -40,7 +40,7 @@ object ArbeidsforholdDbTest : FunSpec({
                 juridiskOrgnummer = "999999999",
                 orgNavn = "Bedriften AS",
                 fom = LocalDate.of(2020, 5, 1),
-                tom = LocalDate.now().minusMonths(3)
+                tom = LocalDate.now().minusMonths(3),
             )
             arbeidsforholdDb.insertOrUpdate(arbeidsforhold)
 
@@ -56,7 +56,7 @@ object ArbeidsforholdDbTest : FunSpec({
                 juridiskOrgnummer = "999999999",
                 orgNavn = "Bedriften AS",
                 fom = LocalDate.of(2020, 5, 1),
-                tom = null
+                tom = null,
             )
             arbeidsforholdDb.insertOrUpdate(arbeidsforhold)
 

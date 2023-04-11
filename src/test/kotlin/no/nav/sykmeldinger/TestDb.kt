@@ -30,7 +30,7 @@ class TestDatabase(val connectionName: String, val dbUsername: String, val dbPas
                 connectionTimeout = 10_000
                 transactionIsolation = "TRANSACTION_REPEATABLE_READ"
                 validate()
-            }
+            },
         )
         runFlywayMigrations()
     }
@@ -78,7 +78,7 @@ class TestDB private constructor() {
                     DELETE FROM arbeidsforhold;
                     DELETE FROM sykmelding;
                     DELETE FROM sykmeldt;
-                """
+                """,
                 ).use { ps ->
                     ps.executeUpdate()
                 }
@@ -91,7 +91,7 @@ class TestDB private constructor() {
                 it.prepareStatement(
                     """
                     SELECT * FROM narmesteleder WHERE narmeste_leder_id = ?;
-                """
+                """,
                 ).use { ps ->
                     ps.setString(1, narmestelederId)
                     ps.executeQuery().toList { toNarmestelederDbModel() }.firstOrNull()

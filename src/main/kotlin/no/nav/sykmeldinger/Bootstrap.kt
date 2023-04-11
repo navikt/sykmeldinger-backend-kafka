@@ -79,7 +79,7 @@ fun main() {
     val applicationState = ApplicationState()
     val applicationEngine = createApplicationEngine(
         env,
-        applicationState
+        applicationState,
     )
     val applicationServer = ApplicationServer(applicationEngine, applicationState)
     val database = Database(env)
@@ -128,7 +128,7 @@ fun main() {
     val pdlClient = PdlClient(
         httpClient,
         env.pdlGraphqlPath,
-        PdlClient::class.java.getResource("/graphql/getPerson.graphql")!!.readText().replace(Regex("[\n\t]"), "")
+        PdlClient::class.java.getResource("/graphql/getPerson.graphql")!!.readText().replace(Regex("[\n\t]"), ""),
     )
     val pdlPersonService = PdlPersonService(pdlClient, accessTokenClient, env.pdlScope)
 
@@ -180,7 +180,7 @@ private fun getKafkaConsumer(): KafkaConsumer<String, String> {
             it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
         }.toConsumerConfig("sykmeldinger-backend-kafka-consumer", StringDeserializer::class),
         StringDeserializer(),
-        StringDeserializer()
+        StringDeserializer(),
     )
     return kafkaConsumer
 }
@@ -192,7 +192,7 @@ private fun getSykmeldingStatusKafkaConsumer(): KafkaConsumer<String, Sykmelding
             it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 10
         }.toConsumerConfig("sykmeldinger-backend-kafka-consumer", JacksonKafkaDeserializer::class),
         StringDeserializer(),
-        JacksonKafkaDeserializer(SykmeldingStatusKafkaMessageDTO::class)
+        JacksonKafkaDeserializer(SykmeldingStatusKafkaMessageDTO::class),
     )
     return kafkaConsumer
 }
@@ -203,7 +203,7 @@ private fun getNarmesteLederKafkaConsumer(): KafkaConsumer<String, Narmesteleder
             it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 10
         }.toConsumerConfig("sykmeldinger-backend-kafka-consumer", JacksonKafkaDeserializer::class),
         StringDeserializer(),
-        JacksonKafkaDeserializer(NarmestelederLeesahKafkaMessage::class)
+        JacksonKafkaDeserializer(NarmestelederLeesahKafkaMessage::class),
     )
     return kafkaConsumer
 }
@@ -215,7 +215,7 @@ private fun getNavnendringerConsumer(environment: Environment): KafkaConsumer<St
         setProperty(KafkaAvroSerializerConfig.BASIC_AUTH_CREDENTIALS_SOURCE, "USER_INFO")
     }.toConsumerConfig(
         "sykmeldinger-backend-kafka-consumer",
-        valueDeserializer = KafkaAvroDeserializer::class
+        valueDeserializer = KafkaAvroDeserializer::class,
     ).also {
         it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
         it["specific.avro.reader"] = true
@@ -230,7 +230,7 @@ private fun getIdentendringConsumer(environment: Environment): KafkaConsumer<Str
         setProperty(KafkaAvroSerializerConfig.BASIC_AUTH_CREDENTIALS_SOURCE, "USER_INFO")
     }.toConsumerConfig(
         "sykmeldinger-backend-kafka-consumer",
-        valueDeserializer = KafkaAvroDeserializer::class
+        valueDeserializer = KafkaAvroDeserializer::class,
     ).also {
         it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
         it["specific.avro.reader"] = true
@@ -245,7 +245,7 @@ private fun getArbeidsforholdKafkaConsumer(): KafkaConsumer<String, Arbeidsforho
             it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 10
         }.toConsumerConfig("sykmeldinger-backend-kafka-consumer", JacksonKafkaDeserializer::class),
         StringDeserializer(),
-        JacksonKafkaDeserializer(ArbeidsforholdHendelse::class)
+        JacksonKafkaDeserializer(ArbeidsforholdHendelse::class),
     )
     return kafkaConsumer
 }

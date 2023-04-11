@@ -30,7 +30,7 @@ object NavnendringConsumerTest : FunSpec({
         kafkaConsumer,
         ApplicationState(alive = true, ready = true),
         narmesteLederDb,
-        pdlPersonService
+        pdlPersonService,
     )
 
     beforeEach {
@@ -76,6 +76,6 @@ fun getPersonhendelse(fnr: String, navn: no.nav.person.pdl.leesah.navn.Navn?): P
         "type",
         Endringstype.OPPRETTET,
         "tidligereId",
-        navn
+        navn,
     )
 }

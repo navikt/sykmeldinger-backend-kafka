@@ -19,7 +19,7 @@ class NavnendringConsumer(
     private val kafkaConsumer: KafkaConsumer<String, Personhendelse>,
     private val applicationState: ApplicationState,
     private val narmestelederDb: NarmestelederDb,
-    private val pdlPersonService: PdlPersonService
+    private val pdlPersonService: PdlPersonService,
 ) {
     @OptIn(DelicateCoroutinesApi::class)
     fun startConsumer() {
@@ -58,7 +58,7 @@ class NavnendringConsumer(
                     val person = pdlPersonService.getPerson(it, personhendelse.hendelseId)
                     narmestelederDb.updateNavn(
                         it,
-                        person.navn.toFormattedNameString()
+                        person.navn.toFormattedNameString(),
                     )
                     NL_NAVN_COUNTER.inc()
                 }

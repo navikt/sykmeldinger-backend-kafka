@@ -10,7 +10,7 @@ data class Sykmeldingsperiode(
     val innspillTilArbeidsgiver: String?,
     val type: Periodetype,
     val aktivitetIkkeMulig: AktivitetIkkeMulig?,
-    val reisetilskudd: Boolean
+    val reisetilskudd: Boolean,
 )
 
 enum class Periodetype {
@@ -18,5 +18,5 @@ enum class Periodetype {
     AVVENTENDE,
     BEHANDLINGSDAGER,
     GRADERT,
-    REISETILSKUDD
+    REISETILSKUDD,
 }

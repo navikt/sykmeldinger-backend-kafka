@@ -43,7 +43,7 @@ object ArbeidsforholdConsumerTest : FunSpec({
         ApplicationState(alive = true, ready = true),
         "topic",
         sykmeldingDb,
-        arbeidsforholdService
+        arbeidsforholdService,
     )
 
     beforeEach {
@@ -59,8 +59,8 @@ object ArbeidsforholdConsumerTest : FunSpec({
                     1,
                     Arbeidssted(ArbeidsstedType.Underenhet, listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))),
                     Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))),
-                    Ansettelsesperiode(startdato = LocalDate.now().minusYears(3), sluttdato = null)
-                )
+                    Ansettelsesperiode(startdato = LocalDate.now().minusYears(3), sluttdato = null),
+                ),
             )
             sykmeldingDb.saveOrUpdateSykmeldt(Sykmeldt("12345678901", "Per", null, "Person"))
             val arbeidsforholdHendelse = ArbeidsforholdHendelse(
@@ -68,8 +68,8 @@ object ArbeidsforholdConsumerTest : FunSpec({
                 endringstype = Endringstype.Opprettelse,
                 arbeidsforhold = ArbeidsforholdKafka(
                     1,
-                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true)))
-                )
+                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true))),
+                ),
             )
 
             arbeidsforholdConsumer.handleArbeidsforholdHendelse(arbeidsforholdHendelse)
@@ -92,8 +92,8 @@ object ArbeidsforholdConsumerTest : FunSpec({
                     1,
                     Arbeidssted(ArbeidsstedType.Underenhet, listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))),
                     Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))),
-                    Ansettelsesperiode(startdato = LocalDate.now().minusYears(3), sluttdato = LocalDate.now().minusYears(1))
-                )
+                    Ansettelsesperiode(startdato = LocalDate.now().minusYears(3), sluttdato = LocalDate.now().minusYears(1)),
+                ),
             )
             sykmeldingDb.saveOrUpdateSykmeldt(Sykmeldt("12345678901", "Per", null, "Person"))
             val arbeidsforholdHendelse = ArbeidsforholdHendelse(
@@ -101,8 +101,8 @@ object ArbeidsforholdConsumerTest : FunSpec({
                 endringstype = Endringstype.Opprettelse,
                 arbeidsforhold = ArbeidsforholdKafka(
                     1,
-                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true)))
-                )
+                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true))),
+                ),
             )
 
             arbeidsforholdConsumer.handleArbeidsforholdHendelse(arbeidsforholdHendelse)
@@ -116,8 +116,8 @@ object ArbeidsforholdConsumerTest : FunSpec({
                     1,
                     Arbeidssted(ArbeidsstedType.Underenhet, listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))),
                     Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))),
-                    Ansettelsesperiode(startdato = LocalDate.now().minusYears(3), sluttdato = null)
-                )
+                    Ansettelsesperiode(startdato = LocalDate.now().minusYears(3), sluttdato = null),
+                ),
             )
             sykmeldingDb.saveOrUpdateSykmeldt(Sykmeldt("12345678901", "Per", null, "Person"))
             arbeidsforholdService.insertOrUpdate(
@@ -128,16 +128,16 @@ object ArbeidsforholdConsumerTest : FunSpec({
                     juridiskOrgnummer = "987654321",
                     orgNavn = "Gammel Navn AS",
                     fom = LocalDate.now().minusYears(3),
-                    tom = LocalDate.now().minusDays(3)
-                )
+                    tom = LocalDate.now().minusDays(3),
+                ),
             )
             val arbeidsforholdHendelse = ArbeidsforholdHendelse(
                 id = 34L,
                 endringstype = Endringstype.Endring,
                 arbeidsforhold = ArbeidsforholdKafka(
                     1,
-                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true)))
-                )
+                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true))),
+                ),
             )
 
             arbeidsforholdConsumer.handleArbeidsforholdHendelse(arbeidsforholdHendelse)
@@ -164,16 +164,16 @@ object ArbeidsforholdConsumerTest : FunSpec({
                     juridiskOrgnummer = "987654321",
                     orgNavn = "Gammel Navn AS",
                     fom = LocalDate.now().minusYears(3),
-                    tom = LocalDate.now().minusDays(3)
-                )
+                    tom = LocalDate.now().minusDays(3),
+                ),
             )
             val arbeidsforholdHendelse = ArbeidsforholdHendelse(
                 id = 34L,
                 endringstype = Endringstype.Sletting,
                 arbeidsforhold = ArbeidsforholdKafka(
                     1,
-                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true)))
-                )
+                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true))),
+                ),
             )
 
             arbeidsforholdConsumer.handleArbeidsforholdHendelse(arbeidsforholdHendelse)
@@ -187,14 +187,14 @@ object ArbeidsforholdConsumerTest : FunSpec({
                     1,
                     Arbeidssted(ArbeidsstedType.Underenhet, listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))),
                     Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))),
-                    Ansettelsesperiode(startdato = LocalDate.now().minusYears(3), sluttdato = null)
+                    Ansettelsesperiode(startdato = LocalDate.now().minusYears(3), sluttdato = null),
                 ),
                 AaregArbeidsforhold(
                     2,
                     Arbeidssted(ArbeidsstedType.Underenhet, listOf(Ident(IdentType.ORGANISASJONSNUMMER, "989898988", true))),
                     Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "989898988", true))),
-                    Ansettelsesperiode(startdato = LocalDate.now().minusYears(3), sluttdato = LocalDate.now().minusMonths(5))
-                )
+                    Ansettelsesperiode(startdato = LocalDate.now().minusYears(3), sluttdato = LocalDate.now().minusMonths(5)),
+                ),
             )
             arbeidsforholdService.insertOrUpdate(
                 Arbeidsforhold(
@@ -204,8 +204,8 @@ object ArbeidsforholdConsumerTest : FunSpec({
                     juridiskOrgnummer = "989898988",
                     orgNavn = "Gammelt Navn AS",
                     fom = LocalDate.now().minusYears(3),
-                    tom = LocalDate.now().minusDays(3)
-                )
+                    tom = LocalDate.now().minusDays(3),
+                ),
             )
             sykmeldingDb.saveOrUpdateSykmeldt(Sykmeldt("12345678901", "Per", null, "Person"))
             val arbeidsforholdHendelse = ArbeidsforholdHendelse(
@@ -213,8 +213,8 @@ object ArbeidsforholdConsumerTest : FunSpec({
                 endringstype = Endringstype.Opprettelse,
                 arbeidsforhold = ArbeidsforholdKafka(
                     1,
-                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true)))
-                )
+                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true))),
+                ),
             )
 
             arbeidsforholdConsumer.handleArbeidsforholdHendelse(arbeidsforholdHendelse)
@@ -231,8 +231,8 @@ object ArbeidsforholdConsumerTest : FunSpec({
                 endringstype = Endringstype.Opprettelse,
                 arbeidsforhold = ArbeidsforholdKafka(
                     15,
-                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true)))
-                )
+                    Arbeidstaker(listOf(Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true))),
+                ),
             )
 
             arbeidsforholdConsumer.handleArbeidsforholdHendelse(arbeidsforholdHendelse)
@@ -252,7 +252,7 @@ object ArbeidsforholdConsumerTest : FunSpec({
                     juridiskOrgnummer = "987654321",
                     orgNavn = "Navn AS",
                     fom = LocalDate.now().minusYears(3),
-                    tom = LocalDate.now().minusDays(3)
+                    tom = LocalDate.now().minusDays(3),
                 ),
                 Arbeidsforhold(
                     id = 2,
@@ -261,8 +261,8 @@ object ArbeidsforholdConsumerTest : FunSpec({
                     juridiskOrgnummer = "989898988",
                     orgNavn = "Bedrift AS",
                     fom = LocalDate.now().minusYears(1),
-                    tom = null
-                )
+                    tom = null,
+                ),
             )
             val arbeidsforholdFraDb = listOf(
                 Arbeidsforhold(
@@ -272,7 +272,7 @@ object ArbeidsforholdConsumerTest : FunSpec({
                     juridiskOrgnummer = "987654321",
                     orgNavn = "Navn AS",
                     fom = LocalDate.now().minusYears(3),
-                    tom = LocalDate.now().minusDays(3)
+                    tom = LocalDate.now().minusDays(3),
                 ),
                 Arbeidsforhold(
                     id = 2,
@@ -281,8 +281,8 @@ object ArbeidsforholdConsumerTest : FunSpec({
                     juridiskOrgnummer = "989898988",
                     orgNavn = "Gammelt Navn AS",
                     fom = LocalDate.now().minusYears(1),
-                    tom = null
-                )
+                    tom = null,
+                ),
             )
 
             val slettesFraDb = arbeidsforholdConsumer.getArbeidsforholdSomSkalSlettes(arbeidsforholdAareg = arbeidsforholdAareg, arbeidsforholdDb = arbeidsforholdFraDb)
@@ -298,7 +298,7 @@ object ArbeidsforholdConsumerTest : FunSpec({
                     juridiskOrgnummer = "987654321",
                     orgNavn = "Navn AS",
                     fom = LocalDate.now().minusYears(3),
-                    tom = LocalDate.now().minusDays(3)
+                    tom = LocalDate.now().minusDays(3),
                 ),
                 Arbeidsforhold(
                     id = 2,
@@ -307,8 +307,8 @@ object ArbeidsforholdConsumerTest : FunSpec({
                     juridiskOrgnummer = "989898988",
                     orgNavn = "Bedrift AS",
                     fom = LocalDate.now().minusYears(1),
-                    tom = null
-                )
+                    tom = null,
+                ),
             )
             val arbeidsforholdFraDb = listOf(
                 Arbeidsforhold(
@@ -318,8 +318,8 @@ object ArbeidsforholdConsumerTest : FunSpec({
                     juridiskOrgnummer = "987654321",
                     orgNavn = "Navn AS",
                     fom = LocalDate.now().minusYears(3),
-                    tom = LocalDate.now().minusDays(3)
-                )
+                    tom = LocalDate.now().minusDays(3),
+                ),
             )
 
             val slettesFraDb = arbeidsforholdConsumer.getArbeidsforholdSomSkalSlettes(arbeidsforholdAareg = arbeidsforholdAareg, arbeidsforholdDb = arbeidsforholdFraDb)
@@ -335,8 +335,8 @@ object ArbeidsforholdConsumerTest : FunSpec({
                     juridiskOrgnummer = "987654321",
                     orgNavn = "Navn AS",
                     fom = LocalDate.now().minusYears(3),
-                    tom = LocalDate.now().minusDays(3)
-                )
+                    tom = LocalDate.now().minusDays(3),
+                ),
             )
             val arbeidsforholdFraDb = listOf(
                 Arbeidsforhold(
@@ -346,7 +346,7 @@ object ArbeidsforholdConsumerTest : FunSpec({
                     juridiskOrgnummer = "987654321",
                     orgNavn = "Navn AS",
                     fom = LocalDate.now().minusYears(3),
-                    tom = LocalDate.now().minusDays(3)
+                    tom = LocalDate.now().minusDays(3),
                 ),
                 Arbeidsforhold(
                     id = 2,
@@ -355,8 +355,8 @@ object ArbeidsforholdConsumerTest : FunSpec({
                     juridiskOrgnummer = "989898988",
                     orgNavn = "Gammelt Navn AS",
                     fom = LocalDate.now().minusYears(1),
-                    tom = null
-                )
+                    tom = null,
+                ),
             )
 
             val slettesFraDb = arbeidsforholdConsumer.getArbeidsforholdSomSkalSlettes(arbeidsforholdAareg = arbeidsforholdAareg, arbeidsforholdDb = arbeidsforholdFraDb)

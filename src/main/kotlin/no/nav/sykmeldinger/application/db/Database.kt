@@ -8,7 +8,7 @@ import java.sql.ResultSet
 import java.util.Properties
 
 class Database(
-    env: Environment
+    env: Environment,
 ) : DatabaseInterface {
     private val dataSource: HikariDataSource
     override val connection: Connection
@@ -31,7 +31,7 @@ class Database(
                 isAutoCommit = false
                 transactionIsolation = "TRANSACTION_READ_COMMITTED"
                 validate()
-            }
+            },
         )
     }
 }

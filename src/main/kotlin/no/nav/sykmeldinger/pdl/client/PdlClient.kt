@@ -15,7 +15,7 @@ import no.nav.sykmeldinger.pdl.client.model.GetPersonVariables
 class PdlClient(
     private val httpClient: HttpClient,
     private val basePath: String,
-    private val graphQlQuery: String
+    private val graphQlQuery: String,
 ) {
     private val temaHeader = "TEMA"
     private val tema = "SYM"

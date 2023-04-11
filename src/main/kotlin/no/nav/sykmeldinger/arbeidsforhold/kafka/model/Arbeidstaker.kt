@@ -4,7 +4,7 @@ import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Ident
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.IdentType
 
 data class Arbeidstaker(
-    val identer: List<Ident>
+    val identer: List<Ident>,
 ) {
     fun getFnr(): String {
         return identer.first {

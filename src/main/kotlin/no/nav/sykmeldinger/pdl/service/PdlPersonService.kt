@@ -12,7 +12,7 @@ import no.nav.sykmeldinger.sikkerlogg
 class PdlPersonService(
     private val pdlClient: PdlClient,
     private val accessTokenClient: AccessTokenClient,
-    private val pdlScope: String
+    private val pdlScope: String,
 ) {
 
     suspend fun getPerson(fnr: String, callId: String): PdlPerson {

@@ -20,7 +20,7 @@ fun getSykmeldt(fnr: String): Sykmeldt =
         fnr = fnr,
         fornavn = "Annet",
         mellomnavn = "Mellomnavn",
-        etternavn = "Etternavn"
+        etternavn = "Etternavn",
     )
 
 fun getArbeidsforhold(fnr: String) =
@@ -31,7 +31,7 @@ fun getArbeidsforhold(fnr: String) =
         juridiskOrgnummer = "999999999",
         orgNavn = "Bedriften AS",
         fom = LocalDate.now().minusYears(3),
-        tom = null
+        tom = null,
     )
 
 fun getSykmelding(): Sykmelding {
@@ -51,11 +51,11 @@ fun getSykmelding(): Sykmelding {
                     medisinskArsak = null,
                     arbeidsrelatertArsak = ArbeidsrelatertArsak(
                         beskrivelse = "",
-                        arsak = listOf(ArbeidsrelatertArsakType.MANGLENDE_TILRETTELEGGING)
-                    )
+                        arsak = listOf(ArbeidsrelatertArsakType.MANGLENDE_TILRETTELEGGING),
+                    ),
                 ),
-                reisetilskudd = false
-            )
+                reisetilskudd = false,
+            ),
         ),
         medisinskVurdering = null,
         prognose = null,
@@ -67,7 +67,7 @@ fun getSykmelding(): Sykmelding {
         meldingTilArbeidsgiver = null,
         kontaktMedPasient = KontaktMedPasient(
             kontaktDato = null,
-            begrunnelseIkkeKontakt = null
+            begrunnelseIkkeKontakt = null,
         ),
         behandletTidspunkt = OffsetDateTime.now(ZoneOffset.UTC),
         behandler = Behandler(
@@ -75,7 +75,7 @@ fun getSykmelding(): Sykmelding {
             mellomnavn = null,
             etternavn = "Doktorsen",
             adresse = Adresse(null, null, null, null, null),
-            tlf = null
+            tlf = null,
         ),
         syketilfelleStartDato = null,
         navnFastlege = null,
@@ -84,6 +84,6 @@ fun getSykmelding(): Sykmelding {
         harRedusertArbeidsgiverperiode = false,
         merknader = null,
         rulesetVersion = null,
-        utenlandskSykmelding = null
+        utenlandskSykmelding = null,
     )
 }

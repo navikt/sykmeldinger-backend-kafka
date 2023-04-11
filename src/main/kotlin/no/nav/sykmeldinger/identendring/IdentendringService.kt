@@ -12,7 +12,7 @@ import no.nav.sykmeldinger.sykmelding.model.Sykmeldt
 class IdentendringService(
     private val arbeidsforholdDb: ArbeidsforholdDb,
     private val sykmeldingDb: SykmeldingDb,
-    private val pdlService: PdlPersonService
+    private val pdlService: PdlPersonService,
 ) {
     suspend fun oppdaterIdent(identListe: List<Identifikator>) {
         if (harEndretFnr(identListe)) {
@@ -42,8 +42,8 @@ class IdentendringService(
                         fnr = nyttFnr,
                         fornavn = navn.fornavn,
                         mellomnavn = navn.mellomnavn,
-                        etternavn = navn.etternavn
-                    )
+                        etternavn = navn.etternavn,
+                    ),
                 )
                 sykmeldte.forEach {
                     sykmeldingDb.deleteSykmeldt(it.fnr)

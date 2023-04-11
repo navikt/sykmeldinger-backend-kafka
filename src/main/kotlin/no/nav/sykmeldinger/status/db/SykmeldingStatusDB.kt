@@ -22,14 +22,14 @@ fun toPGObject(jsonObject: Any) = PGobject().also {
 }
 
 class SykmeldingStatusDB(
-    private val database: DatabaseInterface
+    private val database: DatabaseInterface,
 ) {
     fun insertStatus(statusEvent: List<SykmeldingStatusKafkaEventDTO>): Int {
         database.connection.use { connection ->
             connection.prepareStatement(
                 """
             insert into sykmeldingstatus(sykmelding_id, event, timestamp, arbeidsgiver, sporsmal) values(?, ?, ?, ?, ?) on conflict do nothing;
-        """
+        """,
             ).use { ps ->
                 for (event in statusEvent) {
                     var index = 1

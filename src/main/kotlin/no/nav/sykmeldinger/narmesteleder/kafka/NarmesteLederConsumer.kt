@@ -16,7 +16,7 @@ class NarmesteLederConsumer(
     private val environment: Environment,
     private val kafkaConsumer: KafkaConsumer<String, NarmestelederLeesahKafkaMessage>,
     private val narmesteLederService: NarmesteLederService,
-    private val applicationState: ApplicationState
+    private val applicationState: ApplicationState,
 ) {
 
     @OptIn(DelicateCoroutinesApi::class)

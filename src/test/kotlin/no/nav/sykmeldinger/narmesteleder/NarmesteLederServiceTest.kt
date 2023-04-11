@@ -46,8 +46,8 @@ object NarmesteLederServiceTest : FunSpec({
                     aktivFom = LocalDate.now().minusYears(2),
                     aktivTom = null,
                     arbeidsgiverForskutterer = true,
-                    timestamp = timestamp
-                )
+                    timestamp = timestamp,
+                ),
             )
 
             val narmestelederFraDb = TestDB.getNarmesteleder(nlId.toString())
@@ -57,7 +57,7 @@ object NarmesteLederServiceTest : FunSpec({
                 brukerFnr = fnr,
                 lederFnr = lederFnr,
                 navn = "Fornavn Mellomnavn Etternavn",
-                timestamp = timestamp
+                timestamp = timestamp,
             )
         }
         test("Oppdaterer nærmeste leder") {
@@ -77,8 +77,8 @@ object NarmesteLederServiceTest : FunSpec({
                     aktivFom = LocalDate.now().minusYears(2),
                     aktivTom = null,
                     arbeidsgiverForskutterer = true,
-                    timestamp = timestamp
-                )
+                    timestamp = timestamp,
+                ),
             )
             val timestampOppdatering = OffsetDateTime.now(Clock.tickMillis(ZoneOffset.UTC))
 
@@ -93,8 +93,8 @@ object NarmesteLederServiceTest : FunSpec({
                     aktivFom = LocalDate.now().minusYears(2),
                     aktivTom = null,
                     arbeidsgiverForskutterer = true,
-                    timestamp = timestampOppdatering
-                )
+                    timestamp = timestampOppdatering,
+                ),
             )
 
             val narmestelederFraDb = TestDB.getNarmesteleder(nlId.toString())
@@ -104,7 +104,7 @@ object NarmesteLederServiceTest : FunSpec({
                 brukerFnr = fnr,
                 lederFnr = lederFnr,
                 navn = "Nytt Navn",
-                timestamp = timestampOppdatering
+                timestamp = timestampOppdatering,
             )
         }
         test("Sletter nærmeste leder") {
@@ -120,8 +120,8 @@ object NarmesteLederServiceTest : FunSpec({
                     aktivFom = LocalDate.now().minusYears(2),
                     aktivTom = null,
                     arbeidsgiverForskutterer = true,
-                    timestamp = timestamp
-                )
+                    timestamp = timestamp,
+                ),
             )
 
             narmesteLederService.updateNarmesteLeder(
@@ -135,8 +135,8 @@ object NarmesteLederServiceTest : FunSpec({
                     aktivFom = LocalDate.now().minusYears(2),
                     aktivTom = LocalDate.now(),
                     arbeidsgiverForskutterer = true,
-                    timestamp = timestamp
-                )
+                    timestamp = timestamp,
+                ),
             )
 
             val narmestelederFraDb = TestDB.getNarmesteleder(nlId.toString())

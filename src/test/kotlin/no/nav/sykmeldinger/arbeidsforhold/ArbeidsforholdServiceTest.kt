@@ -30,7 +30,7 @@ object ArbeidsforholdServiceTest : FunSpec({
         TestDB.clearAllData()
         clearMocks(
             arbeidsforholdClient,
-            organisasjonsinfoClient
+            organisasjonsinfoClient,
         )
         coEvery { organisasjonsinfoClient.getOrganisasjonsnavn(any()) } returns getOrganisasjonsinfo()
     }
@@ -41,7 +41,7 @@ object ArbeidsforholdServiceTest : FunSpec({
                     1,
                     Arbeidssted(ArbeidsstedType.Underenhet, listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))),
                     Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))),
-                    Ansettelsesperiode(startdato = LocalDate.now().minusYears(3), sluttdato = null)
+                    Ansettelsesperiode(startdato = LocalDate.now().minusYears(3), sluttdato = null),
                 ),
                 AaregArbeidsforhold(
                     2,
@@ -49,8 +49,8 @@ object ArbeidsforholdServiceTest : FunSpec({
                     Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "999999999", true))),
                     Ansettelsesperiode(
                         startdato = LocalDate.now().minusMonths(6),
-                        sluttdato = LocalDate.now().minusWeeks(3)
-                    )
+                        sluttdato = LocalDate.now().minusWeeks(3),
+                    ),
                 ),
                 AaregArbeidsforhold(
                     3,
@@ -58,12 +58,12 @@ object ArbeidsforholdServiceTest : FunSpec({
                     Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "999999999", true))),
                     Ansettelsesperiode(
                         startdato = LocalDate.now().minusWeeks(2),
-                        sluttdato = LocalDate.now().plusMonths(3)
-                    )
-                )
+                        sluttdato = LocalDate.now().plusMonths(3),
+                    ),
+                ),
             )
             coEvery { organisasjonsinfoClient.getOrganisasjonsnavn(any()) } returns getOrganisasjonsinfo() andThen getOrganisasjonsinfo(
-                navn = "Navn 2"
+                navn = "Navn 2",
             ) andThen getOrganisasjonsinfo(navn = "Navn 2")
 
             val arbeidsforhold = arbeidsforholdService.getArbeidsforhold("12345678901")
@@ -106,7 +106,7 @@ object ArbeidsforholdServiceTest : FunSpec({
                     1,
                     Arbeidssted(ArbeidsstedType.Person, listOf(Ident(IdentType.FOLKEREGISTERIDENT, "fnr", true))),
                     Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))),
-                    Ansettelsesperiode(startdato = LocalDate.now().minusYears(3), sluttdato = null)
+                    Ansettelsesperiode(startdato = LocalDate.now().minusYears(3), sluttdato = null),
                 ),
                 AaregArbeidsforhold(
                     2,
@@ -114,9 +114,9 @@ object ArbeidsforholdServiceTest : FunSpec({
                     Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "999999999", true))),
                     Ansettelsesperiode(
                         startdato = LocalDate.now().minusMonths(6),
-                        sluttdato = LocalDate.now().minusWeeks(3)
-                    )
-                )
+                        sluttdato = LocalDate.now().minusWeeks(3),
+                    ),
+                ),
             )
 
             val arbeidsforhold = arbeidsforholdService.getArbeidsforhold("12345678901")
@@ -138,8 +138,8 @@ object ArbeidsforholdServiceTest : FunSpec({
                     Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))),
                     Ansettelsesperiode(
                         startdato = LocalDate.now().minusMonths(6),
-                        sluttdato = LocalDate.now().minusWeeks(3)
-                    )
+                        sluttdato = LocalDate.now().minusWeeks(3),
+                    ),
                 ),
                 AaregArbeidsforhold(
                     2,
@@ -147,9 +147,9 @@ object ArbeidsforholdServiceTest : FunSpec({
                     Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "999999999", true))),
                     Ansettelsesperiode(
                         startdato = LocalDate.now().minusYears(6),
-                        sluttdato = LocalDate.now().minusMonths(5)
-                    )
-                )
+                        sluttdato = LocalDate.now().minusMonths(5),
+                    ),
+                ),
             )
 
             val arbeidsforhold = arbeidsforholdService.getArbeidsforhold("12345678901")
@@ -170,8 +170,8 @@ object ArbeidsforholdServiceTest : FunSpec({
                     Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))),
                     Ansettelsesperiode(
                         startdato = LocalDate.now().minusMonths(6),
-                        sluttdato = LocalDate.now().minusWeeks(3)
-                    )
+                        sluttdato = LocalDate.now().minusWeeks(3),
+                    ),
                 ),
                 AaregArbeidsforhold(
                     2,
@@ -179,9 +179,9 @@ object ArbeidsforholdServiceTest : FunSpec({
                     Opplysningspliktig(listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))),
                     Ansettelsesperiode(
                         startdato = LocalDate.now().minusMonths(6),
-                        sluttdato = LocalDate.now().minusWeeks(3)
-                    )
-                )
+                        sluttdato = LocalDate.now().minusWeeks(3),
+                    ),
+                ),
             )
 
             val arbeidsforhold = arbeidsforholdService.getArbeidsforhold("12345678901")
@@ -204,7 +204,7 @@ object ArbeidsforholdServiceTest : FunSpec({
                 juridiskOrgnummer = "999999999",
                 orgNavn = "Bedriften AS",
                 fom = LocalDate.of(2020, 5, 1),
-                tom = null
+                tom = null,
             )
 
             arbeidsforholdService.insertOrUpdate(arbeidsforhold)
@@ -227,7 +227,7 @@ object ArbeidsforholdServiceTest : FunSpec({
                 juridiskOrgnummer = "999999999",
                 orgNavn = "Bedriften AS",
                 fom = LocalDate.of(2020, 5, 1),
-                tom = null
+                tom = null,
             )
             arbeidsforholdService.insertOrUpdate(arbeidsforhold)
 
@@ -254,7 +254,7 @@ object ArbeidsforholdServiceTest : FunSpec({
                 juridiskOrgnummer = "999999999",
                 orgNavn = "Bedriften AS",
                 fom = LocalDate.of(2020, 5, 1),
-                tom = null
+                tom = null,
             )
             arbeidsforholdService.insertOrUpdate(arbeidsforhold)
 

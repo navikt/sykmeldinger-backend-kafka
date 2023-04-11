@@ -11,7 +11,7 @@ class BehandlingsutfallDB(private val database: DatabaseInterface) {
                 """
                insert into behandlingsutfall(sykmelding_id, behandlingsutfall, rule_hits) values(?, ?, ?) on conflict(sykmelding_id) do update 
                set behandlingsutfall = excluded.behandlingsutfall, rule_hits = excluded.rule_hits;
-            """
+            """,
             ).use { ps ->
                 for (utfall in behandlingsutfall) {
                     var index = 1

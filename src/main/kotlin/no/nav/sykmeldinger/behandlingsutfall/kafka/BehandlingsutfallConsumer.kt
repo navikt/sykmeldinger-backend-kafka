@@ -38,7 +38,7 @@ class BehandlingsutfallConsumer(
     private val kafkaConsumer: KafkaConsumer<String, String>,
     private val applicationState: ApplicationState,
     private val environment: Environment,
-    private val behandlingsutfallDb: BehandlingsutfallDB
+    private val behandlingsutfallDb: BehandlingsutfallDB,
 ) {
     companion object {
         private val log = LoggerFactory.getLogger(BehandlingsutfallConsumer::class.java)
@@ -55,11 +55,11 @@ class BehandlingsutfallConsumer(
                 while (applicationState.ready) {
                     no.nav.sykmeldinger.log.info(
                         "total behandlingsutfall: $totalRecords, last $lastDate avg tot: ${
-                        getDurationPerRecord(
-                            totalDuration,
-                            totalRecords
-                        )
-                        } ms"
+                            getDurationPerRecord(
+                                totalDuration,
+                                totalRecords,
+                            )
+                        } ms",
                     )
                     delay(10000)
                 }
@@ -88,7 +88,7 @@ class BehandlingsutfallConsumer(
                     totalRecords += consumerRecords.count()
                     lastDate = OffsetDateTime.ofInstant(
                         Instant.ofEpochMilli(consumerRecords.last().timestamp()),
-                        ZoneOffset.UTC
+                        ZoneOffset.UTC,
                     )
                     val behandlingsutfallRecrods = consumerRecords.filterNot { it.value() == null }
 
@@ -114,7 +114,7 @@ class BehandlingsutfallConsumer(
                 Behandlingsutfall(
                     ruleHits = validationResult.ruleHits,
                     sykmeldingId = it.key(),
-                    status = validationResult.status.name
+                    status = validationResult.status.name,
                 )
             }
             behandlingsutfallDb.insertOrUpdateBatch(behandlingsutfalls)

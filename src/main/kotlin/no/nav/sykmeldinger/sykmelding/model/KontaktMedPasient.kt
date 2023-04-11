@@ -4,5 +4,5 @@ import java.time.LocalDate
 
 data class KontaktMedPasient(
     val kontaktDato: LocalDate?,
-    val begrunnelseIkkeKontakt: String?
+    val begrunnelseIkkeKontakt: String?,
 )

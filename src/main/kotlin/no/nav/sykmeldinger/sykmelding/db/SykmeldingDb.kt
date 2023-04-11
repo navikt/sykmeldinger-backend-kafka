@@ -10,7 +10,7 @@ import java.sql.Connection
 import java.sql.ResultSet
 
 class SykmeldingDb(
-    private val database: DatabaseInterface
+    private val database: DatabaseInterface,
 ) {
     fun saveOrUpdate(sykmeldingId: String, sykmelding: Sykmelding, sykmeldt: Sykmeldt) {
         database.connection.use { connection ->
@@ -20,7 +20,7 @@ class SykmeldingDb(
                     values (?, ?, ?) on conflict (sykmelding_id) do update
                      set fnr = excluded.fnr,
                          sykmelding = excluded.sykmelding;
-                """.trimIndent()
+                """.trimIndent(),
             ).use { preparedStatement ->
                 preparedStatement.setString(1, sykmeldingId)
                 preparedStatement.setString(2, sykmeldt.fnr)
@@ -37,7 +37,7 @@ class SykmeldingDb(
             connection.prepareStatement(
                 """ 
                     delete from sykmelding where sykmelding_id = ?;
-                """.trimIndent()
+                """.trimIndent(),
             ).use { preparedStatement ->
                 preparedStatement.setString(1, sykmeldingId)
                 preparedStatement.execute()
@@ -45,7 +45,7 @@ class SykmeldingDb(
             connection.prepareStatement(
                 """ 
                     delete from behandlingsutfall where sykmelding_id = ?;
-                """.trimIndent()
+                """.trimIndent(),
             ).use { preparedStatement ->
                 preparedStatement.setString(1, sykmeldingId)
                 preparedStatement.execute()
@@ -53,7 +53,7 @@ class SykmeldingDb(
             connection.prepareStatement(
                 """ 
                     delete from sykmeldingstatus where sykmelding_id = ?;
-                """.trimIndent()
+                """.trimIndent(),
             ).use { preparedStatement ->
                 preparedStatement.setString(1, sykmeldingId)
                 preparedStatement.execute()
@@ -67,7 +67,7 @@ class SykmeldingDb(
             it.prepareStatement(
                 """
                     SELECT sykmelding_id FROM sykmelding WHERE fnr = ?;
-                """
+                """,
             ).use { ps ->
                 ps.setString(1, fnr)
                 ps.executeQuery().toList { getString("sykmelding_id") }
@@ -80,7 +80,7 @@ class SykmeldingDb(
             connection.prepareStatement(
                 """
                update sykmelding set fnr = ? where sykmelding_id = ?;
-            """
+            """,
             ).use { preparedStatement ->
                 preparedStatement.setString(1, nyttFnr)
                 preparedStatement.setString(2, sykmeldingId)
@@ -95,7 +95,7 @@ class SykmeldingDb(
             connection.prepareStatement(
                 """ 
                     select * from sykmeldt where fnr = ?;
-                """.trimIndent()
+                """.trimIndent(),
             ).use { preparedStatement ->
                 preparedStatement.setString(1, fnr)
                 preparedStatement.executeQuery().toList { toSykmeldt() }.firstOrNull()
@@ -118,7 +118,7 @@ class SykmeldingDb(
                      set fornavn = excluded.fornavn,
                          mellomnavn = excluded.mellomnavn,
                          etternavn = excluded.etternavn;
-            """.trimIndent()
+            """.trimIndent(),
         ).use { ps ->
             ps.setString(1, sykmeldt.fnr)
             ps.setString(2, sykmeldt.fornavn)
@@ -133,7 +133,7 @@ class SykmeldingDb(
             connection.prepareStatement(
                 """ 
                     delete from sykmeldt where fnr = ?;
-                """.trimIndent()
+                """.trimIndent(),
             ).use { preparedStatement ->
                 preparedStatement.setString(1, fnr)
                 preparedStatement.execute()
@@ -148,7 +148,7 @@ fun ResultSet.toSykmeldt(): Sykmeldt =
         fnr = getString("fnr"),
         fornavn = getString("fornavn"),
         mellomnavn = getString("mellomnavn"),
-        etternavn = getString("etternavn")
+        etternavn = getString("etternavn"),
     )
 
 private fun Sykmelding.toPGObject() = PGobject().also {

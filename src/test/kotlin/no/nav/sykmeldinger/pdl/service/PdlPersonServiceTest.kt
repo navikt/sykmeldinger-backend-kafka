@@ -34,18 +34,18 @@ class PdlPersonServiceTest : FunSpec({
                 data = ResponseData(
                     PersonResponse(
                         listOf(
-                            Navn("Fornavn", null, "Etternavn")
-                        )
+                            Navn("Fornavn", null, "Etternavn"),
+                        ),
                     ),
                     Identliste(
                         listOf(
                             IdentInformasjon("12345678910", true, "FOLKEREGISTERIDENT"),
                             IdentInformasjon("xxxxx", false, "AKTOERID"),
-                            IdentInformasjon("10987654321", false, "FOLKEREGISTERIDENT")
-                        )
-                    )
+                            IdentInformasjon("10987654321", false, "FOLKEREGISTERIDENT"),
+                        ),
+                    ),
                 ),
-                errors = null
+                errors = null,
             )
 
             val person = pdlPersonService.getPerson("fnr", "callid")
@@ -56,7 +56,7 @@ class PdlPersonServiceTest : FunSpec({
         test("Feiler hvis vi ikke finner navn") {
             coEvery { pdlClient.getPerson("fnr", "token") } returns GetPersonResponse(
                 data = ResponseData(null, null),
-                errors = listOf(ResponseError("Fant ikke person", emptyList(), null, null))
+                errors = listOf(ResponseError("Fant ikke person", emptyList(), null, null)),
             )
 
             assertFailsWith<PersonNotFoundInPdl> {
@@ -68,12 +68,12 @@ class PdlPersonServiceTest : FunSpec({
                 data = ResponseData(
                     PersonResponse(
                         listOf(
-                            Navn("Fornavn", null, "Etternavn")
-                        )
+                            Navn("Fornavn", null, "Etternavn"),
+                        ),
                     ),
-                    Identliste(emptyList())
+                    Identliste(emptyList()),
                 ),
-                errors = listOf(ResponseError("Fant ikke ident", emptyList(), null, null))
+                errors = listOf(ResponseError("Fant ikke ident", emptyList(), null, null)),
             )
 
             assertFailsWith<PersonNotFoundInPdl> {
@@ -85,17 +85,17 @@ class PdlPersonServiceTest : FunSpec({
                 data = ResponseData(
                     PersonResponse(
                         listOf(
-                            Navn("Fornavn", null, "Etternavn")
-                        )
+                            Navn("Fornavn", null, "Etternavn"),
+                        ),
                     ),
                     Identliste(
                         listOf(
                             IdentInformasjon("12345678910", true, "FOLKEREGISTERIDENT"),
-                            IdentInformasjon("xxxxx", false, "AKTOERID")
-                        )
-                    )
+                            IdentInformasjon("xxxxx", false, "AKTOERID"),
+                        ),
+                    ),
                 ),
-                errors = null
+                errors = null,
             )
 
             assertFailsWith<PersonNotFoundInPdl> {
@@ -110,18 +110,18 @@ class PdlPersonServiceTest : FunSpec({
                 data = ResponseData(
                     PersonResponse(
                         listOf(
-                            Navn("Fornavn", null, "Etternavn")
-                        )
+                            Navn("Fornavn", null, "Etternavn"),
+                        ),
                     ),
                     Identliste(
                         listOf(
                             IdentInformasjon("12345678910", true, "FOLKEREGISTERIDENT"),
                             IdentInformasjon("xxxxx", false, "AKTOERID"),
-                            IdentInformasjon("10987654321", false, "FOLKEREGISTERIDENT")
-                        )
-                    )
+                            IdentInformasjon("10987654321", false, "FOLKEREGISTERIDENT"),
+                        ),
+                    ),
                 ),
-                errors = null
+                errors = null,
             )
 
             pdlPersonService.getNavnHvisIdentErAktiv("10987654321") shouldBeEqualTo no.nav.sykmeldinger.pdl.model.Navn("Fornavn", null, "Etternavn")
@@ -131,18 +131,18 @@ class PdlPersonServiceTest : FunSpec({
                 data = ResponseData(
                     PersonResponse(
                         listOf(
-                            Navn("Fornavn", null, "Etternavn")
-                        )
+                            Navn("Fornavn", null, "Etternavn"),
+                        ),
                     ),
                     Identliste(
                         listOf(
                             IdentInformasjon("12345678910", true, "FOLKEREGISTERIDENT"),
                             IdentInformasjon("xxxxx", false, "AKTOERID"),
-                            IdentInformasjon("10987654321", false, "FOLKEREGISTERIDENT")
-                        )
-                    )
+                            IdentInformasjon("10987654321", false, "FOLKEREGISTERIDENT"),
+                        ),
+                    ),
                 ),
-                errors = null
+                errors = null,
             )
 
             assertFailsWith<InactiveIdentException> {
@@ -154,12 +154,12 @@ class PdlPersonServiceTest : FunSpec({
                 data = ResponseData(
                     PersonResponse(
                         listOf(
-                            Navn("Fornavn", null, "Etternavn")
-                        )
+                            Navn("Fornavn", null, "Etternavn"),
+                        ),
                     ),
-                    Identliste(emptyList())
+                    Identliste(emptyList()),
                 ),
-                errors = listOf(ResponseError("Fant ikke ident", emptyList(), null, null))
+                errors = listOf(ResponseError("Fant ikke ident", emptyList(), null, null)),
             )
 
             assertFailsWith<PersonNotFoundInPdl> {

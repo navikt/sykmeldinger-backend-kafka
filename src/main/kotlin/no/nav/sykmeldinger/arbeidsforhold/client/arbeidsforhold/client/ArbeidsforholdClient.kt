@@ -14,7 +14,7 @@ class ArbeidsforholdClient(
     private val httpClient: HttpClient,
     private val url: String,
     private val accessTokenClient: AccessTokenClient,
-    private val scope: String
+    private val scope: String,
 ) {
 
     private val arbeidsforholdPath = "$url/api/v2/arbeidstaker/arbeidsforhold"
@@ -27,7 +27,7 @@ class ArbeidsforholdClient(
             return httpClient.get(
                 "$arbeidsforholdPath?" +
                     "sporingsinformasjon=false&" +
-                    "arbeidsforholdstatus=AKTIV,FREMTIDIG,AVSLUTTET"
+                    "arbeidsforholdstatus=AKTIV,FREMTIDIG,AVSLUTTET",
             ) {
                 header(navPersonident, fnr)
                 header(HttpHeaders.Authorization, "Bearer $token")

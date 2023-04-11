@@ -9,7 +9,7 @@ import no.nav.sykmeldinger.pdl.service.PdlPersonService
 class NarmesteLederService(
     private val pdlPersonService: PdlPersonService,
     private val narmestelederDb: NarmestelederDb,
-    private val cluster: String
+    private val cluster: String,
 ) {
     suspend fun updateNarmesteLeder(narmestelederLeesahKafkaMessage: NarmestelederLeesahKafkaMessage) {
         when (narmestelederLeesahKafkaMessage.aktivTom) {
@@ -17,10 +17,10 @@ class NarmesteLederService(
                 try {
                     val pdlPerson = pdlPersonService.getPerson(
                         fnr = narmestelederLeesahKafkaMessage.narmesteLederFnr,
-                        callId = narmestelederLeesahKafkaMessage.narmesteLederId.toString()
+                        callId = narmestelederLeesahKafkaMessage.narmesteLederId.toString(),
                     )
                     narmestelederDb.insertOrUpdate(
-                        narmestelederLeesahKafkaMessage.toNarmestelederDbModel(pdlPerson.navn.toFormattedNameString())
+                        narmestelederLeesahKafkaMessage.toNarmestelederDbModel(pdlPerson.navn.toFormattedNameString()),
                     )
                     NL_TOPIC_COUNTER.labels("ny").inc()
                 } catch (e: Exception) {

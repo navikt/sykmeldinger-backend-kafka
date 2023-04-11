@@ -18,7 +18,7 @@ class PdlAktorConsumer(
     private val kafkaConsumer: KafkaConsumer<String, Aktor>,
     private val applicationState: ApplicationState,
     private val topic: String,
-    private val identendringService: IdentendringService
+    private val identendringService: IdentendringService,
 ) {
     companion object {
         private const val DELAY_ON_ERROR_SECONDS = 60L

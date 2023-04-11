@@ -6,7 +6,7 @@ import java.sql.Timestamp
 import java.time.ZoneOffset
 
 class NarmestelederDb(
-    private val database: DatabaseInterface
+    private val database: DatabaseInterface,
 ) {
     fun insertOrUpdate(narmesteleder: NarmestelederDbModel) {
         database.connection.use { connection ->
@@ -19,7 +19,7 @@ class NarmestelederDb(
                     narmeste_leder_fnr = ?,
                     navn = ?,
                     timestamp = ?;
-            """
+            """,
             ).use { preparedStatement ->
                 preparedStatement.setString(1, narmesteleder.narmestelederId)
                 // insert
@@ -45,7 +45,7 @@ class NarmestelederDb(
             connection.prepareStatement(
                 """
                delete from narmesteleder where narmeste_leder_id = ?;
-            """
+            """,
             ).use { ps ->
                 ps.setString(1, narmestelederId)
                 ps.executeUpdate()
@@ -59,7 +59,7 @@ class NarmestelederDb(
             it.prepareStatement(
                 """
                     SELECT * FROM narmesteleder WHERE narmeste_leder_fnr = ?;
-                """
+                """,
             ).use { ps ->
                 ps.setString(1, lederFnr)
                 ps.executeQuery().next()
@@ -72,7 +72,7 @@ class NarmestelederDb(
             connection.prepareStatement(
                 """
                update narmesteleder set navn = ? where narmeste_leder_fnr = ?;
-            """
+            """,
             ).use { preparedStatement ->
                 preparedStatement.setString(1, navn)
                 preparedStatement.setString(2, lederFnr)
@@ -90,5 +90,5 @@ fun ResultSet.toNarmestelederDbModel(): NarmestelederDbModel =
         brukerFnr = getString("bruker_fnr"),
         lederFnr = getString("narmeste_leder_fnr"),
         navn = getString("navn"),
-        timestamp = getTimestamp("timestamp").toInstant().atOffset(ZoneOffset.UTC)
+        timestamp = getTimestamp("timestamp").toInstant().atOffset(ZoneOffset.UTC),
     )

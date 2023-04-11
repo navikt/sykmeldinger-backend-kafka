@@ -5,5 +5,5 @@ data class Adresse(
     val postnummer: Int?,
     val kommune: String?,
     val postboks: String?,
-    val land: String?
+    val land: String?,
 )

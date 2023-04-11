@@ -9,7 +9,7 @@ import no.nav.sykmeldinger.log
 
 class OrganisasjonsinfoClient(
     private val httpClient: HttpClient,
-    private val url: String
+    private val url: String,
 ) {
     suspend fun getOrganisasjonsnavn(orgNummer: String): Organisasjonsinfo {
         val timer = HTTP_CLIENT_HISTOGRAM.labels("$url/api/v1/organisasjon/:orgNummer/noekkelinfo").startTimer()

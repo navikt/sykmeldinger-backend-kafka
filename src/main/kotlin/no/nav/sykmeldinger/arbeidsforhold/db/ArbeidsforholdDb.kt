@@ -10,7 +10,7 @@ import java.sql.ResultSet
 import java.time.LocalDate
 
 class ArbeidsforholdDb(
-    private val database: DatabaseInterface
+    private val database: DatabaseInterface,
 ) {
     suspend fun insertOrUpdate(arbeidsforhold: Arbeidsforhold) = withContext(Dispatchers.IO) {
         database.connection.use { connection ->
@@ -24,7 +24,7 @@ class ArbeidsforholdDb(
                     orgnavn = excluded.orgnavn,
                     fom = excluded.fom,
                     tom = excluded.tom;
-            """
+            """,
             ).use { preparedStatement ->
                 preparedStatement.setString(1, arbeidsforhold.id.toString())
                 preparedStatement.setString(2, arbeidsforhold.fnr)
@@ -44,7 +44,7 @@ class ArbeidsforholdDb(
             it.prepareStatement(
                 """
                     SELECT * FROM arbeidsforhold WHERE fnr = ?;
-                """
+                """,
             ).use { ps ->
                 ps.setString(1, fnr)
                 ps.executeQuery().toList { toArbeidsforhold() }
@@ -57,7 +57,7 @@ class ArbeidsforholdDb(
             connection.prepareStatement(
                 """
                update arbeidsforhold set fnr = ? where id = ?;
-            """
+            """,
             ).use { preparedStatement ->
                 preparedStatement.setString(1, nyttFnr)
                 preparedStatement.setString(2, id.toString())
@@ -72,7 +72,7 @@ class ArbeidsforholdDb(
             connection.prepareStatement(
                 """
                     DELETE FROM arbeidsforhold WHERE id = ?;
-                """
+                """,
             ).use { ps ->
                 ps.setString(1, id.toString())
                 ps.executeUpdate()
@@ -86,7 +86,7 @@ class ArbeidsforholdDb(
             val result = connection.prepareStatement(
                 """
                     DELETE FROM arbeidsforhold where tom is not null and tom < ?;
-                """
+                """,
             ).use { ps ->
                 ps.setDate(1, Date.valueOf(date))
                 ps.executeUpdate()
@@ -105,5 +105,5 @@ fun ResultSet.toArbeidsforhold(): Arbeidsforhold =
         juridiskOrgnummer = getString("juridisk_orgnummer"),
         orgNavn = getString("orgnavn"),
         fom = getDate("fom").toLocalDate(),
-        tom = getDate("tom")?.toLocalDate()
+        tom = getDate("tom")?.toLocalDate(),
     )

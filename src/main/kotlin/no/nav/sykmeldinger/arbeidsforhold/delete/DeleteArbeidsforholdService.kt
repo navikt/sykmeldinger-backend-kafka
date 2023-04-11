@@ -19,7 +19,7 @@ import java.time.ZoneOffset
 class DeleteArbeidsforholdService(
     private val arbeidsforholdDb: ArbeidsforholdDb,
     private val leaderElection: LeaderElection,
-    private val applicationState: ApplicationState
+    private val applicationState: ApplicationState,
 ) {
     companion object {
         private const val MONTHS_FOR_ARBEIDSFORHOLD = 4L
@@ -41,8 +41,8 @@ class DeleteArbeidsforholdService(
                 delay(
                     getDelayTime(
                         start = OffsetTime.of(LocalTime.of(5, 0), ZoneOffset.UTC),
-                        now = OffsetTime.now(ZoneOffset.UTC)
-                    )
+                        now = OffsetTime.now(ZoneOffset.UTC),
+                    ),
                 )
             }
         }

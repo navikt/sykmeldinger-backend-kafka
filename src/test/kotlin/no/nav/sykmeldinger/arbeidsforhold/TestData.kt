@@ -11,7 +11,7 @@ fun getOrganisasjonsinfo(navn: String = "Navn 1"): Organisasjonsinfo {
             null,
             null,
             null,
-            null
-        )
+            null,
+        ),
     )
 }

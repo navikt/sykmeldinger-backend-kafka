@@ -5,5 +5,5 @@ data class Behandler(
     val mellomnavn: String?,
     val etternavn: String,
     val adresse: Adresse,
-    val tlf: String?
+    val tlf: String?,
 )

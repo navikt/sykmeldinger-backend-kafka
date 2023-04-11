@@ -8,5 +8,5 @@ data class NarmestelederDbModel(
     val brukerFnr: String,
     val lederFnr: String,
     val navn: String,
-    val timestamp: OffsetDateTime
+    val timestamp: OffsetDateTime,
 )

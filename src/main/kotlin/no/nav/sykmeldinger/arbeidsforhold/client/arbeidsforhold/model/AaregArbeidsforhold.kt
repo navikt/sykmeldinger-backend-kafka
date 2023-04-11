@@ -4,5 +4,5 @@ data class AaregArbeidsforhold(
     val navArbeidsforholdId: Int,
     val arbeidssted: Arbeidssted,
     val opplysningspliktig: Opplysningspliktig,
-    val ansettelsesperiode: Ansettelsesperiode
+    val ansettelsesperiode: Ansettelsesperiode,
 )

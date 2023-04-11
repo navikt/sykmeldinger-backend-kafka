@@ -11,7 +11,7 @@ import java.time.LocalDate
 class ArbeidsforholdService(
     private val arbeidsforholdClient: ArbeidsforholdClient,
     private val organisasjonsinfoClient: OrganisasjonsinfoClient,
-    private val arbeidsforholdDb: ArbeidsforholdDb
+    private val arbeidsforholdDb: ArbeidsforholdDb,
 ) {
     suspend fun insertOrUpdate(arbeidsforhold: Arbeidsforhold) {
         arbeidsforholdDb.insertOrUpdate(arbeidsforhold)
@@ -30,7 +30,7 @@ class ArbeidsforholdService(
         }.sortedWith(
             compareByDescending(nullsLast()) {
                 it.ansettelsesperiode.sluttdato
-            }
+            },
         ).forEach { aaregArbeidsforhold ->
             val organisasjonsinfo =
                 organisasjonsinfoClient.getOrganisasjonsnavn(aaregArbeidsforhold.arbeidssted.getOrgnummer())
@@ -42,8 +42,8 @@ class ArbeidsforholdService(
                     juridiskOrgnummer = aaregArbeidsforhold.opplysningspliktig.getJuridiskOrgnummer(),
                     orgNavn = organisasjonsinfo.navn.getNameAsString(),
                     fom = aaregArbeidsforhold.ansettelsesperiode.startdato,
-                    tom = aaregArbeidsforhold.ansettelsesperiode.sluttdato
-                )
+                    tom = aaregArbeidsforhold.ansettelsesperiode.sluttdato,
+                ),
             )
         }
         return arbeidsgiverList.distinctBy { listOf(it.fnr, it.orgnummer, it.juridiskOrgnummer, it.orgNavn, it.fom, it.tom) }

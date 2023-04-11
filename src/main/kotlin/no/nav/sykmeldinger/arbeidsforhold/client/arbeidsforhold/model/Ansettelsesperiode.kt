@@ -4,5 +4,5 @@ import java.time.LocalDate
 
 data class Ansettelsesperiode(
     val startdato: LocalDate,
-    val sluttdato: LocalDate?
+    val sluttdato: LocalDate?,
 )

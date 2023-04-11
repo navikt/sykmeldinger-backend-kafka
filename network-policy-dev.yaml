@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: sykmeldinger-db-instance
+  name: sykmeldinger-backend-kafka-db
   namespace: teamsykmelding
 spec:
   egress:

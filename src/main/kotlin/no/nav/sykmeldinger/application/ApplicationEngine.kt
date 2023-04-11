@@ -19,7 +19,7 @@ import no.nav.sykmeldinger.application.metrics.monitorHttpRequests
 
 fun createApplicationEngine(
     env: Environment,
-    applicationState: ApplicationState
+    applicationState: ApplicationState,
 ): ApplicationEngine =
     embeddedServer(Netty, env.applicationPort) {
         install(ContentNegotiation) {

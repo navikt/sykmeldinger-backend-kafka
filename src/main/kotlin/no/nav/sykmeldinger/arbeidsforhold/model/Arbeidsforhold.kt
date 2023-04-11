@@ -9,5 +9,5 @@ data class Arbeidsforhold(
     val juridiskOrgnummer: String,
     val orgNavn: String,
     val fom: LocalDate,
-    val tom: LocalDate?
+    val tom: LocalDate?,
 )

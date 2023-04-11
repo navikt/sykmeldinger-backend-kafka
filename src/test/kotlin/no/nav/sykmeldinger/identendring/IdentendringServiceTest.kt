@@ -27,7 +27,7 @@ object IdentendringServiceTest : FunSpec({
     beforeTest {
         TestDB.clearAllData()
         clearMocks(
-            pdlPersonService
+            pdlPersonService,
         )
         coEvery { pdlPersonService.getNavnHvisIdentErAktiv(any()) } returns Navn("Fornavn", null, "Etternavn")
     }
@@ -43,7 +43,7 @@ object IdentendringServiceTest : FunSpec({
             val identListe = listOf(
                 Identifikator(nyttFnr, Type.FOLKEREGISTERIDENT, true),
                 Identifikator(fnr, Type.FOLKEREGISTERIDENT, false),
-                Identifikator("2222", Type.AKTORID, false)
+                Identifikator("2222", Type.AKTORID, false),
             )
 
             identendringService.oppdaterIdent(identListe)
@@ -64,7 +64,7 @@ object IdentendringServiceTest : FunSpec({
             val identListeMedAnnetFnr = listOf(
                 Identifikator("1234", Type.FOLKEREGISTERIDENT, true),
                 Identifikator("1111", Type.FOLKEREGISTERIDENT, false),
-                Identifikator("2222", Type.AKTORID, false)
+                Identifikator("2222", Type.AKTORID, false),
             )
 
             identendringService.oppdaterIdent(identListeMedAnnetFnr)
@@ -75,7 +75,7 @@ object IdentendringServiceTest : FunSpec({
             val identListeUtenEndringIFnr = listOf(
                 Identifikator("1234", Type.FOLKEREGISTERIDENT, true),
                 Identifikator("1111", Type.AKTORID, true),
-                Identifikator("2222", Type.AKTORID, false)
+                Identifikator("2222", Type.AKTORID, false),
             )
 
             identendringService.oppdaterIdent(identListeUtenEndringIFnr)
@@ -93,7 +93,7 @@ object IdentendringServiceTest : FunSpec({
             val identListe = listOf(
                 Identifikator(nyttFnr, Type.FOLKEREGISTERIDENT, true),
                 Identifikator(fnr, Type.FOLKEREGISTERIDENT, false),
-                Identifikator("2222", Type.AKTORID, false)
+                Identifikator("2222", Type.AKTORID, false),
             )
 
             assertFailsWith<PersonNotFoundInPdl> {
@@ -104,7 +104,7 @@ object IdentendringServiceTest : FunSpec({
             val identListeUtenNyttFnr = listOf(
                 Identifikator("1234", Type.FOLKEREGISTERIDENT, false),
                 Identifikator("1111", Type.FOLKEREGISTERIDENT, false),
-                Identifikator("2222", Type.AKTORID, false)
+                Identifikator("2222", Type.AKTORID, false),
             )
 
             assertFailsWith<IllegalStateException> {

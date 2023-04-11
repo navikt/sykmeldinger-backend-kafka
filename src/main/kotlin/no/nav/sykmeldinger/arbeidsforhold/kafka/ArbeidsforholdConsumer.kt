@@ -21,7 +21,7 @@ class ArbeidsforholdConsumer(
     private val applicationState: ApplicationState,
     private val topic: String,
     private val sykmeldingDb: SykmeldingDb,
-    private val arbeidsforholdService: ArbeidsforholdService
+    private val arbeidsforholdService: ArbeidsforholdService,
 ) {
     companion object {
         private const val DELAY_ON_ERROR_SECONDS = 60L
@@ -37,7 +37,7 @@ class ArbeidsforholdConsumer(
                 } catch (ex: Exception) {
                     log.error(
                         "Error running kafka consumer for arbeidsforhold, unsubscribing and waiting $DELAY_ON_ERROR_SECONDS seconds for retry",
-                        ex
+                        ex,
                     )
                     kafkaConsumer.unsubscribe()
                     delay(DELAY_ON_ERROR_SECONDS.seconds)

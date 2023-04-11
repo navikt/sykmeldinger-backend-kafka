@@ -3,7 +3,7 @@ package no.nav.sykmeldinger.pdl.model
 data class Navn(
     val fornavn: String,
     val mellomnavn: String?,
-    val etternavn: String
+    val etternavn: String,
 ) {
     fun toFormattedNameString(): String {
         return if (mellomnavn.isNullOrEmpty()) {
