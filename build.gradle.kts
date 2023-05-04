@@ -21,7 +21,7 @@ val hikariVersion = "5.0.1"
 val googlePostgresVersion = "1.11.1"
 val smCommonVersion = "1.0.1"
 val flywayVersion = "9.17.0"
-val confluentVersion = "7.3.3"
+val confluentVersion = "7.4.0"
 val commonsCodecVersion = "1.15"
 
 tasks.withType<Jar> {
