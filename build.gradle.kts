@@ -33,7 +33,7 @@ plugins {
     kotlin("jvm") version "1.8.21"
     id("com.diffplug.spotless") version "6.18.0"
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("com.github.davidmc24.gradle.plugin.avro") version "1.7.0"
+    id("com.github.davidmc24.gradle.plugin.avro") version "1.7.1"
 }
 
 buildscript {
