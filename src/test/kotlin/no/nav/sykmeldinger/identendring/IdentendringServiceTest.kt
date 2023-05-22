@@ -39,7 +39,7 @@ object IdentendringServiceTest : FunSpec({
             val sykmeldingId = UUID.randomUUID().toString()
             arbeidsforholdDb.insertOrUpdate(getArbeidsforhold(fnr))
             sykmeldingDb.saveOrUpdateSykmeldt(getSykmeldt(fnr))
-            sykmeldingDb.saveOrUpdate(sykmeldingId, getSykmelding(), getSykmeldt(fnr))
+            sykmeldingDb.saveOrUpdate(sykmeldingId, getSykmelding(), getSykmeldt(fnr), okSykmelding = false)
             val identListe = listOf(
                 Identifikator(nyttFnr, Type.FOLKEREGISTERIDENT, true),
                 Identifikator(fnr, Type.FOLKEREGISTERIDENT, false),
@@ -60,7 +60,7 @@ object IdentendringServiceTest : FunSpec({
             val sykmeldingId = UUID.randomUUID().toString()
             arbeidsforholdDb.insertOrUpdate(getArbeidsforhold(fnr))
             sykmeldingDb.saveOrUpdateSykmeldt(getSykmeldt(fnr))
-            sykmeldingDb.saveOrUpdate(sykmeldingId, getSykmelding(), getSykmeldt(fnr))
+            sykmeldingDb.saveOrUpdate(sykmeldingId, getSykmelding(), getSykmeldt(fnr), okSykmelding = false)
             val identListeMedAnnetFnr = listOf(
                 Identifikator("1234", Type.FOLKEREGISTERIDENT, true),
                 Identifikator("1111", Type.FOLKEREGISTERIDENT, false),
@@ -89,7 +89,7 @@ object IdentendringServiceTest : FunSpec({
             val sykmeldingId = UUID.randomUUID().toString()
             arbeidsforholdDb.insertOrUpdate(getArbeidsforhold(fnr))
             sykmeldingDb.saveOrUpdateSykmeldt(getSykmeldt(fnr))
-            sykmeldingDb.saveOrUpdate(sykmeldingId, getSykmelding(), getSykmeldt(fnr))
+            sykmeldingDb.saveOrUpdate(sykmeldingId, getSykmelding(), getSykmeldt(fnr), okSykmelding = false)
             val identListe = listOf(
                 Identifikator(nyttFnr, Type.FOLKEREGISTERIDENT, true),
                 Identifikator(fnr, Type.FOLKEREGISTERIDENT, false),
