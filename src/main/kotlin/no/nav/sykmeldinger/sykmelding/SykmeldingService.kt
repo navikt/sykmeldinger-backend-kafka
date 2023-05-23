@@ -7,8 +7,8 @@ import no.nav.sykmeldinger.sykmelding.model.Sykmeldt
 class SykmeldingService(
     private val sykmeldingDb: SykmeldingDb,
 ) {
-    fun saveOrUpdate(sykmeldingId: String, sykmelding: Sykmelding, sykmeldt: Sykmeldt) {
-        return sykmeldingDb.saveOrUpdate(sykmeldingId, sykmelding, sykmeldt)
+    fun saveOrUpdate(sykmeldingId: String, sykmelding: Sykmelding, sykmeldt: Sykmeldt, okSykmelding: Boolean) {
+        return sykmeldingDb.saveOrUpdate(sykmeldingId, sykmelding, sykmeldt, okSykmelding)
     }
 
     fun deleteSykmelding(sykmeldingId: String) {

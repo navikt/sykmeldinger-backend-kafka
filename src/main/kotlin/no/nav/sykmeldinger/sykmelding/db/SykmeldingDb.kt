@@ -1,8 +1,10 @@
 package no.nav.sykmeldinger.sykmelding.db
 
+import no.nav.syfo.model.RuleInfo
 import no.nav.sykmeldinger.application.db.DatabaseInterface
 import no.nav.sykmeldinger.application.db.toList
 import no.nav.sykmeldinger.objectMapper
+import no.nav.sykmeldinger.status.db.toPGObject
 import no.nav.sykmeldinger.sykmelding.model.Sykmelding
 import no.nav.sykmeldinger.sykmelding.model.Sykmeldt
 import org.postgresql.util.PGobject
@@ -12,7 +14,7 @@ import java.sql.ResultSet
 class SykmeldingDb(
     private val database: DatabaseInterface,
 ) {
-    fun saveOrUpdate(sykmeldingId: String, sykmelding: Sykmelding, sykmeldt: Sykmeldt) {
+    fun saveOrUpdate(sykmeldingId: String, sykmelding: Sykmelding, sykmeldt: Sykmeldt, okSykmelding: Boolean) {
         database.connection.use { connection ->
             connection.prepareStatement(
                 """ 
@@ -28,6 +30,9 @@ class SykmeldingDb(
                 preparedStatement.executeUpdate()
             }
             connection.saveOrUpdateSykmeldt(sykmeldt)
+            if (okSykmelding) {
+                connection.insertOKBehandlingsutfall(sykmeldingId)
+            }
             connection.commit()
         }
     }
@@ -124,6 +129,20 @@ class SykmeldingDb(
             ps.setString(2, sykmeldt.fornavn)
             ps.setString(3, sykmeldt.mellomnavn)
             ps.setString(4, sykmeldt.etternavn)
+            ps.executeUpdate()
+        }
+    }
+
+    fun Connection.insertOKBehandlingsutfall(sykmeldingId: String) {
+        prepareStatement(
+            """
+               insert into behandlingsutfall(sykmelding_id, behandlingsutfall, rule_hits) values(?, ?, ?) on conflict(sykmelding_id) do nothing;
+            """,
+        ).use { ps ->
+            var index = 1
+            ps.setString(index++, sykmeldingId)
+            ps.setString(index++, "OK")
+            ps.setObject(index, toPGObject(emptyList<RuleInfo>()))
             ps.executeUpdate()
         }
     }

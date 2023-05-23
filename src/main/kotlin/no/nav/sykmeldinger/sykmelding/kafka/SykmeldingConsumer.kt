@@ -106,31 +106,45 @@ class SykmeldingConsumer(
                         ZoneOffset.UTC,
                     )
 
-                    val sykmeldinger = consumerRecords.map { cr ->
+                    consumerRecords.forEach { cr ->
                         val sykmelding: ReceivedSykmelding? = cr.value()?.let { objectMapper.readValue(it, ReceivedSykmelding::class.java) }
-                        when (cr.topic()) {
-                            OK_TOPIC -> okRecords++
-                            MANUELL_TOPIC -> manuellRecords++
-                            AVVIST_TOPIC -> avvistRecords++
+
+                        val okSykmelding = when (cr.topic()) {
+                            OK_TOPIC -> {
+                                okRecords++
+                                true
+                            }
+                            MANUELL_TOPIC -> {
+                                manuellRecords++
+                                false
+                            }
+                            AVVIST_TOPIC -> {
+                                avvistRecords++
+                                false
+                            }
+                            else -> {
+                                false
+                            }
                         }
-                        cr.key() to sykmelding
-                    }
-                    sykmeldinger.forEach {
-                        handleSykmelding(it.first, it.second)
+                        handleSykmelding(cr.key(), sykmelding, okSykmelding)
                     }
                 }
             }
         }
     }
 
-    private suspend fun handleSykmelding(sykmeldingId: String, receivedSykmelding: ReceivedSykmelding?) {
+    private suspend fun handleSykmelding(
+        sykmeldingId: String,
+        receivedSykmelding: ReceivedSykmelding?,
+        okSykmelding: Boolean,
+    ) {
         if (receivedSykmelding != null) {
             val sykmelding = SykmeldingMapper.mapToSykmelding(receivedSykmelding)
             try {
                 val sykmeldt = pdlPersonService.getPerson(receivedSykmelding.personNrPasient, sykmeldingId).toSykmeldt()
                 val arbeidsforhold = arbeidsforholdService.getArbeidsforhold(sykmeldt.fnr)
                 arbeidsforhold.forEach { arbeidsforholdService.insertOrUpdate(it) }
-                sykmeldingService.saveOrUpdate(sykmeldingId, sykmelding, sykmeldt)
+                sykmeldingService.saveOrUpdate(sykmeldingId, sykmelding, sykmeldt, okSykmelding)
             } catch (e: PersonNotFoundInPdl) {
                 if (cluster != "dev-gcp") {
                     log.error("Person not found in PDL, for sykmelding $sykmeldingId", e)
