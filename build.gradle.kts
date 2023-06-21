@@ -20,7 +20,7 @@ val postgresVersion = "42.6.0"
 val hikariVersion = "5.0.1"
 val googlePostgresVersion = "1.12.0"
 val smCommonVersion = "1.0.1"
-val flywayVersion = "9.19.4"
+val flywayVersion = "9.20.0"
 val confluentVersion = "7.4.0"
 val commonsCodecVersion = "1.15"
 
