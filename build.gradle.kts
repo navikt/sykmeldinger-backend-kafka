@@ -22,7 +22,7 @@ val googlePostgresVersion = "1.12.0"
 val smCommonVersion = "1.0.1"
 val flywayVersion = "9.20.0"
 val confluentVersion = "7.4.0"
-val commonsCodecVersion = "1.15"
+val commonsCodecVersion = "1.16.0"
 
 tasks.withType<Jar> {
     manifest.attributes["Main-Class"] = "no.nav.sykmeldinger.BootstrapKt"
