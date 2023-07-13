@@ -24,11 +24,7 @@ import no.nav.sykmeldinger.sykmelding.model.Sykmeldt
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.LoggerFactory
 import java.time.Duration
-import java.time.Instant
-import java.time.OffsetDateTime
-import java.time.ZoneOffset
 import kotlin.time.ExperimentalTime
-import kotlin.time.measureTime
 
 private val objectMapper: ObjectMapper = jacksonObjectMapper().apply {
     registerModule(JavaTimeModule())
@@ -54,31 +50,10 @@ class SykmeldingConsumer(
 
     private val sykmeldingTopics =
         listOf(OK_TOPIC, AVVIST_TOPIC, MANUELL_TOPIC)
-    private var totalDuration = kotlin.time.Duration.ZERO
-    private val sykmeldingDuration = kotlin.time.Duration.ZERO
-    private var totalRecords = 0
-    private var okRecords = 0
-    private var avvistRecords = 0
-    private var manuellRecords = 0
-
-    private var lastDate = OffsetDateTime.MIN
 
     @OptIn(DelicateCoroutinesApi::class)
     fun startConsumer() {
         GlobalScope.launch(Dispatchers.IO) {
-            GlobalScope.launch(Dispatchers.IO) {
-                while (applicationState.ready) {
-                    no.nav.sykmeldinger.log.info(
-                        "total: $totalRecords, ok: $okRecords, manuell: $manuellRecords, avvist: $avvistRecords, last $lastDate avg tot: ${
-                            getDurationPerRecord(
-                                totalDuration,
-                                totalRecords,
-                            )
-                        } ms",
-                    )
-                    delay(10000)
-                }
-            }
             while (applicationState.ready) {
                 try {
                     kafkaConsumer.subscribe(sykmeldingTopics)
@@ -99,35 +74,24 @@ class SykmeldingConsumer(
         while (applicationState.ready) {
             val consumerRecords = kafkaConsumer.poll(Duration.ofSeconds(1))
             if (!consumerRecords.isEmpty) {
-                totalDuration += measureTime {
-                    totalRecords += consumerRecords.count()
-                    lastDate = OffsetDateTime.ofInstant(
-                        Instant.ofEpochMilli(consumerRecords.last().timestamp()),
-                        ZoneOffset.UTC,
-                    )
+                consumerRecords.forEach { cr ->
+                    val sykmelding: ReceivedSykmelding? = cr.value()?.let { objectMapper.readValue(it, ReceivedSykmelding::class.java) }
 
-                    consumerRecords.forEach { cr ->
-                        val sykmelding: ReceivedSykmelding? = cr.value()?.let { objectMapper.readValue(it, ReceivedSykmelding::class.java) }
-
-                        val okSykmelding = when (cr.topic()) {
-                            OK_TOPIC -> {
-                                okRecords++
-                                true
-                            }
-                            MANUELL_TOPIC -> {
-                                manuellRecords++
-                                false
-                            }
-                            AVVIST_TOPIC -> {
-                                avvistRecords++
-                                false
-                            }
-                            else -> {
-                                false
-                            }
+                    val okSykmelding = when (cr.topic()) {
+                        OK_TOPIC -> {
+                            true
                         }
-                        handleSykmelding(cr.key(), sykmelding, okSykmelding)
+                        MANUELL_TOPIC -> {
+                            false
+                        }
+                        AVVIST_TOPIC -> {
+                            false
+                        }
+                        else -> {
+                            false
+                        }
                     }
+                    handleSykmelding(cr.key(), sykmelding, okSykmelding)
                 }
             }
         }
@@ -163,13 +127,6 @@ class SykmeldingConsumer(
         } else {
             sykmeldingService.deleteSykmelding(sykmeldingId)
             log.info("Deleted sykmelding etc with sykmeldingId: $sykmeldingId")
-        }
-    }
-
-    private fun getDurationPerRecord(duration: kotlin.time.Duration, records: Int): Long {
-        return when (duration.inWholeMilliseconds == 0L || records == 0) {
-            false -> duration.div(records).inWholeMilliseconds
-            else -> 0L
         }
     }
 }
