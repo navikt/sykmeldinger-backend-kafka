@@ -1,5 +1,7 @@
 package no.nav.sykmeldinger.arbeidsforhold.kafka
 
+import java.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -13,8 +15,6 @@ import no.nav.sykmeldinger.arbeidsforhold.model.Arbeidsforhold
 import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.sykmelding.db.SykmeldingDb
 import org.apache.kafka.clients.consumer.KafkaConsumer
-import java.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 class ArbeidsforholdConsumer(
     private val kafkaConsumer: KafkaConsumer<String, ArbeidsforholdHendelse>,
@@ -59,19 +59,29 @@ class ArbeidsforholdConsumer(
     }
 
     suspend fun handleArbeidsforholdHendelse(arbeidsforholdHendelse: ArbeidsforholdHendelse) {
-        log.debug("Mottatt arbeidsforhold-hendelse med id ${arbeidsforholdHendelse.id} og type ${arbeidsforholdHendelse.endringstype}")
+        log.debug(
+            "Mottatt arbeidsforhold-hendelse med id ${arbeidsforholdHendelse.id} og type ${arbeidsforholdHendelse.endringstype}"
+        )
         val fnr = arbeidsforholdHendelse.arbeidsforhold.arbeidstaker.getFnr()
         val sykmeldt = sykmeldingDb.getSykmeldt(fnr)
 
         if (sykmeldt != null) {
             if (arbeidsforholdHendelse.endringstype == Endringstype.Sletting) {
-                log.info("Sletter arbeidsforhold med id ${arbeidsforholdHendelse.arbeidsforhold.navArbeidsforholdId} hvis det finnes")
-                arbeidsforholdService.deleteArbeidsforhold(arbeidsforholdHendelse.arbeidsforhold.navArbeidsforholdId)
+                log.info(
+                    "Sletter arbeidsforhold med id ${arbeidsforholdHendelse.arbeidsforhold.navArbeidsforholdId} hvis det finnes"
+                )
+                arbeidsforholdService.deleteArbeidsforhold(
+                    arbeidsforholdHendelse.arbeidsforhold.navArbeidsforholdId
+                )
             } else {
                 val arbeidsforhold = arbeidsforholdService.getArbeidsforhold(fnr)
                 val arbeidsforholdFraDb = arbeidsforholdService.getArbeidsforholdFromDb(fnr)
 
-                val slettesfraDb = getArbeidsforholdSomSkalSlettes(arbeidsforholdDb = arbeidsforholdFraDb, arbeidsforholdAareg = arbeidsforhold)
+                val slettesfraDb =
+                    getArbeidsforholdSomSkalSlettes(
+                        arbeidsforholdDb = arbeidsforholdFraDb,
+                        arbeidsforholdAareg = arbeidsforhold
+                    )
 
                 if (slettesfraDb.isNotEmpty()) {
                     slettesfraDb.forEach {
@@ -79,21 +89,29 @@ class ArbeidsforholdConsumer(
                         arbeidsforholdService.deleteArbeidsforhold(it)
                     }
                 }
-                arbeidsforhold.forEach {
-                    arbeidsforholdService.insertOrUpdate(it)
-                }
-                log.info("Opprettet eller oppdatert ${arbeidsforhold.size} arbeidsforhold etter mottak av hendelse med id ${arbeidsforholdHendelse.id}")
+                arbeidsforhold.forEach { arbeidsforholdService.insertOrUpdate(it) }
+                log.info(
+                    "Opprettet eller oppdatert ${arbeidsforhold.size} arbeidsforhold etter mottak av hendelse med id ${arbeidsforholdHendelse.id}"
+                )
             }
         }
     }
 
-    fun getArbeidsforholdSomSkalSlettes(arbeidsforholdAareg: List<Arbeidsforhold>, arbeidsforholdDb: List<Arbeidsforhold>): List<Int> {
-        if (arbeidsforholdDb.size == arbeidsforholdAareg.size && arbeidsforholdDb.toHashSet() == arbeidsforholdAareg.toHashSet()) {
+    fun getArbeidsforholdSomSkalSlettes(
+        arbeidsforholdAareg: List<Arbeidsforhold>,
+        arbeidsforholdDb: List<Arbeidsforhold>
+    ): List<Int> {
+        if (
+            arbeidsforholdDb.size == arbeidsforholdAareg.size &&
+                arbeidsforholdDb.toHashSet() == arbeidsforholdAareg.toHashSet()
+        ) {
             return emptyList()
         }
 
-        val arbeidsforholdAaregMap: HashMap<Int, Arbeidsforhold> = HashMap(arbeidsforholdAareg.associateBy { it.id })
-        val arbeidsforholdDbMap: HashMap<Int, Arbeidsforhold> = HashMap(arbeidsforholdDb.associateBy { it.id })
+        val arbeidsforholdAaregMap: HashMap<Int, Arbeidsforhold> =
+            HashMap(arbeidsforholdAareg.associateBy { it.id })
+        val arbeidsforholdDbMap: HashMap<Int, Arbeidsforhold> =
+            HashMap(arbeidsforholdDb.associateBy { it.id })
 
         return arbeidsforholdDbMap.filter { arbeidsforholdAaregMap[it.key] == null }.keys.toList()
     }

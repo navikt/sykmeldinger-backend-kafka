@@ -7,8 +7,6 @@ data class Arbeidstaker(
     val identer: List<Ident>,
 ) {
     fun getFnr(): String {
-        return identer.first {
-            it.type == IdentType.FOLKEREGISTERIDENT && it.gjeldende
-        }.ident
+        return identer.first { it.type == IdentType.FOLKEREGISTERIDENT && it.gjeldende }.ident
     }
 }

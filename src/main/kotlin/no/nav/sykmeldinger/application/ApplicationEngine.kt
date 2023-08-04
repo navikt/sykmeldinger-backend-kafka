@@ -31,10 +31,6 @@ fun createApplicationEngine(
             }
         }
 
-        routing() {
-            route("internal") {
-                registerNaisApi(applicationState)
-            }
-        }
+        routing() { route("internal") { registerNaisApi(applicationState) } }
         intercept(ApplicationCallPipeline.Monitoring, monitorHttpRequests())
     }

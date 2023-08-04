@@ -1,5 +1,10 @@
 package no.nav.sykmeldinger.arbeidsforhold.delete
 
+import java.time.Duration
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.OffsetTime
+import java.time.ZoneOffset
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -10,11 +15,6 @@ import no.nav.sykmeldinger.application.leaderelection.LeaderElection
 import no.nav.sykmeldinger.application.metrics.SLETTET_ARBFORHOLD_COUNTER
 import no.nav.sykmeldinger.arbeidsforhold.db.ArbeidsforholdDb
 import no.nav.sykmeldinger.log
-import java.time.Duration
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.OffsetTime
-import java.time.ZoneOffset
 
 class DeleteArbeidsforholdService(
     private val arbeidsforholdDb: ArbeidsforholdDb,

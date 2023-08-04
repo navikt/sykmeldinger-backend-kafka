@@ -25,8 +25,6 @@ data class Navn(
         if (!navnelinje5.isNullOrBlank()) {
             builder.appendLine(navnelinje5)
         }
-        return builder.lineSequence().filter {
-            it.isNotBlank()
-        }.joinToString(separator = ",")
+        return builder.lineSequence().filter { it.isNotBlank() }.joinToString(separator = ",")
     }
 }

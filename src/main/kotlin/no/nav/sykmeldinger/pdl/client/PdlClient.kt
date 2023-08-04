@@ -21,15 +21,18 @@ class PdlClient(
     private val tema = "SYM"
 
     suspend fun getPerson(fnr: String, token: String): GetPersonResponse {
-        val getPersonRequest = GetPersonRequest(query = graphQlQuery, variables = GetPersonVariables(ident = fnr))
+        val getPersonRequest =
+            GetPersonRequest(query = graphQlQuery, variables = GetPersonVariables(ident = fnr))
         val timer = HTTP_CLIENT_HISTOGRAM.labels(basePath).startTimer()
         try {
-            return httpClient.post(basePath) {
-                setBody(getPersonRequest)
-                header(HttpHeaders.Authorization, "Bearer $token")
-                header(temaHeader, tema)
-                header(HttpHeaders.ContentType, "application/json")
-            }.body()
+            return httpClient
+                .post(basePath) {
+                    setBody(getPersonRequest)
+                    header(HttpHeaders.Authorization, "Bearer $token")
+                    header(temaHeader, tema)
+                    header(HttpHeaders.ContentType, "application/json")
+                }
+                .body()
         } catch (e: Exception) {
             log.error("Noe gikk galt ved kall til PDL", e)
             throw e

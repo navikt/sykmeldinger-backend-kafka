@@ -14,9 +14,12 @@ data class Navn(
     }
 
     private fun capitalizeFirstLetter(string: String): String {
-        return string.lowercase()
-            .split(" ").joinToString(" ") { it.replaceFirstChar { char -> char.titlecaseChar() } }
-            .split("-").joinToString("-") { it.replaceFirstChar { char -> char.titlecaseChar() } }
+        return string
+            .lowercase()
+            .split(" ")
+            .joinToString(" ") { it.replaceFirstChar { char -> char.titlecaseChar() } }
+            .split("-")
+            .joinToString("-") { it.replaceFirstChar { char -> char.titlecaseChar() } }
             .trimEnd()
     }
 }

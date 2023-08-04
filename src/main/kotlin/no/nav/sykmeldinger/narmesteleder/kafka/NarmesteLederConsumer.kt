@@ -1,5 +1,6 @@
 package no.nav.sykmeldinger.narmesteleder.kafka
 
+import java.time.Duration
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -10,7 +11,6 @@ import no.nav.sykmeldinger.application.ApplicationState
 import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.narmesteleder.NarmesteLederService
 import org.apache.kafka.clients.consumer.KafkaConsumer
-import java.time.Duration
 
 class NarmesteLederConsumer(
     private val environment: Environment,
@@ -30,7 +30,9 @@ class NarmesteLederConsumer(
                     log.error("error running nl-consumer", ex)
                 } finally {
                     kafkaConsumer.unsubscribe()
-                    log.info("Unsubscribed from topic ${environment.narmestelederLeesahTopic} and waiting for 10 seconds before trying again")
+                    log.info(
+                        "Unsubscribed from topic ${environment.narmestelederLeesahTopic} and waiting for 10 seconds before trying again"
+                    )
                     delay(10_000)
                 }
             }
@@ -42,7 +44,9 @@ class NarmesteLederConsumer(
             val records = kafkaConsumer.poll(Duration.ofSeconds(1)).mapNotNull { it.value() }
             if (records.isNotEmpty()) {
                 records.forEach {
-                    log.info("Mottatt nærmesteleder-oppdatering for kobling med id ${it.narmesteLederId}")
+                    log.info(
+                        "Mottatt nærmesteleder-oppdatering for kobling med id ${it.narmesteLederId}"
+                    )
                     narmesteLederService.updateNarmesteLeder(it)
                 }
             }

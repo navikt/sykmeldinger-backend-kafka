@@ -5,12 +5,11 @@ data class Arbeidssted(
     val identer: List<Ident>,
 ) {
     fun getOrgnummer(): String {
-        return identer.first {
-            it.type == IdentType.ORGANISASJONSNUMMER
-        }.ident
+        return identer.first { it.type == IdentType.ORGANISASJONSNUMMER }.ident
     }
 }
 
 enum class ArbeidsstedType {
-    Underenhet, Person
+    Underenhet,
+    Person
 }

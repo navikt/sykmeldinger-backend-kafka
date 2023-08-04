@@ -1,5 +1,7 @@
 package no.nav.sykmeldinger.identendring
 
+import java.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -11,8 +13,6 @@ import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.pdl.error.InactiveIdentException
 import no.nav.sykmeldinger.pdl.error.PersonNotFoundInPdl
 import org.apache.kafka.clients.consumer.KafkaConsumer
-import java.time.Duration
-import kotlin.time.Duration.Companion.seconds
 
 class PdlAktorConsumer(
     private val kafkaConsumer: KafkaConsumer<String, Aktor>,
@@ -34,13 +34,22 @@ class PdlAktorConsumer(
                 } catch (ex: Exception) {
                     when (ex) {
                         is InactiveIdentException -> {
-                            log.warn("New ident is inactive in PDL, unsubscribing and waiting $DELAY_ON_ERROR_SECONDS seconds for retry", ex)
+                            log.warn(
+                                "New ident is inactive in PDL, unsubscribing and waiting $DELAY_ON_ERROR_SECONDS seconds for retry",
+                                ex
+                            )
                         }
                         is PersonNotFoundInPdl -> {
-                            log.warn("Person not found in PDL, unsubscribing and waiting $DELAY_ON_ERROR_SECONDS seconds for retry", ex)
+                            log.warn(
+                                "Person not found in PDL, unsubscribing and waiting $DELAY_ON_ERROR_SECONDS seconds for retry",
+                                ex
+                            )
                         }
                         else -> {
-                            log.error("Error running kafka consumer for pdl-aktor, unsubscribing and waiting $DELAY_ON_ERROR_SECONDS seconds for retry", ex)
+                            log.error(
+                                "Error running kafka consumer for pdl-aktor, unsubscribing and waiting $DELAY_ON_ERROR_SECONDS seconds for retry",
+                                ex
+                            )
                         }
                     }
                     kafkaConsumer.unsubscribe()

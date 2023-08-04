@@ -16,20 +16,23 @@ class IdentendringService(
 ) {
     suspend fun oppdaterIdent(identListe: List<Identifikator>) {
         if (harEndretFnr(identListe)) {
-            val nyttFnr = identListe.find { it.type == Type.FOLKEREGISTERIDENT && it.gjeldende }?.idnummer
-                ?: throw IllegalStateException("Mangler gyldig fnr!")
-            val tidligereFnr = identListe.filter { it.type == Type.FOLKEREGISTERIDENT && !it.gjeldende }
+            val nyttFnr =
+                identListe.find { it.type == Type.FOLKEREGISTERIDENT && it.gjeldende }?.idnummer
+                    ?: throw IllegalStateException("Mangler gyldig fnr!")
+            val tidligereFnr =
+                identListe.filter { it.type == Type.FOLKEREGISTERIDENT && !it.gjeldende }
 
-            val arbeidsforhold = tidligereFnr.flatMap { arbeidsforholdDb.getArbeidsforhold(it.idnummer) }
+            val arbeidsforhold =
+                tidligereFnr.flatMap { arbeidsforholdDb.getArbeidsforhold(it.idnummer) }
             val sykmeldinger = tidligereFnr.flatMap { sykmeldingDb.getSykmeldingIds(it.idnummer) }
             val sykmeldte = tidligereFnr.mapNotNull { sykmeldingDb.getSykmeldt(it.idnummer) }
 
-            if (arbeidsforhold.isNotEmpty() || sykmeldinger.isNotEmpty() || sykmeldte.isNotEmpty()) {
+            if (
+                arbeidsforhold.isNotEmpty() || sykmeldinger.isNotEmpty() || sykmeldte.isNotEmpty()
+            ) {
                 val navn = pdlService.getNavnHvisIdentErAktiv(nyttFnr)
 
-                arbeidsforhold.forEach {
-                    arbeidsforholdDb.updateFnr(nyttFnr = nyttFnr, id = it.id)
-                }
+                arbeidsforhold.forEach { arbeidsforholdDb.updateFnr(nyttFnr = nyttFnr, id = it.id) }
                 log.info("Har oppdatert fnr for ${arbeidsforhold.size} arbeidsforhold")
 
                 sykmeldinger.forEach {
@@ -45,9 +48,7 @@ class IdentendringService(
                         etternavn = navn.etternavn,
                     ),
                 )
-                sykmeldte.forEach {
-                    sykmeldingDb.deleteSykmeldt(it.fnr)
-                }
+                sykmeldte.forEach { sykmeldingDb.deleteSykmeldt(it.fnr) }
                 log.info("Har slettet ${sykmeldte.size} sykmeldte")
 
                 NYTT_FNR_COUNTER.inc()

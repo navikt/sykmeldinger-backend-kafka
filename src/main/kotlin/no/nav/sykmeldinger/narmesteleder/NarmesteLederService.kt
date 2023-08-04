@@ -11,28 +11,37 @@ class NarmesteLederService(
     private val narmestelederDb: NarmestelederDb,
     private val cluster: String,
 ) {
-    suspend fun updateNarmesteLeder(narmestelederLeesahKafkaMessage: NarmestelederLeesahKafkaMessage) {
+    suspend fun updateNarmesteLeder(
+        narmestelederLeesahKafkaMessage: NarmestelederLeesahKafkaMessage
+    ) {
         when (narmestelederLeesahKafkaMessage.aktivTom) {
             null -> {
                 try {
-                    val pdlPerson = pdlPersonService.getPerson(
-                        fnr = narmestelederLeesahKafkaMessage.narmesteLederFnr,
-                        callId = narmestelederLeesahKafkaMessage.narmesteLederId.toString(),
-                    )
+                    val pdlPerson =
+                        pdlPersonService.getPerson(
+                            fnr = narmestelederLeesahKafkaMessage.narmesteLederFnr,
+                            callId = narmestelederLeesahKafkaMessage.narmesteLederId.toString(),
+                        )
                     narmestelederDb.insertOrUpdate(
-                        narmestelederLeesahKafkaMessage.toNarmestelederDbModel(pdlPerson.navn.toFormattedNameString()),
+                        narmestelederLeesahKafkaMessage.toNarmestelederDbModel(
+                            pdlPerson.navn.toFormattedNameString()
+                        ),
                     )
                     NL_TOPIC_COUNTER.labels("ny").inc()
                 } catch (e: Exception) {
-                    log.error("Noe gikk galt ved oppdatering av nærmeste leder med id ${narmestelederLeesahKafkaMessage.narmesteLederId}", e)
+                    log.error(
+                        "Noe gikk galt ved oppdatering av nærmeste leder med id ${narmestelederLeesahKafkaMessage.narmesteLederId}",
+                        e
+                    )
                     if (cluster == "dev-gcp") {
-                        log.info("Ignorerer feil i dev for id ${narmestelederLeesahKafkaMessage.narmesteLederId}")
+                        log.info(
+                            "Ignorerer feil i dev for id ${narmestelederLeesahKafkaMessage.narmesteLederId}"
+                        )
                     } else {
                         throw e
                     }
                 }
             }
-
             else -> {
                 narmestelederDb.remove(narmestelederLeesahKafkaMessage.narmesteLederId.toString())
                 NL_TOPIC_COUNTER.labels("avbrutt").inc()

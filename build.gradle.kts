@@ -23,6 +23,7 @@ val smCommonVersion = "1.0.1"
 val flywayVersion = "9.21.1"
 val confluentVersion = "7.4.1"
 val commonsCodecVersion = "1.16.0"
+val ktfmtVersion = "0.44"
 
 tasks.withType<Jar> {
     manifest.attributes["Main-Class"] = "no.nav.sykmeldinger.BootstrapKt"
@@ -133,7 +134,10 @@ tasks {
         }
     }
 
-    "check" {
-        dependsOn("formatKotlin")
+    spotless {
+        kotlin { ktfmt(ktfmtVersion).kotlinlangStyle() }
+        check {
+            dependsOn("spotlessApply")
+        }
     }
 }

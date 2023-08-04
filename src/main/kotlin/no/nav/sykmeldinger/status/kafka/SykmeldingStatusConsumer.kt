@@ -1,5 +1,10 @@
 package no.nav.sykmeldinger.status.kafka
 
+import java.sql.BatchUpdateException
+import java.time.Duration
+import java.time.OffsetDateTime
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -13,11 +18,6 @@ import no.nav.sykmeldinger.application.ApplicationState
 import no.nav.sykmeldinger.status.db.SykmeldingStatusDB
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.LoggerFactory
-import java.sql.BatchUpdateException
-import java.time.Duration
-import java.time.OffsetDateTime
-import kotlin.time.ExperimentalTime
-import kotlin.time.measureTime
 
 class SykmeldingStatusConsumer(
     private val environment: Environment,
@@ -28,6 +28,7 @@ class SykmeldingStatusConsumer(
     companion object {
         private val log = LoggerFactory.getLogger(SykmeldingStatusConsumer::class.java)
     }
+
     private var duration = kotlin.time.Duration.ZERO
     private var totalRecords = 0
     private var lastDate = OffsetDateTime.MIN
@@ -37,7 +38,9 @@ class SykmeldingStatusConsumer(
         GlobalScope.launch(Dispatchers.IO) {
             GlobalScope.launch(Dispatchers.IO) {
                 while (applicationState.ready) {
-                    log.info("$totalRecords records processed, last record was at $lastDate avg time per record: ${getDurationPerRecord()} ms")
+                    log.info(
+                        "$totalRecords records processed, last record was at $lastDate avg time per record: ${getDurationPerRecord()} ms"
+                    )
                     delay(10000)
                 }
             }
@@ -49,7 +52,9 @@ class SykmeldingStatusConsumer(
                     log.error("error running consumer", ex)
                 } finally {
                     kafkaConsumer.unsubscribe()
-                    log.info("Unsubscribed from topic ${environment.statusTopic} and waiting for 10 seconds before trying again")
+                    log.info(
+                        "Unsubscribed from topic ${environment.statusTopic} and waiting for 10 seconds before trying again"
+                    )
                     delay(10_000)
                 }
             }
@@ -69,21 +74,20 @@ class SykmeldingStatusConsumer(
             val records = kafkaConsumer.poll(Duration.ofSeconds(1)).mapNotNull { it.value() }
             if (records.isNotEmpty()) {
                 lastDate = records.last().event.timestamp
-                val time = measureTime {
-                    updateStatus(records.map { it.event })
-                }
+                val time = measureTime { updateStatus(records.map { it.event }) }
                 duration += time
                 totalRecords += records.count()
             }
         }
     }
 
-    private suspend fun updateStatus(statusEvents: List<SykmeldingStatusKafkaEventDTO>) = withContext(Dispatchers.IO) {
-        while (!tryUpdateStatus(statusEvents)) {
-            delay(100)
-            log.info("waiting and trying to update status")
+    private suspend fun updateStatus(statusEvents: List<SykmeldingStatusKafkaEventDTO>) =
+        withContext(Dispatchers.IO) {
+            while (!tryUpdateStatus(statusEvents)) {
+                delay(100)
+                log.info("waiting and trying to update status")
+            }
         }
-    }
 
     private fun tryUpdateStatus(statusEvents: List<SykmeldingStatusKafkaEventDTO>): Boolean {
         return try {

@@ -1,9 +1,9 @@
 package no.nav.sykmeldinger.narmesteleder.kafka
 
-import no.nav.sykmeldinger.narmesteleder.db.NarmestelederDbModel
 import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.UUID
+import no.nav.sykmeldinger.narmesteleder.db.NarmestelederDbModel
 
 data class NarmestelederLeesahKafkaMessage(
     val narmesteLederId: UUID,

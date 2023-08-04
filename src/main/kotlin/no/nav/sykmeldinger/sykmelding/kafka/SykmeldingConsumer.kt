@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.SerializationFeature
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.ktor.client.plugins.ClientRequestException
+import java.time.Duration
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -23,15 +25,14 @@ import no.nav.sykmeldinger.sykmelding.SykmeldingService
 import no.nav.sykmeldinger.sykmelding.model.Sykmeldt
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.LoggerFactory
-import java.time.Duration
-import kotlin.time.ExperimentalTime
 
-private val objectMapper: ObjectMapper = jacksonObjectMapper().apply {
-    registerModule(JavaTimeModule())
-    configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-    configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-    configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true)
-}
+private val objectMapper: ObjectMapper =
+    jacksonObjectMapper().apply {
+        registerModule(JavaTimeModule())
+        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+        configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true)
+    }
 
 class SykmeldingConsumer(
     private val kafkaConsumer: KafkaConsumer<String, String>,
@@ -48,8 +49,7 @@ class SykmeldingConsumer(
         private const val MANUELL_TOPIC = "teamsykmelding.manuell-behandling-sykmelding"
     }
 
-    private val sykmeldingTopics =
-        listOf(OK_TOPIC, AVVIST_TOPIC, MANUELL_TOPIC)
+    private val sykmeldingTopics = listOf(OK_TOPIC, AVVIST_TOPIC, MANUELL_TOPIC)
 
     @OptIn(DelicateCoroutinesApi::class)
     fun startConsumer() {
@@ -62,7 +62,9 @@ class SykmeldingConsumer(
                     log.error("error running sykmelding-consumer", ex)
                 } finally {
                     kafkaConsumer.unsubscribe()
-                    log.info("Unsubscribed from topic $sykmeldingTopics and waiting for 10 seconds before trying again")
+                    log.info(
+                        "Unsubscribed from topic $sykmeldingTopics and waiting for 10 seconds before trying again"
+                    )
                     delay(10_000)
                 }
             }
@@ -70,32 +72,37 @@ class SykmeldingConsumer(
     }
 
     @OptIn(ExperimentalTime::class)
-    private suspend fun consume() = withContext(Dispatchers.IO) {
-        while (applicationState.ready) {
-            val consumerRecords = kafkaConsumer.poll(Duration.ofSeconds(1))
-            if (!consumerRecords.isEmpty) {
-                consumerRecords.forEach { cr ->
-                    val sykmelding: ReceivedSykmelding? = cr.value()?.let { objectMapper.readValue(it, ReceivedSykmelding::class.java) }
+    private suspend fun consume() =
+        withContext(Dispatchers.IO) {
+            while (applicationState.ready) {
+                val consumerRecords = kafkaConsumer.poll(Duration.ofSeconds(1))
+                if (!consumerRecords.isEmpty) {
+                    consumerRecords.forEach { cr ->
+                        val sykmelding: ReceivedSykmelding? =
+                            cr.value()?.let {
+                                objectMapper.readValue(it, ReceivedSykmelding::class.java)
+                            }
 
-                    val okSykmelding = when (cr.topic()) {
-                        OK_TOPIC -> {
-                            true
-                        }
-                        MANUELL_TOPIC -> {
-                            false
-                        }
-                        AVVIST_TOPIC -> {
-                            false
-                        }
-                        else -> {
-                            false
-                        }
+                        val okSykmelding =
+                            when (cr.topic()) {
+                                OK_TOPIC -> {
+                                    true
+                                }
+                                MANUELL_TOPIC -> {
+                                    false
+                                }
+                                AVVIST_TOPIC -> {
+                                    false
+                                }
+                                else -> {
+                                    false
+                                }
+                            }
+                        handleSykmelding(cr.key(), sykmelding, okSykmelding)
                     }
-                    handleSykmelding(cr.key(), sykmelding, okSykmelding)
                 }
             }
         }
-    }
 
     private suspend fun handleSykmelding(
         sykmeldingId: String,
@@ -105,7 +112,10 @@ class SykmeldingConsumer(
         if (receivedSykmelding != null) {
             val sykmelding = SykmeldingMapper.mapToSykmelding(receivedSykmelding)
             try {
-                val sykmeldt = pdlPersonService.getPerson(receivedSykmelding.personNrPasient, sykmeldingId).toSykmeldt()
+                val sykmeldt =
+                    pdlPersonService
+                        .getPerson(receivedSykmelding.personNrPasient, sykmeldingId)
+                        .toSykmeldt()
                 val arbeidsforhold = arbeidsforholdService.getArbeidsforhold(sykmeldt.fnr)
                 arbeidsforhold.forEach { arbeidsforholdService.insertOrUpdate(it) }
                 sykmeldingService.saveOrUpdate(sykmeldingId, sykmelding, sykmeldt, okSykmelding)
@@ -114,7 +124,9 @@ class SykmeldingConsumer(
                     log.error("Person not found in PDL, for sykmelding $sykmeldingId", e)
                     throw e
                 } else {
-                    log.warn("Person not found in PDL, for sykmelding $sykmeldingId, skipping in dev")
+                    log.warn(
+                        "Person not found in PDL, for sykmelding $sykmeldingId, skipping in dev"
+                    )
                 }
             } catch (e: ClientRequestException) {
                 if (cluster != "dev-gcp") {
@@ -132,5 +144,10 @@ class SykmeldingConsumer(
 }
 
 fun PdlPerson.toSykmeldt(): Sykmeldt {
-    return Sykmeldt(fnr = fnr, fornavn = navn.fornavn, mellomnavn = navn.mellomnavn, etternavn = navn.etternavn)
+    return Sykmeldt(
+        fnr = fnr,
+        fornavn = navn.fornavn,
+        mellomnavn = navn.mellomnavn,
+        etternavn = navn.etternavn
+    )
 }

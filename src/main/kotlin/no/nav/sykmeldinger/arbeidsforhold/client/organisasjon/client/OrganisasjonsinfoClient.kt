@@ -12,7 +12,9 @@ class OrganisasjonsinfoClient(
     private val url: String,
 ) {
     suspend fun getOrganisasjonsnavn(orgNummer: String): Organisasjonsinfo {
-        val timer = HTTP_CLIENT_HISTOGRAM.labels("$url/api/v1/organisasjon/:orgNummer/noekkelinfo").startTimer()
+        val timer =
+            HTTP_CLIENT_HISTOGRAM.labels("$url/api/v1/organisasjon/:orgNummer/noekkelinfo")
+                .startTimer()
         try {
             return httpClient.get("$url/api/v1/organisasjon/$orgNummer/noekkelinfo").body()
         } catch (e: Exception) {

@@ -5,5 +5,4 @@ data class Prognose(
     val hensynArbeidsplassen: String?,
     val erIArbeid: ErIArbeid?,
     val erIkkeIArbeid: ErIkkeIArbeid?,
-
 )

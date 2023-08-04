@@ -23,7 +23,8 @@ data class Navn(
 data class Identliste(
     val identer: List<IdentInformasjon>,
 ) {
-    val fnr: String? = identer.firstOrNull { it.gruppe == "FOLKEREGISTERIDENT" && !it.historisk }?.ident
+    val fnr: String? =
+        identer.firstOrNull { it.gruppe == "FOLKEREGISTERIDENT" && !it.historisk }?.ident
 }
 
 data class IdentInformasjon(

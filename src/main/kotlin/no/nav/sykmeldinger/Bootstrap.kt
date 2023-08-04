@@ -65,22 +65,24 @@ import org.slf4j.LoggerFactory
 val log: Logger = LoggerFactory.getLogger("no.nav.sykmeldinger.sykmeldinger-backend-kafka")
 val sikkerlogg = LoggerFactory.getLogger("securelog")
 
-val objectMapper: ObjectMapper = jacksonObjectMapper().apply {
-    registerModule(JavaTimeModule())
-    configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-    configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-    configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true)
-}
+val objectMapper: ObjectMapper =
+    jacksonObjectMapper().apply {
+        registerModule(JavaTimeModule())
+        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
+        configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true)
+    }
 
 @OptIn(DelicateCoroutinesApi::class)
 fun main() {
     val env = Environment()
     DefaultExports.initialize()
     val applicationState = ApplicationState()
-    val applicationEngine = createApplicationEngine(
-        env,
-        applicationState,
-    )
+    val applicationEngine =
+        createApplicationEngine(
+            env,
+            applicationState,
+        )
     val applicationServer = ApplicationServer(applicationEngine, applicationState)
     val database = Database(env)
 
@@ -93,7 +95,9 @@ fun main() {
             }
             retryIf(maxRetries) { request, response ->
                 if (response.status.value.let { it in 500..599 }) {
-                    log.warn("Retrying for statuscode ${response.status.value}, for url ${request.url}")
+                    log.warn(
+                        "Retrying for statuscode ${response.status.value}, for url ${request.url}"
+                    )
                     true
                 } else {
                     false
@@ -116,7 +120,8 @@ fun main() {
         HttpResponseValidator {
             handleResponseExceptionWithRequest { exception, _ ->
                 when (exception) {
-                    is SocketTimeoutException -> throw ServiceUnavailableException(exception.message)
+                    is SocketTimeoutException ->
+                        throw ServiceUnavailableException(exception.message)
                 }
             }
         }
@@ -124,128 +129,219 @@ fun main() {
     }
     val httpClient = HttpClient(Apache, config)
 
-    val accessTokenClient = AccessTokenClient(env.aadAccessTokenUrl, env.clientId, env.clientSecret, httpClient)
-    val pdlClient = PdlClient(
-        httpClient,
-        env.pdlGraphqlPath,
-        PdlClient::class.java.getResource("/graphql/getPerson.graphql")!!.readText().replace(Regex("[\n\t]"), ""),
-    )
+    val accessTokenClient =
+        AccessTokenClient(env.aadAccessTokenUrl, env.clientId, env.clientSecret, httpClient)
+    val pdlClient =
+        PdlClient(
+            httpClient,
+            env.pdlGraphqlPath,
+            PdlClient::class
+                .java
+                .getResource("/graphql/getPerson.graphql")!!
+                .readText()
+                .replace(Regex("[\n\t]"), ""),
+        )
     val pdlPersonService = PdlPersonService(pdlClient, accessTokenClient, env.pdlScope)
 
     val kafkaConsumer = getSykmeldingStatusKafkaConsumer()
     val sykmeldingStatusDB = SykmeldingStatusDB(database)
-    val sykmeldingStatusConsumer = SykmeldingStatusConsumer(env, kafkaConsumer, sykmeldingStatusDB, applicationState)
+    val sykmeldingStatusConsumer =
+        SykmeldingStatusConsumer(env, kafkaConsumer, sykmeldingStatusDB, applicationState)
     sykmeldingStatusConsumer.startConsumer()
 
     val narmesteLederKafkaConsumer = getNarmesteLederKafkaConsumer()
     val narmestelederDb = NarmestelederDb(database)
     val narmesteLederService = NarmesteLederService(pdlPersonService, narmestelederDb, env.cluster)
-    val narmesteLederConsumer = NarmesteLederConsumer(env, narmesteLederKafkaConsumer, narmesteLederService, applicationState)
+    val narmesteLederConsumer =
+        NarmesteLederConsumer(
+            env,
+            narmesteLederKafkaConsumer,
+            narmesteLederService,
+            applicationState
+        )
     val behandlingsutfallDB = BehandlingsutfallDB(database)
-    val behandlingsutfallConsumer = BehandlingsutfallConsumer(getKafkaConsumer(), applicationState, env, behandlingsutfallDB)
+    val behandlingsutfallConsumer =
+        BehandlingsutfallConsumer(getKafkaConsumer(), applicationState, env, behandlingsutfallDB)
     behandlingsutfallConsumer.startConsumer()
     narmesteLederConsumer.startConsumer()
 
-    val navnendringConsumer = NavnendringConsumer(env.navnendringTopic, getNavnendringerConsumer(env), applicationState, narmestelederDb, pdlPersonService)
+    val navnendringConsumer =
+        NavnendringConsumer(
+            env.navnendringTopic,
+            getNavnendringerConsumer(env),
+            applicationState,
+            narmestelederDb,
+            pdlPersonService
+        )
     navnendringConsumer.startConsumer()
 
-    val arbeidsforholdClient = ArbeidsforholdClient(httpClient, env.aaregUrl, accessTokenClient, env.aaregScope)
+    val arbeidsforholdClient =
+        ArbeidsforholdClient(httpClient, env.aaregUrl, accessTokenClient, env.aaregScope)
     val arbeidsforholdDb = ArbeidsforholdDb(database)
     val organisasjonsinfoClient = OrganisasjonsinfoClient(httpClient, env.eregUrl)
-    val arbeidsforholdService = ArbeidsforholdService(arbeidsforholdClient, organisasjonsinfoClient, arbeidsforholdDb)
+    val arbeidsforholdService =
+        ArbeidsforholdService(arbeidsforholdClient, organisasjonsinfoClient, arbeidsforholdDb)
 
     val sykmeldingDb = SykmeldingDb(database)
     val sykmeldingService = SykmeldingService(sykmeldingDb)
-    val sykmeldingConsumer = SykmeldingConsumer(getKafkaConsumer(), applicationState, pdlPersonService, arbeidsforholdService, sykmeldingService, env.cluster)
+    val sykmeldingConsumer =
+        SykmeldingConsumer(
+            getKafkaConsumer(),
+            applicationState,
+            pdlPersonService,
+            arbeidsforholdService,
+            sykmeldingService,
+            env.cluster
+        )
     sykmeldingConsumer.startConsumer()
 
     val identendringService = IdentendringService(arbeidsforholdDb, sykmeldingDb, pdlPersonService)
-    val pdlAktorConsumer = PdlAktorConsumer(getIdentendringConsumer(env), applicationState, env.aktorV2Topic, identendringService)
+    val pdlAktorConsumer =
+        PdlAktorConsumer(
+            getIdentendringConsumer(env),
+            applicationState,
+            env.aktorV2Topic,
+            identendringService
+        )
     pdlAktorConsumer.startConsumer()
 
-    val arbeidsforholdConsumer = ArbeidsforholdConsumer(getArbeidsforholdKafkaConsumer(), applicationState, env.arbeidsforholdTopic, sykmeldingDb, arbeidsforholdService)
+    val arbeidsforholdConsumer =
+        ArbeidsforholdConsumer(
+            getArbeidsforholdKafkaConsumer(),
+            applicationState,
+            env.arbeidsforholdTopic,
+            sykmeldingDb,
+            arbeidsforholdService
+        )
     arbeidsforholdConsumer.startConsumer()
 
     val leaderElection = LeaderElection(httpClient, env.electorPath)
-    val deleteArbeidsforholdService = DeleteArbeidsforholdService(arbeidsforholdDb, leaderElection, applicationState)
+    val deleteArbeidsforholdService =
+        DeleteArbeidsforholdService(arbeidsforholdDb, leaderElection, applicationState)
     deleteArbeidsforholdService.start()
 
     applicationServer.start()
 }
 
 private fun getKafkaConsumer(): KafkaConsumer<String, String> {
-    val kafkaConsumer = KafkaConsumer(
-        KafkaUtils.getAivenKafkaConfig().also {
-            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
-            it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
-        }.toConsumerConfig("sykmeldinger-backend-kafka-consumer", StringDeserializer::class),
-        StringDeserializer(),
-        StringDeserializer(),
-    )
+    val kafkaConsumer =
+        KafkaConsumer(
+            KafkaUtils.getAivenKafkaConfig()
+                .also {
+                    it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
+                    it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
+                }
+                .toConsumerConfig("sykmeldinger-backend-kafka-consumer", StringDeserializer::class),
+            StringDeserializer(),
+            StringDeserializer(),
+        )
     return kafkaConsumer
 }
 
-private fun getSykmeldingStatusKafkaConsumer(): KafkaConsumer<String, SykmeldingStatusKafkaMessageDTO> {
-    val kafkaConsumer = KafkaConsumer(
-        KafkaUtils.getAivenKafkaConfig().also {
-            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
-            it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 10
-        }.toConsumerConfig("sykmeldinger-backend-kafka-consumer", JacksonKafkaDeserializer::class),
-        StringDeserializer(),
-        JacksonKafkaDeserializer(SykmeldingStatusKafkaMessageDTO::class),
-    )
-    return kafkaConsumer
-}
-private fun getNarmesteLederKafkaConsumer(): KafkaConsumer<String, NarmestelederLeesahKafkaMessage> {
-    val kafkaConsumer = KafkaConsumer(
-        KafkaUtils.getAivenKafkaConfig().also {
-            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
-            it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 10
-        }.toConsumerConfig("sykmeldinger-backend-kafka-consumer", JacksonKafkaDeserializer::class),
-        StringDeserializer(),
-        JacksonKafkaDeserializer(NarmestelederLeesahKafkaMessage::class),
-    )
+private fun getSykmeldingStatusKafkaConsumer():
+    KafkaConsumer<String, SykmeldingStatusKafkaMessageDTO> {
+    val kafkaConsumer =
+        KafkaConsumer(
+            KafkaUtils.getAivenKafkaConfig()
+                .also {
+                    it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
+                    it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 10
+                }
+                .toConsumerConfig(
+                    "sykmeldinger-backend-kafka-consumer",
+                    JacksonKafkaDeserializer::class
+                ),
+            StringDeserializer(),
+            JacksonKafkaDeserializer(SykmeldingStatusKafkaMessageDTO::class),
+        )
     return kafkaConsumer
 }
 
-private fun getNavnendringerConsumer(environment: Environment): KafkaConsumer<String, Personhendelse> {
-    val consumerProperties = KafkaUtils.getAivenKafkaConfig().apply {
-        setProperty(KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG, environment.schemaRegistryUrl)
-        setProperty(KafkaAvroSerializerConfig.USER_INFO_CONFIG, "${environment.kafkaSchemaRegistryUsername}:${environment.kafkaSchemaRegistryPassword}")
-        setProperty(KafkaAvroSerializerConfig.BASIC_AUTH_CREDENTIALS_SOURCE, "USER_INFO")
-    }.toConsumerConfig(
-        "sykmeldinger-backend-kafka-consumer",
-        valueDeserializer = KafkaAvroDeserializer::class,
-    ).also {
-        it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
-        it["specific.avro.reader"] = true
-    }
+private fun getNarmesteLederKafkaConsumer():
+    KafkaConsumer<String, NarmestelederLeesahKafkaMessage> {
+    val kafkaConsumer =
+        KafkaConsumer(
+            KafkaUtils.getAivenKafkaConfig()
+                .also {
+                    it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
+                    it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 10
+                }
+                .toConsumerConfig(
+                    "sykmeldinger-backend-kafka-consumer",
+                    JacksonKafkaDeserializer::class
+                ),
+            StringDeserializer(),
+            JacksonKafkaDeserializer(NarmestelederLeesahKafkaMessage::class),
+        )
+    return kafkaConsumer
+}
+
+private fun getNavnendringerConsumer(
+    environment: Environment
+): KafkaConsumer<String, Personhendelse> {
+    val consumerProperties =
+        KafkaUtils.getAivenKafkaConfig()
+            .apply {
+                setProperty(
+                    KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG,
+                    environment.schemaRegistryUrl
+                )
+                setProperty(
+                    KafkaAvroSerializerConfig.USER_INFO_CONFIG,
+                    "${environment.kafkaSchemaRegistryUsername}:${environment.kafkaSchemaRegistryPassword}"
+                )
+                setProperty(KafkaAvroSerializerConfig.BASIC_AUTH_CREDENTIALS_SOURCE, "USER_INFO")
+            }
+            .toConsumerConfig(
+                "sykmeldinger-backend-kafka-consumer",
+                valueDeserializer = KafkaAvroDeserializer::class,
+            )
+            .also {
+                it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
+                it["specific.avro.reader"] = true
+            }
     return KafkaConsumer<String, Personhendelse>(consumerProperties)
 }
 
 private fun getIdentendringConsumer(environment: Environment): KafkaConsumer<String, Aktor> {
-    val consumerProperties = KafkaUtils.getAivenKafkaConfig().apply {
-        setProperty(KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG, environment.schemaRegistryUrl)
-        setProperty(KafkaAvroSerializerConfig.USER_INFO_CONFIG, "${environment.kafkaSchemaRegistryUsername}:${environment.kafkaSchemaRegistryPassword}")
-        setProperty(KafkaAvroSerializerConfig.BASIC_AUTH_CREDENTIALS_SOURCE, "USER_INFO")
-    }.toConsumerConfig(
-        "sykmeldinger-backend-kafka-consumer",
-        valueDeserializer = KafkaAvroDeserializer::class,
-    ).also {
-        it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
-        it["specific.avro.reader"] = true
-    }
+    val consumerProperties =
+        KafkaUtils.getAivenKafkaConfig()
+            .apply {
+                setProperty(
+                    KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG,
+                    environment.schemaRegistryUrl
+                )
+                setProperty(
+                    KafkaAvroSerializerConfig.USER_INFO_CONFIG,
+                    "${environment.kafkaSchemaRegistryUsername}:${environment.kafkaSchemaRegistryPassword}"
+                )
+                setProperty(KafkaAvroSerializerConfig.BASIC_AUTH_CREDENTIALS_SOURCE, "USER_INFO")
+            }
+            .toConsumerConfig(
+                "sykmeldinger-backend-kafka-consumer",
+                valueDeserializer = KafkaAvroDeserializer::class,
+            )
+            .also {
+                it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
+                it["specific.avro.reader"] = true
+            }
     return KafkaConsumer<String, Aktor>(consumerProperties)
 }
 
 private fun getArbeidsforholdKafkaConsumer(): KafkaConsumer<String, ArbeidsforholdHendelse> {
-    val kafkaConsumer = KafkaConsumer(
-        KafkaUtils.getAivenKafkaConfig().also {
-            it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
-            it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 10
-        }.toConsumerConfig("sykmeldinger-backend-kafka-consumer", JacksonKafkaDeserializer::class),
-        StringDeserializer(),
-        JacksonKafkaDeserializer(ArbeidsforholdHendelse::class),
-    )
+    val kafkaConsumer =
+        KafkaConsumer(
+            KafkaUtils.getAivenKafkaConfig()
+                .also {
+                    it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
+                    it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 10
+                }
+                .toConsumerConfig(
+                    "sykmeldinger-backend-kafka-consumer",
+                    JacksonKafkaDeserializer::class
+                ),
+            StringDeserializer(),
+            JacksonKafkaDeserializer(ArbeidsforholdHendelse::class),
+        )
     return kafkaConsumer
 }

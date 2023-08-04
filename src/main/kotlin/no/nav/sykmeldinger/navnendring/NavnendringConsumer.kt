@@ -1,5 +1,6 @@
 package no.nav.sykmeldinger.navnendring
 
+import java.time.Duration
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -12,7 +13,6 @@ import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.narmesteleder.db.NarmestelederDb
 import no.nav.sykmeldinger.pdl.service.PdlPersonService
 import org.apache.kafka.clients.consumer.KafkaConsumer
-import java.time.Duration
 
 class NavnendringConsumer(
     private val navnendringTopic: String,
@@ -32,7 +32,9 @@ class NavnendringConsumer(
                     log.error("error running navnendring-consumer", ex)
                 } finally {
                     kafkaConsumer.unsubscribe()
-                    log.info("Unsubscribed from topic $navnendringTopic and waiting for 10 seconds before trying again")
+                    log.info(
+                        "Unsubscribed from topic $navnendringTopic and waiting for 10 seconds before trying again"
+                    )
                     delay(10_000)
                 }
             }
@@ -43,9 +45,7 @@ class NavnendringConsumer(
         while (applicationState.ready) {
             val records = kafkaConsumer.poll(Duration.ofSeconds(1)).mapNotNull { it.value() }
             if (records.isNotEmpty()) {
-                records.forEach { personhendelse ->
-                    handlePersonhendelse(personhendelse)
-                }
+                records.forEach { personhendelse -> handlePersonhendelse(personhendelse) }
             }
         }
     }
@@ -54,7 +54,9 @@ class NavnendringConsumer(
         if (personhendelse.navn != null) {
             personhendelse.personidenter.forEach {
                 if (narmestelederDb.isNarmesteleder(it)) {
-                    log.info("Oppdaterer navn med navn fra PDL for nærmeste leder for personhendelse ${personhendelse.hendelseId}")
+                    log.info(
+                        "Oppdaterer navn med navn fra PDL for nærmeste leder for personhendelse ${personhendelse.hendelseId}"
+                    )
                     val person = pdlPersonService.getPerson(it, personhendelse.hendelseId)
                     narmestelederDb.updateNavn(
                         it,

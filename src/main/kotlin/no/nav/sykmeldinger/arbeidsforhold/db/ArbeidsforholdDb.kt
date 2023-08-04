@@ -1,21 +1,23 @@
 package no.nav.sykmeldinger.arbeidsforhold.db
 
+import java.sql.Date
+import java.sql.ResultSet
+import java.time.LocalDate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import no.nav.sykmeldinger.application.db.DatabaseInterface
 import no.nav.sykmeldinger.application.db.toList
 import no.nav.sykmeldinger.arbeidsforhold.model.Arbeidsforhold
-import java.sql.Date
-import java.sql.ResultSet
-import java.time.LocalDate
 
 class ArbeidsforholdDb(
     private val database: DatabaseInterface,
 ) {
-    suspend fun insertOrUpdate(arbeidsforhold: Arbeidsforhold) = withContext(Dispatchers.IO) {
-        database.connection.use { connection ->
-            connection.prepareStatement(
-                """
+    suspend fun insertOrUpdate(arbeidsforhold: Arbeidsforhold) =
+        withContext(Dispatchers.IO) {
+            database.connection.use { connection ->
+                connection
+                    .prepareStatement(
+                        """
                insert into arbeidsforhold(id, fnr, orgnummer, juridisk_orgnummer, orgnavn, fom, tom) 
                values (?, ?, ?, ?, ?, ?, ?) on conflict (id) do update
                 set fnr = excluded.fnr,
@@ -25,72 +27,84 @@ class ArbeidsforholdDb(
                     fom = excluded.fom,
                     tom = excluded.tom;
             """,
-            ).use { preparedStatement ->
-                preparedStatement.setString(1, arbeidsforhold.id.toString())
-                preparedStatement.setString(2, arbeidsforhold.fnr)
-                preparedStatement.setString(3, arbeidsforhold.orgnummer)
-                preparedStatement.setString(4, arbeidsforhold.juridiskOrgnummer)
-                preparedStatement.setString(5, arbeidsforhold.orgNavn)
-                preparedStatement.setDate(6, Date.valueOf(arbeidsforhold.fom))
-                preparedStatement.setDate(7, arbeidsforhold.tom?.let { Date.valueOf(arbeidsforhold.tom) })
-                preparedStatement.executeUpdate()
+                    )
+                    .use { preparedStatement ->
+                        preparedStatement.setString(1, arbeidsforhold.id.toString())
+                        preparedStatement.setString(2, arbeidsforhold.fnr)
+                        preparedStatement.setString(3, arbeidsforhold.orgnummer)
+                        preparedStatement.setString(4, arbeidsforhold.juridiskOrgnummer)
+                        preparedStatement.setString(5, arbeidsforhold.orgNavn)
+                        preparedStatement.setDate(6, Date.valueOf(arbeidsforhold.fom))
+                        preparedStatement.setDate(
+                            7,
+                            arbeidsforhold.tom?.let { Date.valueOf(arbeidsforhold.tom) }
+                        )
+                        preparedStatement.executeUpdate()
+                    }
+                connection.commit()
             }
-            connection.commit()
         }
-    }
 
     fun getArbeidsforhold(fnr: String): List<Arbeidsforhold> {
         return database.connection.use {
             it.prepareStatement(
-                """
+                    """
                     SELECT * FROM arbeidsforhold WHERE fnr = ?;
                 """,
-            ).use { ps ->
-                ps.setString(1, fnr)
-                ps.executeQuery().toList { toArbeidsforhold() }
-            }
+                )
+                .use { ps ->
+                    ps.setString(1, fnr)
+                    ps.executeQuery().toList { toArbeidsforhold() }
+                }
         }
     }
 
     fun updateFnr(nyttFnr: String, id: Int) {
         database.connection.use { connection ->
-            connection.prepareStatement(
-                """
+            connection
+                .prepareStatement(
+                    """
                update arbeidsforhold set fnr = ? where id = ?;
             """,
-            ).use { preparedStatement ->
-                preparedStatement.setString(1, nyttFnr)
-                preparedStatement.setString(2, id.toString())
-                preparedStatement.executeUpdate()
-            }
+                )
+                .use { preparedStatement ->
+                    preparedStatement.setString(1, nyttFnr)
+                    preparedStatement.setString(2, id.toString())
+                    preparedStatement.executeUpdate()
+                }
             connection.commit()
         }
     }
 
     fun deleteArbeidsforhold(id: Int) {
         database.connection.use { connection ->
-            connection.prepareStatement(
-                """
+            connection
+                .prepareStatement(
+                    """
                     DELETE FROM arbeidsforhold WHERE id = ?;
                 """,
-            ).use { ps ->
-                ps.setString(1, id.toString())
-                ps.executeUpdate()
-            }
+                )
+                .use { ps ->
+                    ps.setString(1, id.toString())
+                    ps.executeUpdate()
+                }
             connection.commit()
         }
     }
 
     fun deleteOldArbeidsforhold(date: LocalDate): Int {
         database.connection.use { connection ->
-            val result = connection.prepareStatement(
-                """
+            val result =
+                connection
+                    .prepareStatement(
+                        """
                     DELETE FROM arbeidsforhold where tom is not null and tom < ?;
                 """,
-            ).use { ps ->
-                ps.setDate(1, Date.valueOf(date))
-                ps.executeUpdate()
-            }
+                    )
+                    .use { ps ->
+                        ps.setDate(1, Date.valueOf(date))
+                        ps.executeUpdate()
+                    }
             connection.commit()
             return result
         }

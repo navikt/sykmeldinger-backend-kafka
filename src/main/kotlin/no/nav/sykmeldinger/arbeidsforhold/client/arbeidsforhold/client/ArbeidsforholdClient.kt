@@ -24,14 +24,16 @@ class ArbeidsforholdClient(
         val token = accessTokenClient.getAccessToken(scope)
         val timer = HTTP_CLIENT_HISTOGRAM.labels(arbeidsforholdPath).startTimer()
         try {
-            return httpClient.get(
-                "$arbeidsforholdPath?" +
-                    "sporingsinformasjon=false&" +
-                    "arbeidsforholdstatus=AKTIV,FREMTIDIG,AVSLUTTET",
-            ) {
-                header(navPersonident, fnr)
-                header(HttpHeaders.Authorization, "Bearer $token")
-            }.body()
+            return httpClient
+                .get(
+                    "$arbeidsforholdPath?" +
+                        "sporingsinformasjon=false&" +
+                        "arbeidsforholdstatus=AKTIV,FREMTIDIG,AVSLUTTET",
+                ) {
+                    header(navPersonident, fnr)
+                    header(HttpHeaders.Authorization, "Bearer $token")
+                }
+                .body()
         } catch (e: Exception) {
             log.error("Noe gikk galt ved henting av arbeidsforhold", e)
             throw e
