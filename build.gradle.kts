@@ -30,7 +30,7 @@ tasks.withType<Jar> {
 }
 
 plugins {
-    id("org.jmailen.kotlinter") version "3.15.0"
+    id("org.jmailen.kotlinter") version "3.16.0"
     kotlin("jvm") version "1.9.0"
     id("com.diffplug.spotless") version "6.20.0"
     id("com.github.johnrengelman.shadow") version "8.1.1"
