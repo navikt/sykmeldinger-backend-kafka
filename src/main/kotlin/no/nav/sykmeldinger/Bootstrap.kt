@@ -226,7 +226,7 @@ fun main() {
 private fun getKafkaConsumer(): KafkaConsumer<String, String> {
     val kafkaConsumer =
         KafkaConsumer(
-            KafkaUtils.getAivenKafkaConfig()
+            KafkaUtils.getAivenKafkaConfig("sykmeldinger-backend-kafka-consumer")
                 .also {
                     it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
                     it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
@@ -242,7 +242,7 @@ private fun getSykmeldingStatusKafkaConsumer():
     KafkaConsumer<String, SykmeldingStatusKafkaMessageDTO> {
     val kafkaConsumer =
         KafkaConsumer(
-            KafkaUtils.getAivenKafkaConfig()
+            KafkaUtils.getAivenKafkaConfig("sykmeldinger-status-consumer")
                 .also {
                     it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
                     it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 10
@@ -261,7 +261,7 @@ private fun getNarmesteLederKafkaConsumer():
     KafkaConsumer<String, NarmestelederLeesahKafkaMessage> {
     val kafkaConsumer =
         KafkaConsumer(
-            KafkaUtils.getAivenKafkaConfig()
+            KafkaUtils.getAivenKafkaConfig("narmeste-leder-consumer")
                 .also {
                     it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
                     it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 10
@@ -280,7 +280,7 @@ private fun getNavnendringerConsumer(
     environment: Environment
 ): KafkaConsumer<String, Personhendelse> {
     val consumerProperties =
-        KafkaUtils.getAivenKafkaConfig()
+        KafkaUtils.getAivenKafkaConfig("navne-endring-consumer")
             .apply {
                 setProperty(
                     KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG,
@@ -305,7 +305,7 @@ private fun getNavnendringerConsumer(
 
 private fun getIdentendringConsumer(environment: Environment): KafkaConsumer<String, Aktor> {
     val consumerProperties =
-        KafkaUtils.getAivenKafkaConfig()
+        KafkaUtils.getAivenKafkaConfig("identendring-consumer")
             .apply {
                 setProperty(
                     KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG,
@@ -331,7 +331,7 @@ private fun getIdentendringConsumer(environment: Environment): KafkaConsumer<Str
 private fun getArbeidsforholdKafkaConsumer(): KafkaConsumer<String, ArbeidsforholdHendelse> {
     val kafkaConsumer =
         KafkaConsumer(
-            KafkaUtils.getAivenKafkaConfig()
+            KafkaUtils.getAivenKafkaConfig("arbeidsforhold-consumer")
                 .also {
                     it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
                     it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 10

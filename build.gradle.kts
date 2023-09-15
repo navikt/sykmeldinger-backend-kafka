@@ -1,47 +1,41 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-import com.github.jengelman.gradle.plugins.shadow.transformers.ServiceFileTransformer
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
 group = "no.nav.sykmeldinger"
 version = "1.0.0"
 
 val coroutinesVersion = "1.7.3"
 val jacksonVersion = "2.15.2"
 val kluentVersion = "1.73"
-val ktorVersion = "2.3.3"
+val ktorVersion = "2.3.4"
 val logbackVersion = "1.4.11"
 val logstashEncoderVersion = "7.4"
 val prometheusVersion = "0.16.0"
 val mockkVersion = "1.13.7"
 val testContainerVersion = "1.18.3"
-val kotlinVersion = "1.9.0"
+val kotlinVersion = "1.9.10"
 val kotestVersion = "5.6.2"
 val postgresVersion = "42.6.0"
 val hikariVersion = "5.0.1"
 val googlePostgresVersion = "1.13.1"
-val smCommonVersion = "1.0.1"
+val smCommonVersion = "1.0.19"
 val flywayVersion = "9.21.1"
 val confluentVersion = "7.4.1"
 val commonsCodecVersion = "1.16.0"
 val ktfmtVersion = "0.44"
 
-tasks.withType<Jar> {
-    manifest.attributes["Main-Class"] = "no.nav.sykmeldinger.BootstrapKt"
-}
-
 plugins {
-    id("org.jmailen.kotlinter") version "3.16.0"
-    kotlin("jvm") version "1.9.0"
-    id("com.diffplug.spotless") version "6.20.0"
+    id("application")
+    kotlin("jvm") version "1.9.10"
+    id("com.diffplug.spotless") version "6.21.0"
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("com.github.davidmc24.gradle.plugin.avro") version "1.8.0"
-    id("org.cyclonedx.bom") version "1.7.4"
 }
 
-buildscript {
-    dependencies {
-    }
+application {
+    mainClass.set("no.nav.syfo.ApplicationKt")
+
+    val isDevelopment: Boolean = project.ext.has("development")
+    applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
 }
+
 
 val githubUser: String by project
 val githubPassword: String by project
@@ -103,23 +97,27 @@ dependencies {
     testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
     testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
     testImplementation("io.kotest:kotest-property:$kotestVersion")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.flywaydb:flyway-core:$flywayVersion")
 }
 
 tasks {
 
-    create("printVersion") {
-        println(project.version)
-    }
-
-    withType<ShadowJar> {
-        transform(ServiceFileTransformer::class.java) {
-            setPath("META-INF/cxf")
-            include("bus-extensions.txt")
+    shadowJar {
+        archiveBaseName.set("app")
+        archiveClassifier.set("")
+        isZip64 = true
+        manifest {
+            attributes(
+                mapOf(
+                    "Main-Class" to "no.nav.sykmeldinger.BootstrapKt",
+                ),
+            )
         }
+        dependsOn("generateTestAvroJava")
     }
 
-    withType<Test> {
+    test {
         useJUnitPlatform {
         }
         testLogging {
@@ -133,6 +131,7 @@ tasks {
         kotlin { ktfmt(ktfmtVersion).kotlinlangStyle() }
         check {
             dependsOn("spotlessApply")
+            dependsOn("generateTestAvroJava")
         }
     }
 }
