@@ -76,6 +76,11 @@ dependencies {
     }
 
     implementation("no.nav.helse:syfosm-common-kafka:$smCommonVersion")
+    constraints {
+        implementation("org.xerial.snappy:snappy-java:1.1.10.4") {
+            because("override transient from org.apache.kafka:kafka_2.12")
+        }
+    }
     implementation("no.nav.helse:syfosm-common-models:$smCommonVersion")
     implementation("io.confluent:kafka-avro-serializer:$confluentVersion")
 
