@@ -15,7 +15,7 @@ val kotestVersion = "5.7.2"
 val postgresVersion = "42.6.0"
 val hikariVersion = "5.0.1"
 val googlePostgresVersion = "1.14.0"
-val smCommonVersion = "2.0.0"
+val smCommonVersion = "2.0.2"
 val flywayVersion = "9.22.2"
 val confluentVersion = "7.5.0"
 val commonsCodecVersion = "1.16.0"
@@ -77,7 +77,7 @@ dependencies {
 
     implementation("no.nav.helse:syfosm-common-kafka:$smCommonVersion")
     constraints {
-        implementation("org.xerial.snappy:snappy-java:1.1.10.4") {
+        implementation("org.xerial.snappy:snappy-java:1.1.10.5") {
             because("override transient from org.apache.kafka:kafka_2.12")
         }
     }
