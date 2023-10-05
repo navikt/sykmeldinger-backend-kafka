@@ -20,6 +20,7 @@ val flywayVersion = "9.22.2"
 val confluentVersion = "7.5.0"
 val commonsCodecVersion = "1.16.0"
 val ktfmtVersion = "0.44"
+val avroVersion = "1.11.3"
 
 plugins {
     id("application")
@@ -83,6 +84,11 @@ dependencies {
     }
     implementation("no.nav.helse:syfosm-common-models:$smCommonVersion")
     implementation("io.confluent:kafka-avro-serializer:$confluentVersion")
+    constraints {
+        implementation("org.apache.avro:avro:$avroVersion") {
+            because("override transient from io.confluent:kafka-avro-serializer")
+        }
+    }
 
     testImplementation("org.amshove.kluent:kluent:$kluentVersion")
     testImplementation("io.mockk:mockk:$mockkVersion")
