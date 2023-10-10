@@ -11,7 +11,9 @@ import no.nav.sykmeldinger.application.ApplicationState
 import no.nav.sykmeldinger.application.metrics.NL_NAVN_COUNTER
 import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.narmesteleder.db.NarmestelederDb
+import no.nav.sykmeldinger.objectMapper
 import no.nav.sykmeldinger.pdl.service.PdlPersonService
+import no.nav.sykmeldinger.secureLog
 import org.apache.kafka.clients.consumer.KafkaConsumer
 
 class NavnendringConsumer(
@@ -51,6 +53,11 @@ class NavnendringConsumer(
     }
 
     suspend fun handlePersonhendelse(personhendelse: Personhendelse) {
+        if (personhendelse.opplysningstype == "FOLKEREGISTERIDENTIFIKATOR_V1") {
+            secureLog.info(
+                "Mottok endring av ID: ${objectMapper.writeValueAsString(personhendelse.toDataClass())}"
+            )
+        }
         if (personhendelse.navn != null) {
             personhendelse.personidenter.forEach {
                 if (narmestelederDb.isNarmesteleder(it)) {

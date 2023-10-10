@@ -5,7 +5,9 @@ import no.nav.person.pdl.aktor.v2.Type
 import no.nav.sykmeldinger.application.metrics.NYTT_FNR_COUNTER
 import no.nav.sykmeldinger.arbeidsforhold.db.ArbeidsforholdDb
 import no.nav.sykmeldinger.log
+import no.nav.sykmeldinger.objectMapper
 import no.nav.sykmeldinger.pdl.service.PdlPersonService
+import no.nav.sykmeldinger.secureLog
 import no.nav.sykmeldinger.sykmelding.db.SykmeldingDb
 import no.nav.sykmeldinger.sykmelding.model.Sykmeldt
 
@@ -15,6 +17,10 @@ class IdentendringService(
     private val pdlService: PdlPersonService,
 ) {
     suspend fun oppdaterIdent(identListe: List<Identifikator>) {
+        secureLog.info(
+            "Mottok identendring: ${objectMapper.writeValueAsString(identListe.map{ it.toIdentifikatorDataClass() })}"
+        )
+
         if (harEndretFnr(identListe)) {
             val nyttFnr =
                 identListe.find { it.type == Type.FOLKEREGISTERIDENT && it.gjeldende }?.idnummer
