@@ -14,7 +14,7 @@ val kotlinVersion = "1.9.10"
 val kotestVersion = "5.7.2"
 val postgresVersion = "42.6.0"
 val hikariVersion = "5.0.1"
-val googlePostgresVersion = "1.14.0"
+val googlePostgresVersion = "1.14.1"
 val smCommonVersion = "2.0.3"
 val flywayVersion = "9.22.2"
 val confluentVersion = "7.5.1"
@@ -27,7 +27,7 @@ plugins {
     kotlin("jvm") version "1.9.10"
     id("com.diffplug.spotless") version "6.22.0"
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("com.github.davidmc24.gradle.plugin.avro") version "1.8.0"
+    id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
 }
 
 application {
