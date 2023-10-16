@@ -31,7 +31,7 @@ object NarmesteLederServiceTest :
 
         beforeEach {
             coEvery { pdlPersonService.getPerson(any(), any()) } returns
-                PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), lederFnr)
+                PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), lederFnr, emptyList())
             TestDB.clearAllData()
         }
 
@@ -66,8 +66,12 @@ object NarmesteLederServiceTest :
             }
             test("Oppdaterer nærmeste leder") {
                 coEvery { pdlPersonService.getPerson(any(), any()) } returns
-                    PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), lederFnr) andThen
-                    PdlPerson(Navn("Nytt", null, "Navn"), lederFnr)
+                    PdlPerson(
+                        Navn("Fornavn", "Mellomnavn", "Etternavn"),
+                        lederFnr,
+                        emptyList()
+                    ) andThen
+                    PdlPerson(Navn("Nytt", null, "Navn"), lederFnr, emptyList())
 
                 val nlId = UUID.randomUUID()
                 narmesteLederService.updateNarmesteLeder(

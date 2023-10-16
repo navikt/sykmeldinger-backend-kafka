@@ -12,6 +12,7 @@ import no.nav.sykmeldinger.TestDB
 import no.nav.sykmeldinger.arbeidsforhold.db.ArbeidsforholdDb
 import no.nav.sykmeldinger.pdl.error.PersonNotFoundInPdl
 import no.nav.sykmeldinger.pdl.model.Navn
+import no.nav.sykmeldinger.pdl.model.PdlPerson
 import no.nav.sykmeldinger.pdl.service.PdlPersonService
 import no.nav.sykmeldinger.sykmelding.db.SykmeldingDb
 import org.amshove.kluent.internal.assertFailsWith
@@ -23,16 +24,19 @@ object IdentendringServiceTest :
         val arbeidsforholdDb = ArbeidsforholdDb(testDb)
         val sykmeldingDb = SykmeldingDb(testDb)
         val pdlPersonService = mockk<PdlPersonService>()
-        val identendringService =
-            IdentendringService(arbeidsforholdDb, sykmeldingDb, pdlPersonService)
+        val identendringService = IdentendringService(sykmeldingDb, pdlPersonService)
 
         beforeTest {
             TestDB.clearAllData()
             clearMocks(
                 pdlPersonService,
             )
-            coEvery { pdlPersonService.getNavnHvisIdentErAktiv(any()) } returns
-                Navn("Fornavn", null, "Etternavn")
+            coEvery { pdlPersonService.getPerson(any(), any()) } returns
+                PdlPerson(
+                    navn = Navn("Fornavn", null, "Etternavn"),
+                    fnr = "10987654321",
+                    oldFnr = emptyList()
+                )
         }
 
         context("IdentendringService") {
@@ -54,38 +58,16 @@ object IdentendringServiceTest :
                         Identifikator(fnr, Type.FOLKEREGISTERIDENT, false),
                         Identifikator("2222", Type.AKTORID, false),
                     )
-
                 identendringService.oppdaterIdent(identListe)
 
                 sykmeldingDb.getSykmeldt(fnr) shouldBeEqualTo null
-                sykmeldingDb.getSykmeldt(nyttFnr)?.fornavn shouldBeEqualTo "Fornavn"
+                sykmeldingDb.getSykmeldt(nyttFnr)?.fornavn shouldBeEqualTo "Annet"
                 sykmeldingDb.getSykmeldingIds(fnr).size shouldBeEqualTo 0
                 sykmeldingDb.getSykmeldingIds(nyttFnr).size shouldBeEqualTo 1
                 arbeidsforholdDb.getArbeidsforhold(fnr).size shouldBeEqualTo 0
                 arbeidsforholdDb.getArbeidsforhold(nyttFnr).size shouldBeEqualTo 1
             }
-            test("Oppdaterer ingenting hvis vi ikke har data på gamle fnr") {
-                val fnr = "12345678910"
-                val sykmeldingId = UUID.randomUUID().toString()
-                arbeidsforholdDb.insertOrUpdate(getArbeidsforhold(fnr))
-                sykmeldingDb.saveOrUpdateSykmeldt(getSykmeldt(fnr))
-                sykmeldingDb.saveOrUpdate(
-                    sykmeldingId,
-                    getSykmelding(),
-                    getSykmeldt(fnr),
-                    okSykmelding = false
-                )
-                val identListeMedAnnetFnr =
-                    listOf(
-                        Identifikator("1234", Type.FOLKEREGISTERIDENT, true),
-                        Identifikator("1111", Type.FOLKEREGISTERIDENT, false),
-                        Identifikator("2222", Type.AKTORID, false),
-                    )
 
-                identendringService.oppdaterIdent(identListeMedAnnetFnr)
-
-                coVerify(exactly = 0) { pdlPersonService.getNavnHvisIdentErAktiv(any()) }
-            }
             test("Oppdaterer ingenting hvis endringen ikke gjelder fnr") {
                 val identListeUtenEndringIFnr =
                     listOf(
@@ -96,10 +78,10 @@ object IdentendringServiceTest :
 
                 identendringService.oppdaterIdent(identListeUtenEndringIFnr)
 
-                coVerify(exactly = 0) { pdlPersonService.getNavnHvisIdentErAktiv(any()) }
+                coVerify(exactly = 0) { pdlPersonService.getPerson(any(), any()) }
             }
             test("Kaster feil hvis sjekk mot PDL feiler") {
-                coEvery { pdlPersonService.getNavnHvisIdentErAktiv(any()) } throws
+                coEvery { pdlPersonService.getPerson(any(), any()) } throws
                     PersonNotFoundInPdl("Fant ikke person")
                 val fnr = "12345678910"
                 val nyttFnr = "10987654321"

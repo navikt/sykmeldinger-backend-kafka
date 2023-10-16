@@ -1,4 +1,4 @@
-package no.nav.sykmeldinger.navnendring
+package no.nav.sykmeldinger.pdl
 
 import java.time.Instant
 import java.time.LocalDate

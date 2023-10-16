@@ -20,9 +20,9 @@ class PdlClient(
     private val temaHeader = "TEMA"
     private val tema = "SYM"
 
-    suspend fun getPerson(fnr: String, token: String): GetPersonResponse {
+    suspend fun getPerson(ident: String, token: String): GetPersonResponse {
         val getPersonRequest =
-            GetPersonRequest(query = graphQlQuery, variables = GetPersonVariables(ident = fnr))
+            GetPersonRequest(query = graphQlQuery, variables = GetPersonVariables(ident = ident))
         val timer = HTTP_CLIENT_HISTOGRAM.labels(basePath).startTimer()
         try {
             return httpClient

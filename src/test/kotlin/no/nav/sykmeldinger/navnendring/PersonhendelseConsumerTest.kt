@@ -12,33 +12,38 @@ import no.nav.person.pdl.leesah.Endringstype
 import no.nav.person.pdl.leesah.Personhendelse
 import no.nav.sykmeldinger.TestDB
 import no.nav.sykmeldinger.application.ApplicationState
+import no.nav.sykmeldinger.identendring.IdentendringService
 import no.nav.sykmeldinger.narmesteleder.db.NarmestelederDb
 import no.nav.sykmeldinger.narmesteleder.db.NarmestelederDbModel
+import no.nav.sykmeldinger.pdl.PersonhendelseConsumer
 import no.nav.sykmeldinger.pdl.model.Navn
 import no.nav.sykmeldinger.pdl.model.PdlPerson
 import no.nav.sykmeldinger.pdl.service.PdlPersonService
+import no.nav.sykmeldinger.sykmelding.db.SykmeldingDb
 import org.amshove.kluent.shouldBeEqualTo
 import org.apache.kafka.clients.consumer.KafkaConsumer
 
-object NavnendringConsumerTest :
+object PersonhendelseConsumerTest :
     FunSpec({
         val kafkaConsumer = mockk<KafkaConsumer<String, Personhendelse>>()
         val testDb = TestDB.database
         val narmesteLederDb = NarmestelederDb(testDb)
         val pdlPersonService = mockk<PdlPersonService>()
+        val identendringService = IdentendringService(SykmeldingDb(testDb), pdlPersonService)
         val navnendingConsumer =
-            NavnendringConsumer(
+            PersonhendelseConsumer(
                 "topic",
                 kafkaConsumer,
                 ApplicationState(alive = true, ready = true),
                 narmesteLederDb,
                 pdlPersonService,
+                identendringService
             )
 
         beforeEach {
             clearMocks(pdlPersonService)
             coEvery { pdlPersonService.getPerson(any(), any()) } returns
-                PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), "12345678910")
+                PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), "12345678910", emptyList())
             TestDB.clearAllData()
         }
 
@@ -70,7 +75,7 @@ object NavnendringConsumerTest :
                         )
                     )
 
-                navnendingConsumer.handlePersonhendelse(personhendelse)
+                navnendingConsumer.handlePersonhendelse(listOf(personhendelse))
 
                 coVerify(exactly = 1) { pdlPersonService.getPerson("12345678910", any()) }
                 TestDB.getNarmesteleder(nlId)?.navn shouldBeEqualTo "Fornavn Mellomnavn Etternavn"
@@ -91,14 +96,14 @@ object NavnendringConsumerTest :
                         )
                     )
 
-                navnendingConsumer.handlePersonhendelse(personhendelse)
+                navnendingConsumer.handlePersonhendelse(listOf(personhendelse))
 
                 coVerify(exactly = 0) { pdlPersonService.getPerson(any(), any()) }
             }
             test("Oppdaterer ikke navn hvis personhendelse ikke er relatert til navn") {
                 val personhendelse = getPersonhendelse("12345678910", null)
 
-                navnendingConsumer.handlePersonhendelse(personhendelse)
+                navnendingConsumer.handlePersonhendelse(listOf(personhendelse))
 
                 coVerify(exactly = 0) { pdlPersonService.getPerson(any(), any()) }
             }

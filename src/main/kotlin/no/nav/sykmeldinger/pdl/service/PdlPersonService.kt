@@ -15,9 +15,9 @@ class PdlPersonService(
     private val pdlScope: String,
 ) {
 
-    suspend fun getPerson(fnr: String, callId: String): PdlPerson {
+    suspend fun getPerson(ident: String, callId: String): PdlPerson {
         val accessToken = accessTokenClient.getAccessToken(pdlScope)
-        val pdlResponse = pdlClient.getPerson(fnr, accessToken)
+        val pdlResponse = pdlClient.getPerson(ident, accessToken)
 
         if (pdlResponse.errors != null) {
             pdlResponse.errors.forEach {
@@ -32,19 +32,19 @@ class PdlPersonService(
             }
         }
         if (pdlResponse.data.person == null) {
-            secureLog.info("Fant ikke person i PDL, fnr: $fnr")
+            secureLog.info("Fant ikke person i PDL, fnr: $ident")
             log.error("Fant ikke person i PDL {}", callId)
             throw PersonNotFoundInPdl("Fant ikke person i PDL")
         }
         if (pdlResponse.data.person.navn.isNullOrEmpty()) {
-            secureLog.info("Fant ikke navn på person i PDL, fnr: $fnr")
+            secureLog.info("Fant ikke navn på person i PDL, fnr: $ident")
             log.error("Fant ikke navn på person i PDL {}", callId)
             throw PersonNotFoundInPdl("Fant ikke navn på person i PDL")
         }
         if (
             pdlResponse.data.hentIdenter == null || pdlResponse.data.hentIdenter.identer.isEmpty()
         ) {
-            secureLog.info("Fant ikke person i PDL, fnr: $fnr")
+            secureLog.info("Fant ikke person i PDL, fnr: $ident")
             log.warn("Fant ikke person i PDL")
             throw PersonNotFoundInPdl("Fant ikke person i PDL")
         }
@@ -53,7 +53,11 @@ class PdlPersonService(
             throw PersonNotFoundInPdl("Mangler gyldig fnr for person i PDL")
         }
 
-        return PdlPerson(getNavn(pdlResponse.data.person.navn[0]), pdlResponse.data.hentIdenter.fnr)
+        return PdlPerson(
+            getNavn(pdlResponse.data.person.navn[0]),
+            pdlResponse.data.hentIdenter.fnr,
+            pdlResponse.data.hentIdenter.oldFnr
+        )
     }
 
     suspend fun getNavnHvisIdentErAktiv(nyttFnr: String): Navn {

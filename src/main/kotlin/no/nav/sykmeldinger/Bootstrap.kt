@@ -47,7 +47,7 @@ import no.nav.sykmeldinger.narmesteleder.NarmesteLederService
 import no.nav.sykmeldinger.narmesteleder.db.NarmestelederDb
 import no.nav.sykmeldinger.narmesteleder.kafka.NarmesteLederConsumer
 import no.nav.sykmeldinger.narmesteleder.kafka.NarmestelederLeesahKafkaMessage
-import no.nav.sykmeldinger.navnendring.NavnendringConsumer
+import no.nav.sykmeldinger.pdl.PersonhendelseConsumer
 import no.nav.sykmeldinger.pdl.client.PdlClient
 import no.nav.sykmeldinger.pdl.service.PdlPersonService
 import no.nav.sykmeldinger.status.db.SykmeldingStatusDB
@@ -165,16 +165,6 @@ fun main() {
     behandlingsutfallConsumer.startConsumer()
     narmesteLederConsumer.startConsumer()
 
-    val navnendringConsumer =
-        NavnendringConsumer(
-            env.navnendringTopic,
-            getNavnendringerConsumer(env),
-            applicationState,
-            narmestelederDb,
-            pdlPersonService
-        )
-    navnendringConsumer.startConsumer()
-
     val arbeidsforholdClient =
         ArbeidsforholdClient(httpClient, env.aaregUrl, accessTokenClient, env.aaregScope)
     val arbeidsforholdDb = ArbeidsforholdDb(database)
@@ -195,7 +185,19 @@ fun main() {
         )
     sykmeldingConsumer.startConsumer()
 
-    val identendringService = IdentendringService(arbeidsforholdDb, sykmeldingDb, pdlPersonService)
+    val identendringService = IdentendringService(sykmeldingDb, pdlPersonService)
+
+    val pdlHendelseConsumer =
+        PersonhendelseConsumer(
+            env.navnendringTopic,
+            getNavnendringerConsumer(env),
+            applicationState,
+            narmestelederDb,
+            pdlPersonService,
+            identendringService,
+        )
+    pdlHendelseConsumer.startConsumer()
+
     val pdlAktorConsumer =
         PdlAktorConsumer(
             getIdentendringConsumer(env),

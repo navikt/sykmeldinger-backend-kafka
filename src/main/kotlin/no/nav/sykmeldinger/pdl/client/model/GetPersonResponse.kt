@@ -25,6 +25,8 @@ data class Identliste(
 ) {
     val fnr: String? =
         identer.firstOrNull { it.gruppe == "FOLKEREGISTERIDENT" && !it.historisk }?.ident
+    val oldFnr =
+        identer.filter { it.gruppe == "FOLKEREGISTERIDENT" && it.historisk }.map { it.ident }
 }
 
 data class IdentInformasjon(
