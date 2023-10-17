@@ -59,23 +59,6 @@ class ArbeidsforholdDb(
         }
     }
 
-    fun updateFnr(nyttFnr: String, id: Int) {
-        database.connection.use { connection ->
-            connection
-                .prepareStatement(
-                    """
-               update arbeidsforhold set fnr = ? where id = ?;
-            """,
-                )
-                .use { preparedStatement ->
-                    preparedStatement.setString(1, nyttFnr)
-                    preparedStatement.setString(2, id.toString())
-                    preparedStatement.executeUpdate()
-                }
-            connection.commit()
-        }
-    }
-
     fun deleteArbeidsforhold(id: Int) {
         database.connection.use { connection ->
             connection

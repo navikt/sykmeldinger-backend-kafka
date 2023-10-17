@@ -7,7 +7,6 @@ data class Ident(
 )
 
 enum class IdentType {
-    AKTORID,
     FOLKEREGISTERIDENT,
     ORGANISASJONSNUMMER
 }

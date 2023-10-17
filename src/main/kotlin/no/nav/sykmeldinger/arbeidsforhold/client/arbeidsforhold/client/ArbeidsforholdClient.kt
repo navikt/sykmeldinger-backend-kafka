@@ -12,7 +12,7 @@ import no.nav.sykmeldinger.log
 
 class ArbeidsforholdClient(
     private val httpClient: HttpClient,
-    private val url: String,
+    url: String,
     private val accessTokenClient: AccessTokenClient,
     private val scope: String,
 ) {

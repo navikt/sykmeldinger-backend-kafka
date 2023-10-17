@@ -20,7 +20,6 @@ import io.ktor.network.sockets.SocketTimeoutException
 import io.ktor.serialization.jackson.jackson
 import io.prometheus.client.hotspot.DefaultExports
 import kotlinx.coroutines.DelicateCoroutinesApi
-import no.nav.person.pdl.aktor.v2.Aktor
 import no.nav.person.pdl.leesah.Personhendelse
 import no.nav.syfo.kafka.aiven.KafkaUtils
 import no.nav.syfo.kafka.toConsumerConfig
@@ -42,7 +41,6 @@ import no.nav.sykmeldinger.azuread.AccessTokenClient
 import no.nav.sykmeldinger.behandlingsutfall.db.BehandlingsutfallDB
 import no.nav.sykmeldinger.behandlingsutfall.kafka.BehandlingsutfallConsumer
 import no.nav.sykmeldinger.identendring.IdentendringService
-import no.nav.sykmeldinger.identendring.PdlAktorConsumer
 import no.nav.sykmeldinger.narmesteleder.NarmesteLederService
 import no.nav.sykmeldinger.narmesteleder.db.NarmestelederDb
 import no.nav.sykmeldinger.narmesteleder.kafka.NarmesteLederConsumer
@@ -64,7 +62,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 val log: Logger = LoggerFactory.getLogger("no.nav.sykmeldinger.sykmeldinger-backend-kafka")
-val secureLog = LoggerFactory.getLogger("securelog")
+val secureLog: Logger = LoggerFactory.getLogger("securelog")
 
 val objectMapper: ObjectMapper =
     jacksonObjectMapper().apply {
@@ -202,15 +200,6 @@ fun main() {
         )
     pdlHendelseConsumer.startConsumer()
 
-    val pdlAktorConsumer =
-        PdlAktorConsumer(
-            getIdentendringConsumer(env),
-            applicationState,
-            env.aktorV2Topic,
-            identendringService
-        )
-    pdlAktorConsumer.startConsumer()
-
     val arbeidsforholdConsumer =
         ArbeidsforholdConsumer(
             getArbeidsforholdKafkaConsumer(),
@@ -304,34 +293,10 @@ private fun getNavnendringerConsumer(
             )
             .also {
                 it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
+                it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
                 it["specific.avro.reader"] = true
             }
     return KafkaConsumer<String, Personhendelse>(consumerProperties)
-}
-
-private fun getIdentendringConsumer(environment: Environment): KafkaConsumer<String, Aktor> {
-    val consumerProperties =
-        KafkaUtils.getAivenKafkaConfig("identendring-consumer")
-            .apply {
-                setProperty(
-                    KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG,
-                    environment.schemaRegistryUrl
-                )
-                setProperty(
-                    KafkaAvroSerializerConfig.USER_INFO_CONFIG,
-                    "${environment.kafkaSchemaRegistryUsername}:${environment.kafkaSchemaRegistryPassword}"
-                )
-                setProperty(KafkaAvroSerializerConfig.BASIC_AUTH_CREDENTIALS_SOURCE, "USER_INFO")
-            }
-            .toConsumerConfig(
-                "sykmeldinger-backend-kafka-consumer",
-                valueDeserializer = KafkaAvroDeserializer::class,
-            )
-            .also {
-                it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
-                it["specific.avro.reader"] = true
-            }
-    return KafkaConsumer<String, Aktor>(consumerProperties)
 }
 
 private fun getArbeidsforholdKafkaConsumer(): KafkaConsumer<String, ArbeidsforholdHendelse> {
@@ -340,7 +305,7 @@ private fun getArbeidsforholdKafkaConsumer(): KafkaConsumer<String, Arbeidsforho
             KafkaUtils.getAivenKafkaConfig("arbeidsforhold-consumer")
                 .also {
                     it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
-                    it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 10
+                    it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
                 }
                 .toConsumerConfig(
                     "sykmeldinger-backend-kafka-consumer",

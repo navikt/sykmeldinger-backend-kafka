@@ -13,27 +13,29 @@ import org.testcontainers.containers.wait.strategy.HostPortWaitStrategy
 
 class PsqlContainer : PostgreSQLContainer<PsqlContainer>("postgres:14.4")
 
-class TestDatabase(val connectionName: String, val dbUsername: String, val dbPassword: String) :
-    DatabaseInterface {
-    private val dataSource: HikariDataSource
+class TestDatabase(
+    private val connectionName: String,
+    private val dbUsername: String,
+    private val dbPassword: String
+) : DatabaseInterface {
+    private val dataSource: HikariDataSource =
+        HikariDataSource(
+            HikariConfig().apply {
+                jdbcUrl = connectionName
+                username = dbUsername
+                password = dbPassword
+                maximumPoolSize = 1
+                minimumIdle = 1
+                isAutoCommit = false
+                connectionTimeout = 10_000
+                transactionIsolation = "TRANSACTION_REPEATABLE_READ"
+                validate()
+            },
+        )
     override val connection: Connection
         get() = dataSource.connection
 
     init {
-        dataSource =
-            HikariDataSource(
-                HikariConfig().apply {
-                    jdbcUrl = connectionName
-                    username = dbUsername
-                    password = dbPassword
-                    maximumPoolSize = 1
-                    minimumIdle = 1
-                    isAutoCommit = false
-                    connectionTimeout = 10_000
-                    transactionIsolation = "TRANSACTION_REPEATABLE_READ"
-                    validate()
-                },
-            )
         runFlywayMigrations()
     }
 
