@@ -2,6 +2,8 @@ package no.nav.sykmeldinger.sykmelding.db
 
 import java.sql.Connection
 import java.sql.ResultSet
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import no.nav.syfo.model.RuleInfo
 import no.nav.sykmeldinger.application.db.DatabaseInterface
 import no.nav.sykmeldinger.application.db.toList
@@ -11,9 +13,49 @@ import no.nav.sykmeldinger.sykmelding.model.Sykmelding
 import no.nav.sykmeldinger.sykmelding.model.Sykmeldt
 import org.postgresql.util.PGobject
 
+data class UpdateResult(val table: String, val updatedRows: Int)
+
 class SykmeldingDb(
     private val database: DatabaseInterface,
 ) {
+
+    suspend fun updateFnr(oldFnr: String, newFNR: String): List<UpdateResult> =
+        withContext(Dispatchers.IO) {
+            val results = mutableListOf<UpdateResult>()
+            database.connection.use { connection ->
+                results.add(
+                    connection.updateFnrInTable("sykmelding", oldFnr = oldFnr, newFNR = newFNR)
+                )
+                results.add(
+                    connection.updateFnrInTable("sykmeldt", oldFnr = oldFnr, newFNR = newFNR)
+                )
+                results.add(
+                    connection.updateFnrInTable("arbeidsforhold", oldFnr = oldFnr, newFNR = newFNR)
+                )
+                connection.commit()
+            }
+            results
+        }
+
+    private fun Connection.updateFnrInTable(
+        table: String,
+        oldFnr: String,
+        newFNR: String
+    ): UpdateResult {
+        val updatedRows =
+            prepareStatement(
+                    """
+               update $table set fnr = ? where fnr = ?;
+            """,
+                )
+                .use { preparedStatement ->
+                    preparedStatement.setString(1, newFNR)
+                    preparedStatement.setString(2, oldFnr)
+                    preparedStatement.executeUpdate()
+                }
+        return UpdateResult(table, updatedRows)
+    }
+
     fun saveOrUpdate(
         sykmeldingId: String,
         sykmelding: Sykmelding,
@@ -98,7 +140,7 @@ class SykmeldingDb(
         }
     }
 
-    fun updateFnr(nyttFnr: String, sykmeldingId: String) {
+    fun updateFnr2(nyttFnr: String, sykmeldingId: String) {
         database.connection.use { connection ->
             connection
                 .prepareStatement(
@@ -171,23 +213,6 @@ class SykmeldingDb(
                 ps.setObject(index, toPGObject(emptyList<RuleInfo>()))
                 ps.executeUpdate()
             }
-    }
-
-    fun deleteSykmeldt(fnr: String) {
-        database.connection.use { connection ->
-            connection
-                .prepareStatement(
-                    """ 
-                    delete from sykmeldt where fnr = ?;
-                """
-                        .trimIndent(),
-                )
-                .use { preparedStatement ->
-                    preparedStatement.setString(1, fnr)
-                    preparedStatement.execute()
-                }
-            connection.commit()
-        }
     }
 }
 

@@ -1,4 +1,4 @@
-package no.nav.sykmeldinger.navnendring
+package no.nav.sykmeldinger.pdl
 
 import java.time.Instant
 import java.time.LocalDate
@@ -7,15 +7,22 @@ import no.nav.person.pdl.leesah.navn.Navn
 import no.nav.person.pdl.leesah.navn.OriginaltNavn
 
 data class PersonhendelseDataClass(
-    val hendelseId: String?,
-    val personidenter: List<String>?,
+    val hendelseId: String,
+    val personidenter: List<String>,
     val master: String?,
     val opprettet: Instant?,
     val opplysningstype: String?,
-    val endringstype: String?,
+    val endringstype: Endringstype,
     val tidligereHendelseId: String?,
     val navn: NavnDataClass?
 )
+
+enum class Endringstype {
+    OPPRETTET,
+    KORRIGERT,
+    ANNULLERT,
+    OPPHOERT
+}
 
 data class NavnDataClass(
     val fornavn: String?,
@@ -39,10 +46,19 @@ fun Personhendelse.toDataClass(): PersonhendelseDataClass {
         master = master,
         opprettet = opprettet,
         opplysningstype = opplysningstype,
-        endringstype = endringstype.name,
+        endringstype = endringstype.toEndringstype(),
         tidligereHendelseId = tidligereHendelseId,
         navn = navn?.let { mapNavnToNavnDataClass(navn) }
     )
+}
+
+private fun no.nav.person.pdl.leesah.Endringstype.toEndringstype(): Endringstype {
+    return when (this) {
+        no.nav.person.pdl.leesah.Endringstype.OPPRETTET -> Endringstype.OPPRETTET
+        no.nav.person.pdl.leesah.Endringstype.KORRIGERT -> Endringstype.KORRIGERT
+        no.nav.person.pdl.leesah.Endringstype.ANNULLERT -> Endringstype.ANNULLERT
+        no.nav.person.pdl.leesah.Endringstype.OPPHOERT -> Endringstype.OPPHOERT
+    }
 }
 
 fun mapNavnToNavnDataClass(navn: Navn): NavnDataClass {

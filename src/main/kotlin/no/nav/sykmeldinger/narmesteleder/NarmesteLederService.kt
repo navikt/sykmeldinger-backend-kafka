@@ -19,7 +19,7 @@ class NarmesteLederService(
                 try {
                     val pdlPerson =
                         pdlPersonService.getPerson(
-                            fnr = narmestelederLeesahKafkaMessage.narmesteLederFnr,
+                            ident = narmestelederLeesahKafkaMessage.narmesteLederFnr,
                             callId = narmestelederLeesahKafkaMessage.narmesteLederId.toString(),
                         )
                     narmestelederDb.insertOrUpdate(

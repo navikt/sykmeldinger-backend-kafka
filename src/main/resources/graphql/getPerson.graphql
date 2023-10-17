@@ -6,7 +6,7 @@ query($ident: ID!){
   	  etternavn
     }
   },
-  hentIdenter(ident: $ident, historikk: false) {
+  hentIdenter(ident: $ident, historikk: true) {
       identer {
         ident,
         historisk,
