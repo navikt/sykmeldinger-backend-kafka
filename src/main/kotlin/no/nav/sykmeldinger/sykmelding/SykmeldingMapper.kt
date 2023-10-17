@@ -226,7 +226,7 @@ class SykmeldingMapper private constructor() {
             ) {
                 return true
             } else if (
-                !biDiagnoser.isNullOrEmpty() &&
+                biDiagnoser.isNotEmpty() &&
                     biDiagnoser.find { diagnoserSomGirRedusertArbgiverPeriode.contains(it.kode) } !=
                         null
             ) {

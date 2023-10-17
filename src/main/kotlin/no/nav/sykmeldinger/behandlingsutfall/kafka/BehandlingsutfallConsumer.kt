@@ -10,7 +10,6 @@ import java.time.Duration
 import java.time.Instant
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
-import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -82,7 +81,6 @@ class BehandlingsutfallConsumer(
         }
     }
 
-    @OptIn(ExperimentalTime::class)
     private suspend fun consume() =
         withContext(Dispatchers.IO) {
             while (applicationState.ready) {

@@ -140,23 +140,6 @@ class SykmeldingDb(
         }
     }
 
-    fun updateFnr2(nyttFnr: String, sykmeldingId: String) {
-        database.connection.use { connection ->
-            connection
-                .prepareStatement(
-                    """
-               update sykmelding set fnr = ? where sykmelding_id = ?;
-            """,
-                )
-                .use { preparedStatement ->
-                    preparedStatement.setString(1, nyttFnr)
-                    preparedStatement.setString(2, sykmeldingId)
-                    preparedStatement.executeUpdate()
-                }
-            connection.commit()
-        }
-    }
-
     fun getSykmeldt(fnr: String): Sykmeldt? {
         return database.connection.use { connection ->
             connection
@@ -200,7 +183,7 @@ class SykmeldingDb(
             }
     }
 
-    fun Connection.insertOKBehandlingsutfall(sykmeldingId: String) {
+    private fun Connection.insertOKBehandlingsutfall(sykmeldingId: String) {
         prepareStatement(
                 """
                insert into behandlingsutfall(sykmelding_id, behandlingsutfall, rule_hits) values(?, ?, ?) on conflict(sykmelding_id) do nothing;

@@ -3,7 +3,6 @@ package no.nav.sykmeldinger.status.kafka
 import java.sql.BatchUpdateException
 import java.time.Duration
 import java.time.OffsetDateTime
-import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -68,7 +67,6 @@ class SykmeldingStatusConsumer(
         }
     }
 
-    @OptIn(ExperimentalTime::class)
     private suspend fun consume() {
         while (applicationState.ready) {
             val records = kafkaConsumer.poll(Duration.ofSeconds(1)).mapNotNull { it.value() }

@@ -7,7 +7,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.ktor.client.plugins.ClientRequestException
 import java.time.Duration
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -71,7 +70,6 @@ class SykmeldingConsumer(
         }
     }
 
-    @OptIn(ExperimentalTime::class)
     private suspend fun consume() =
         withContext(Dispatchers.IO) {
             while (applicationState.ready) {
