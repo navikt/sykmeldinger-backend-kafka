@@ -24,7 +24,6 @@ class PersonhendelseService(
             .toSet()
             .forEach {
                 identendringService.updateIdent(it)
-                secureLog.info("Mottok endring av IDer: $it")
             }
 
         personhendelser
