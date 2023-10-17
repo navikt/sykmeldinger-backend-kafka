@@ -50,6 +50,7 @@ import no.nav.sykmeldinger.narmesteleder.kafka.NarmestelederLeesahKafkaMessage
 import no.nav.sykmeldinger.pdl.PersonhendelseConsumer
 import no.nav.sykmeldinger.pdl.client.PdlClient
 import no.nav.sykmeldinger.pdl.service.PdlPersonService
+import no.nav.sykmeldinger.pdl.service.PersonhendelseService
 import no.nav.sykmeldinger.status.db.SykmeldingStatusDB
 import no.nav.sykmeldinger.status.kafka.SykmeldingStatusConsumer
 import no.nav.sykmeldinger.sykmelding.SykmeldingService
@@ -186,15 +187,18 @@ fun main() {
     sykmeldingConsumer.startConsumer()
 
     val identendringService = IdentendringService(sykmeldingDb, pdlPersonService)
-
+    val personhendelseService =
+        PersonhendelseService(
+            narmestelederDb = narmestelederDb,
+            pdlPersonService = pdlPersonService,
+            identendringService = identendringService
+        )
     val pdlHendelseConsumer =
         PersonhendelseConsumer(
             env.navnendringTopic,
             getNavnendringerConsumer(env),
             applicationState,
-            narmestelederDb,
-            pdlPersonService,
-            identendringService,
+            personhendelseService,
         )
     pdlHendelseConsumer.startConsumer()
 

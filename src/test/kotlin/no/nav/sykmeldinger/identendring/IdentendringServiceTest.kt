@@ -38,8 +38,42 @@ object IdentendringServiceTest :
                     oldFnr = emptyList()
                 )
         }
+        context("Update ident") {
+            test("Opdater ident") {
+                val fnr = "12345678910"
+                val nyttFnr = "10987654321"
+                coEvery { pdlPersonService.getPerson(any(), any()) } returns
+                    PdlPerson(
+                        navn = Navn("Fornavn", null, "Etternavn"),
+                        fnr = "10987654321",
+                        oldFnr = listOf(fnr)
+                    )
+                val sykmeldingId = UUID.randomUUID().toString()
+                arbeidsforholdDb.insertOrUpdate(getArbeidsforhold(fnr))
+                sykmeldingDb.saveOrUpdateSykmeldt(getSykmeldt(fnr))
+                sykmeldingDb.saveOrUpdate(
+                    sykmeldingId,
+                    getSykmelding(),
+                    getSykmeldt(fnr),
+                    okSykmelding = false
+                )
+                val identListe =
+                    listOf(
+                        Identifikator(nyttFnr, Type.FOLKEREGISTERIDENT, true),
+                        Identifikator(fnr, Type.FOLKEREGISTERIDENT, false),
+                        Identifikator("2222", Type.AKTORID, false),
+                    )
+                identendringService.updateIdent(identListe.map { it.idnummer })
 
-        context("IdentendringService") {
+                sykmeldingDb.getSykmeldt(fnr) shouldBeEqualTo null
+                sykmeldingDb.getSykmeldt(nyttFnr)?.fornavn shouldBeEqualTo "Annet"
+                sykmeldingDb.getSykmeldingIds(fnr).size shouldBeEqualTo 0
+                sykmeldingDb.getSykmeldingIds(nyttFnr).size shouldBeEqualTo 1
+                arbeidsforholdDb.getArbeidsforhold(fnr).size shouldBeEqualTo 0
+                arbeidsforholdDb.getArbeidsforhold(nyttFnr).size shouldBeEqualTo 1
+            }
+        }
+        context("IdentendringService oppdater ident ") {
             test("Oppdaterer sykmeldt, sykmelding og arbeidsforhold ved nytt fnr") {
                 val fnr = "12345678910"
                 val nyttFnr = "10987654321"
