@@ -2,7 +2,9 @@ package no.nav.sykmeldinger.pdl.service
 
 import no.nav.sykmeldinger.azuread.AccessTokenClient
 import no.nav.sykmeldinger.log
+import no.nav.sykmeldinger.objectMapper
 import no.nav.sykmeldinger.pdl.client.PdlClient
+import no.nav.sykmeldinger.pdl.client.model.GetPersonResponse
 import no.nav.sykmeldinger.pdl.error.InactiveIdentException
 import no.nav.sykmeldinger.pdl.error.PersonNotFoundInPdl
 import no.nav.sykmeldinger.pdl.model.Navn
@@ -32,23 +34,24 @@ class PdlPersonService(
             }
         }
         if (pdlResponse.data.person == null) {
-            secureLog.info("Fant ikke person i PDL, fnr: $ident")
+            logPdlResponse("Fant ikke person i PDL", ident, pdlResponse)
             log.error("Fant ikke person i PDL {}", callId)
             throw PersonNotFoundInPdl("Fant ikke person i PDL")
         }
         if (pdlResponse.data.person.navn.isNullOrEmpty()) {
-            secureLog.info("Fant ikke navn på person i PDL, fnr: $ident")
+            logPdlResponse("Fant ikke navn på person i PDL", ident, pdlResponse)
             log.error("Fant ikke navn på person i PDL {}", callId)
             throw PersonNotFoundInPdl("Fant ikke navn på person i PDL")
         }
         if (
             pdlResponse.data.hentIdenter == null || pdlResponse.data.hentIdenter.identer.isEmpty()
         ) {
-            secureLog.info("Fant ikke person i PDL, fnr: $ident")
+            logPdlResponse("Fant ikke person i PDL", ident, pdlResponse)
             log.warn("Fant ikke person i PDL")
             throw PersonNotFoundInPdl("Fant ikke person i PDL")
         }
         if (pdlResponse.data.hentIdenter.fnr == null) {
+
             log.error("Mangler gyldig fnr for person i PDL")
             throw PersonNotFoundInPdl("Mangler gyldig fnr for person i PDL")
         }
@@ -57,6 +60,12 @@ class PdlPersonService(
             getNavn(pdlResponse.data.person.navn[0]),
             pdlResponse.data.hentIdenter.fnr,
             pdlResponse.data.hentIdenter.oldFnr
+        )
+    }
+
+    private fun logPdlResponse(logMessage: String, ident: String, pdlResponse: GetPersonResponse) {
+        secureLog.info(
+            "$logMessage, fnr: $ident, pdlResponse ${objectMapper.writeValueAsString(pdlResponse)}"
         )
     }
 

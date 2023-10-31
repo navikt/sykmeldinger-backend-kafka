@@ -26,7 +26,7 @@ class PersonhendelseConsumer(
                     kafkaConsumer.subscribe(listOf(navnendringTopic))
                     consume()
                 } catch (ex: Exception) {
-                    log.error("error running navnendring-consumer", ex)
+                    log.error("error running pdl-consumer", ex)
                 } finally {
                     kafkaConsumer.unsubscribe()
                     log.info(

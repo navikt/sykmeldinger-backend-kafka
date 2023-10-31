@@ -6,7 +6,6 @@ import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.narmesteleder.db.NarmestelederDb
 import no.nav.sykmeldinger.pdl.Endringstype
 import no.nav.sykmeldinger.pdl.PersonhendelseDataClass
-import no.nav.sykmeldinger.secureLog
 
 class PersonhendelseService(
     private val identendringService: IdentendringService,
@@ -22,9 +21,7 @@ class PersonhendelseService(
             }
             .map { it.personidenter }
             .toSet()
-            .forEach {
-                identendringService.updateIdent(it)
-            }
+            .forEach { identendringService.updateIdent(it) }
 
         personhendelser
             .filter { it.navn != null }
