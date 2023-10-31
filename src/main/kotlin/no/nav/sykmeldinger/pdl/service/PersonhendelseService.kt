@@ -4,8 +4,11 @@ import no.nav.sykmeldinger.application.metrics.NL_NAVN_COUNTER
 import no.nav.sykmeldinger.identendring.IdentendringService
 import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.narmesteleder.db.NarmestelederDb
+import no.nav.sykmeldinger.objectMapper
 import no.nav.sykmeldinger.pdl.Endringstype
 import no.nav.sykmeldinger.pdl.PersonhendelseDataClass
+import no.nav.sykmeldinger.pdl.error.PersonNotFoundInPdl
+import no.nav.sykmeldinger.secureLog
 
 class PersonhendelseService(
     private val identendringService: IdentendringService,
@@ -21,7 +24,15 @@ class PersonhendelseService(
             }
             .map { it.personidenter }
             .toSet()
-            .forEach { identendringService.updateIdent(it) }
+            .forEach {
+                try {
+                    identendringService.updateIdent(it)
+                } catch (ex: PersonNotFoundInPdl) {
+                    val hendelse = personhendelser.first { hendelse -> hendelse.personidenter.contains(it.first()) }
+                    secureLog.error("Could not update ident for person in PDL ${objectMapper.writeValueAsString(hendelse)}")
+                    throw ex;
+                }
+            }
 
         personhendelser
             .filter { it.navn != null }
