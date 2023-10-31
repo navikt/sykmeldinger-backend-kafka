@@ -28,9 +28,14 @@ class PersonhendelseService(
                 try {
                     identendringService.updateIdent(it)
                 } catch (ex: PersonNotFoundInPdl) {
-                    val hendelse = personhendelser.first { hendelse -> hendelse.personidenter.contains(it.first()) }
-                    secureLog.error("Could not update ident for person in PDL ${objectMapper.writeValueAsString(hendelse)}")
-                    throw ex;
+                    val hendelse =
+                        personhendelser.first { hendelse ->
+                            hendelse.personidenter.contains(it.first())
+                        }
+                    secureLog.error(
+                        "Could not update ident for person in PDL ${objectMapper.writeValueAsString(hendelse)}"
+                    )
+                    throw ex
                 }
             }
 
