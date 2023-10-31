@@ -41,6 +41,7 @@ class PersonhendelseConsumer(
     private suspend fun consume() {
         while (applicationState.ready) {
             val records = kafkaConsumer.poll(Duration.ofSeconds(5)).mapNotNull { it.value() }
+                .filter { it.hendelseId != "0316768f-b8fa-464f-8e65-29e9794b3627" }
             if (records.isNotEmpty()) {
                 personhendlseService.handlePersonhendelse(records.map { it.toDataClass() })
             }
