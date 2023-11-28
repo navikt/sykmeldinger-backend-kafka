@@ -25,7 +25,7 @@ val avroVersion = "1.11.3"
 plugins {
     id("application")
     kotlin("jvm") version "1.9.10"
-    id("com.diffplug.spotless") version "6.22.0"
+    id("com.diffplug.spotless") version "6.23.0"
     id("com.github.johnrengelman.shadow") version "8.1.1"
     id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
 }
