@@ -102,6 +102,7 @@ dependencies {
     testImplementation("io.kotest:kotest-property:$kotestVersion")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation("org.flywaydb:flyway-core:$flywayVersion")
+    testImplementation("org.flywaydb:flyway-database-postgresql:$flywayVersion")
 }
 
 tasks {
