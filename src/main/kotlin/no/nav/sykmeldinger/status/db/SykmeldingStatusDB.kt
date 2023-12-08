@@ -32,7 +32,7 @@ class SykmeldingStatusDB(
             connection
                 .prepareStatement(
                     """
-            insert into sykmeldingstatus(sykmelding_id, event, timestamp, arbeidsgiver, sporsmal) values(?, ?, ?, ?, ?) on conflict do nothing;
+            insert into sykmeldingstatus(sykmelding_id, event, timestamp, arbeidsgiver, sporsmal, tidligere_arbeidsgiver) values(?, ?, ?, ?, ?, ?) on conflict do nothing;
         """,
                 )
                 .use { ps ->
@@ -42,7 +42,8 @@ class SykmeldingStatusDB(
                         ps.setString(index++, event.statusEvent)
                         ps.setTimestamp(index++, Timestamp.from(event.timestamp.toInstant()))
                         ps.setObject(index++, event.arbeidsgiver?.let { toPGObject(it) })
-                        ps.setObject(index, event.sporsmals?.let { toPGObject(it) })
+                        ps.setObject(index++, event.sporsmals?.let { toPGObject(it) })
+                        ps.setObject(index, event.tidligereArbeidsgiver?.let { toPGObject(it) })
                         ps.addBatch()
                     }
                     return ps.executeBatch().also { connection.commit() }.size
