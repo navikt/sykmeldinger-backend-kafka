@@ -5,7 +5,6 @@ import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
-import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.util.UUID
 import no.nav.sykmeldinger.TestDB
@@ -130,7 +129,6 @@ class PersonhendelseServiceTest :
                             "Etternavn",
                             "Fornavn Etternavn",
                             null,
-                            LocalDate.now()
                         )
                     )
 
@@ -151,7 +149,6 @@ class PersonhendelseServiceTest :
                             "Etternavn",
                             "Fornavn Etternavn",
                             null,
-                            LocalDate.now()
                         )
                     )
 

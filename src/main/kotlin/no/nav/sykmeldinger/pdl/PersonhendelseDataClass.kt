@@ -1,7 +1,6 @@
 package no.nav.sykmeldinger.pdl
 
 import java.time.Instant
-import java.time.LocalDate
 import no.nav.person.pdl.leesah.Personhendelse
 import no.nav.person.pdl.leesah.navn.Navn
 import no.nav.person.pdl.leesah.navn.OriginaltNavn
@@ -30,7 +29,6 @@ data class NavnDataClass(
     val etternavn: String?,
     val forkortetNavn: String?,
     val originaltNavn: OriginaltNavnDataClass?,
-    val gyldigFraOgMed: LocalDate?
 )
 
 data class OriginaltNavnDataClass(
@@ -71,7 +69,6 @@ fun mapNavnToNavnDataClass(navn: Navn): NavnDataClass {
             navn.originaltNavn?.let {
                 mapOriginaltNavnToOriginaltNavnDataClass(navn.originaltNavn)
             },
-        gyldigFraOgMed = navn.gyldigFraOgMed
     )
 }
 
