@@ -58,11 +58,13 @@ dependencies {
     implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
     implementation("io.ktor:ktor-client-core:$ktorVersion")
     implementation("io.ktor:ktor-client-apache:$ktorVersion")
+    constraints {
+        implementation("commons-codec:commons-codec:$commonsCodecVersion") {
+            because("override transient version 1.10 from io.ktor:ktor-client-apache")
+        }
+    }
     implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     implementation("io.ktor:ktor-serialization-jackson:$ktorVersion")
-
-    implementation("commons-codec:commons-codec:$commonsCodecVersion")
-    // override transient version 1.10 from io.ktor:ktor-client-apache
 
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("net.logstash.logback:logstash-logback-encoder:$logstashEncoderVersion")
@@ -72,9 +74,7 @@ dependencies {
 
     implementation("com.zaxxer:HikariCP:$hikariVersion")
     implementation("org.postgresql:postgresql:$postgresVersion")
-    implementation("com.google.cloud.sql:postgres-socket-factory:$googlePostgresVersion") {
-        exclude(group = "commons-codec", module = "commons-codec")
-    }
+    implementation("com.google.cloud.sql:postgres-socket-factory:$googlePostgresVersion")
 
     implementation("no.nav.helse:syfosm-common-kafka:$smCommonVersion")
     constraints {
@@ -94,9 +94,7 @@ dependencies {
     testImplementation("io.mockk:mockk:$mockkVersion")
     testImplementation("org.testcontainers:kafka:$testContainerVersion")
     testImplementation("org.testcontainers:postgresql:$testContainerVersion")
-    testImplementation("io.ktor:ktor-server-test-host:$ktorVersion") {
-        exclude(group = "org.eclipse.jetty")
-    }
+    testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
     testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
     testImplementation("io.kotest:kotest-property:$kotestVersion")
