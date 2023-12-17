@@ -11,7 +11,7 @@ import no.nav.sykmeldinger.application.ApplicationState
 import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.pdl.service.PersonhendelseService
 import org.apache.kafka.clients.consumer.KafkaConsumer
-import no.nav.sykmeldinger.pdl.Endringstype
+import no.nav.person.pdl.leesah.Endringstype
 
 class PersonhendelseConsumer(
     private val navnendringTopic: String,
