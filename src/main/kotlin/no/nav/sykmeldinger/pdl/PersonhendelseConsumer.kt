@@ -11,7 +11,6 @@ import no.nav.sykmeldinger.application.ApplicationState
 import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.pdl.service.PersonhendelseService
 import org.apache.kafka.clients.consumer.KafkaConsumer
-import no.nav.person.pdl.leesah.Endringstype
 
 class PersonhendelseConsumer(
     private val navnendringTopic: String,
@@ -42,7 +41,7 @@ class PersonhendelseConsumer(
     private suspend fun consume() {
         while (applicationState.ready) {
             val records = kafkaConsumer.poll(Duration.ofSeconds(5)).mapNotNull { it.value() }.filter {
-                it.endringstype != Endringstype.OPPHOERT
+                it.navn != null
             }
             if (records.isNotEmpty()) {
                 personhendlseService.handlePersonhendelse(records.map { it.toDataClass() })
