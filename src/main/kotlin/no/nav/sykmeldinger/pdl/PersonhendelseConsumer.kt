@@ -44,7 +44,6 @@ class PersonhendelseConsumer(
                 kafkaConsumer
                     .poll(Duration.ofSeconds(5))
                     .mapNotNull { it.value() }
-                    .filter { it.hendelseId != "394f6781-f7fa-42ae-b3f7-4e60981eaed1" }
             if (records.isNotEmpty()) {
                 personhendlseService.handlePersonhendelse(records.map { it.toDataClass() })
             }
