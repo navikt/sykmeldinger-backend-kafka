@@ -7,6 +7,7 @@ import no.nav.sykmeldinger.narmesteleder.db.NarmestelederDb
 import no.nav.sykmeldinger.objectMapper
 import no.nav.sykmeldinger.pdl.Endringstype
 import no.nav.sykmeldinger.pdl.PersonhendelseDataClass
+import no.nav.sykmeldinger.pdl.error.PersonNameNotFoundInPdl
 import no.nav.sykmeldinger.pdl.error.PersonNotFoundInPdl
 import no.nav.sykmeldinger.secureLog
 
@@ -27,14 +28,14 @@ class PersonhendelseService(
             .forEach {
                 try {
                     identendringService.updateIdent(it)
-                } catch (ex: PersonNotFoundInPdl) {
-                    val hendelse =
-                        personhendelser.first { hendelse ->
-                            hendelse.personidenter.contains(it.first())
-                        }
-                    secureLog.error(
-                        "Could not update ident for person in PDL ${objectMapper.writeValueAsString(hendelse)}"
+                } catch (ex: PersonNameNotFoundInPdl) {
+                    logPersonhendelseError(
+                        personhendelser,
+                        it,
+                        "Did not find name in PDL, continuing"
                     )
+                } catch (ex: PersonNotFoundInPdl) {
+                    logPersonhendelseError(personhendelser, it)
                     throw ex
                 }
             }
@@ -56,5 +57,17 @@ class PersonhendelseService(
                     }
                 }
             }
+    }
+
+    private fun logPersonhendelseError(
+        personhendelser: List<PersonhendelseDataClass>,
+        it: List<String>,
+        logStatement: String = "Could not update ident for person in PDL"
+    ) {
+        val hendelse =
+            personhendelser.first { hendelse -> hendelse.personidenter.contains(it.first()) }
+        secureLog.error(
+            "$logStatement ${objectMapper.writeValueAsString(hendelse)}",
+        )
     }
 }

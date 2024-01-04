@@ -69,9 +69,11 @@ class SykmeldingStatusConsumer(
 
     private suspend fun consume() {
         while (applicationState.ready) {
-            val records = kafkaConsumer.poll(Duration.ofSeconds(1))
-                .mapNotNull { it.value() }
-                .filter { it.kafkaMetadata.source != "sykmeldinger-backend" }
+            val records =
+                kafkaConsumer
+                    .poll(Duration.ofSeconds(1))
+                    .mapNotNull { it.value() }
+                    .filter { it.kafkaMetadata.source != "sykmeldinger-backend" }
             if (records.isNotEmpty()) {
                 lastDate = records.last().event.timestamp
                 val time = measureTime { updateStatus(records.map { it.event }) }
