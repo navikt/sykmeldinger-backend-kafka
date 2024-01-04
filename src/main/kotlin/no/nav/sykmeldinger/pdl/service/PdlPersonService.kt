@@ -6,6 +6,7 @@ import no.nav.sykmeldinger.objectMapper
 import no.nav.sykmeldinger.pdl.client.PdlClient
 import no.nav.sykmeldinger.pdl.client.model.GetPersonResponse
 import no.nav.sykmeldinger.pdl.error.InactiveIdentException
+import no.nav.sykmeldinger.pdl.error.PersonNameNotFoundInPdl
 import no.nav.sykmeldinger.pdl.error.PersonNotFoundInPdl
 import no.nav.sykmeldinger.pdl.model.Navn
 import no.nav.sykmeldinger.pdl.model.PdlPerson
@@ -41,7 +42,7 @@ class PdlPersonService(
         if (pdlResponse.data.person.navn.isNullOrEmpty()) {
             logPdlResponse("Fant ikke navn på person i PDL", ident, pdlResponse)
             log.error("Fant ikke navn på person i PDL {}", callId)
-            throw PersonNotFoundInPdl("Fant ikke navn på person i PDL")
+            throw PersonNameNotFoundInPdl("Fant ikke navn på person i PDL")
         }
         if (
             pdlResponse.data.hentIdenter == null || pdlResponse.data.hentIdenter.identer.isEmpty()
