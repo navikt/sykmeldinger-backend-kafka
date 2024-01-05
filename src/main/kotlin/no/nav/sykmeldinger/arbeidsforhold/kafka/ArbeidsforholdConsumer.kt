@@ -89,6 +89,9 @@ class ArbeidsforholdConsumer(
                 secureLog.info(
                     "Sletter arbeidsforhold, fnr: $fnr, arbeidsforholdId: ${arbeidsforholdHendelse.id}"
                 )
+                secureLog.info(
+                    "Sletter arbeidsforhold, fnr: $fnr, arbeidsforholdId: ${arbeidsforholdHendelse.id}"
+                )
                 arbeidsforholdService.deleteArbeidsforhold(
                     arbeidsforholdHendelse.arbeidsforhold.navArbeidsforholdId,
                 )
