@@ -13,6 +13,7 @@ import no.nav.sykmeldinger.arbeidsforhold.kafka.model.ArbeidsforholdHendelse
 import no.nav.sykmeldinger.arbeidsforhold.kafka.model.Endringstype
 import no.nav.sykmeldinger.arbeidsforhold.model.Arbeidsforhold
 import no.nav.sykmeldinger.log
+import no.nav.sykmeldinger.secureLog
 import no.nav.sykmeldinger.sykmelding.db.SykmeldingDb
 import org.apache.kafka.clients.consumer.KafkaConsumer
 
@@ -70,6 +71,9 @@ class ArbeidsforholdConsumer(
                 log.info(
                     "Sletter arbeidsforhold med id ${arbeidsforholdHendelse.arbeidsforhold.navArbeidsforholdId} hvis det finnes"
                 )
+                secureLog.info(
+                    "Sletter arbeidsforhold, fnr: $fnr, arbeidsforholdId: ${arbeidsforholdHendelse.id}"
+                )
                 arbeidsforholdService.deleteArbeidsforhold(
                     arbeidsforholdHendelse.arbeidsforhold.navArbeidsforholdId
                 )
@@ -85,11 +89,19 @@ class ArbeidsforholdConsumer(
 
                 if (slettesfraDb.isNotEmpty()) {
                     slettesfraDb.forEach {
-                        log.info("Sletter utdatert arbeidsforhold med id $it")
+                        log.info(
+                            "Sletter utdatert arbeidsforhold med id $it, endringstype: ${arbeidsforholdHendelse.endringstype}"
+                        )
+                        secureLog.info(
+                            "Sletter fra arbeidsforhold, siden db og areg ulike, fnr: $fnr, arbeidsforholdId: ${arbeidsforholdHendelse.id}"
+                        )
                         arbeidsforholdService.deleteArbeidsforhold(it)
                     }
                 }
                 arbeidsforhold.forEach { arbeidsforholdService.insertOrUpdate(it) }
+                secureLog.info(
+                    "Opprettet eller oppdatert arbeidsforhold for $fnr for disse orgnr: ${arbeidsforhold.map { it.orgnummer }}"
+                )
                 log.info(
                     "Opprettet eller oppdatert ${arbeidsforhold.size} arbeidsforhold etter mottak av hendelse med id ${arbeidsforholdHendelse.id}"
                 )
