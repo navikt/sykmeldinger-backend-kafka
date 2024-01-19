@@ -75,7 +75,7 @@ class ArbeidsforholdConsumer(
     }
 
     suspend fun handleArbeidsforholdHendelse(arbeidsforholdHendelse: ArbeidsforholdHendelse) {
-        log.debug(
+        log.info(
             "Mottatt arbeidsforhold-hendelse med id ${arbeidsforholdHendelse.id} og type ${arbeidsforholdHendelse.endringstype}",
         )
         val fnr = arbeidsforholdHendelse.arbeidsforhold.arbeidstaker.getFnr()
@@ -96,35 +96,39 @@ class ArbeidsforholdConsumer(
                     arbeidsforholdHendelse.arbeidsforhold.navArbeidsforholdId,
                 )
             } else {
-                val arbeidsforhold = arbeidsforholdService.getArbeidsforhold(fnr)
-                val arbeidsforholdFraDb = arbeidsforholdService.getArbeidsforholdFromDb(fnr)
-
-                val slettesfraDb =
-                    getArbeidsforholdSomSkalSlettes(
-                        arbeidsforholdDb = arbeidsforholdFraDb,
-                        arbeidsforholdAareg = arbeidsforhold,
-                    )
-
-                if (slettesfraDb.isNotEmpty()) {
-                    slettesfraDb.forEach {
-                        log.info(
-                            "Sletter utdatert arbeidsforhold med id $it, endringstype: ${arbeidsforholdHendelse.endringstype}"
-                        )
-                        secureLog.info(
-                            "Sletter fra arbeidsforhold, siden db og areg ulike, fnr: $fnr, arbeidsforholdId: ${arbeidsforholdHendelse.id}"
-                        )
-                        arbeidsforholdService.deleteArbeidsforhold(it)
-                    }
-                }
-                arbeidsforhold.forEach { arbeidsforholdService.insertOrUpdate(it) }
-                secureLog.info(
-                    "Opprettet eller oppdatert arbeidsforhold for $fnr for disse orgnr: ${arbeidsforhold.map { it.orgnummer }}"
-                )
-                log.info(
-                    "Opprettet eller oppdatert ${arbeidsforhold.size} arbeidsforhold etter mottak av hendelse med id ${arbeidsforholdHendelse.id}",
-                )
+                updateArbeidsforhold(fnr)
             }
         }
+    }
+
+    private suspend fun updateArbeidsforhold(fnr: String) {
+        val arbeidsforhold = arbeidsforholdService.getArbeidsforhold(fnr)
+        val arbeidsforholdFraDb = arbeidsforholdService.getArbeidsforholdFromDb(fnr)
+
+        val slettesfraDb =
+            getArbeidsforholdSomSkalSlettes(
+                arbeidsforholdDb = arbeidsforholdFraDb,
+                arbeidsforholdAareg = arbeidsforhold,
+            )
+
+        if (slettesfraDb.isNotEmpty()) {
+            slettesfraDb.forEach {
+                log.info(
+                    "Sletter utdatert arbeidsforhold med id $it",
+                )
+                secureLog.info(
+                    "Sletter fra arbeidsforhold, siden db og areg ulike, fnr: $fnr, arbeidsforholdId: $it",
+                )
+                arbeidsforholdService.deleteArbeidsforhold(it)
+            }
+        }
+        arbeidsforhold.forEach { arbeidsforholdService.insertOrUpdate(it) }
+        secureLog.info(
+            "Opprettet eller oppdatert arbeidsforhold for $fnr for disse orgnr: ${arbeidsforhold.map { it.orgnummer }}",
+        )
+        log.info(
+            "Opprettet eller oppdatert ${arbeidsforhold.size} arbeidsforhold med ider: ${arbeidsforhold.map { it.id }}",
+        )
     }
 
     fun getArbeidsforholdSomSkalSlettes(
