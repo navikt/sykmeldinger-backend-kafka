@@ -5,8 +5,11 @@ import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import no.nav.sykmeldinger.application.ApplicationState
 import no.nav.sykmeldinger.arbeidsforhold.ArbeidsforholdService
 import no.nav.sykmeldinger.arbeidsforhold.kafka.model.ArbeidsforholdHendelse
@@ -51,16 +54,39 @@ class ArbeidsforholdConsumer(
         kafkaConsumer.subscribe(listOf(topic))
         log.info("Starting consuming topic $topic")
         while (applicationState.ready) {
-            kafkaConsumer.poll(Duration.ofSeconds(POLL_DURATION_SECONDS)).forEach {
-                if (it.value() != null) {
-                    handleArbeidsforholdHendelse(it.value())
-                }
+            val hendelser = kafkaConsumer.poll(Duration.ofSeconds(POLL_DURATION_SECONDS))
+            val newhendelserByFnr =
+                hendelser
+                    .filter { it.value().endringstype != Endringstype.Sletting }
+                    .map { it.value().arbeidsforhold.arbeidstaker.getFnr() }
+                    .distinct()
+
+            newhendelserByFnr.chunked(10).forEach { updateArbeidsforholdFor(it) }
+
+            val deleted =
+                hendelser
+                    .filter { it.value().endringstype == Endringstype.Sletting }
+                    .map { it.value().arbeidsforhold.navArbeidsforholdId }
+            deleteArbeidsforhold(deleted)
+            if(hendelser.count() > 0) {
+                log.info("Last hendelsesId ${hendelser.last().value().id}")
             }
         }
     }
 
+    private suspend fun deleteArbeidsforhold(deleted: List<Int>) {
+        arbeidsforholdService.deleteArbeidsforholdIds(deleted)
+    }
+
+    private suspend fun updateArbeidsforholdFor(newhendelserByFnr: List<String>) {
+        withContext(Dispatchers.IO) {
+            val jobs = newhendelserByFnr.map { async(Dispatchers.IO) { updateArbeidsforhold(it) } }
+            jobs.awaitAll()
+        }
+    }
+
     suspend fun handleArbeidsforholdHendelse(arbeidsforholdHendelse: ArbeidsforholdHendelse) {
-        log.debug(
+        log.info(
             "Mottatt arbeidsforhold-hendelse med id ${arbeidsforholdHendelse.id} og type ${arbeidsforholdHendelse.endringstype}"
         )
         val fnr = arbeidsforholdHendelse.arbeidsforhold.arbeidstaker.getFnr()
@@ -78,35 +104,39 @@ class ArbeidsforholdConsumer(
                     arbeidsforholdHendelse.arbeidsforhold.navArbeidsforholdId
                 )
             } else {
-                val arbeidsforhold = arbeidsforholdService.getArbeidsforhold(fnr)
-                val arbeidsforholdFraDb = arbeidsforholdService.getArbeidsforholdFromDb(fnr)
-
-                val slettesfraDb =
-                    getArbeidsforholdSomSkalSlettes(
-                        arbeidsforholdDb = arbeidsforholdFraDb,
-                        arbeidsforholdAareg = arbeidsforhold
-                    )
-
-                if (slettesfraDb.isNotEmpty()) {
-                    slettesfraDb.forEach {
-                        log.info(
-                            "Sletter utdatert arbeidsforhold med id $it, endringstype: ${arbeidsforholdHendelse.endringstype}"
-                        )
-                        secureLog.info(
-                            "Sletter fra arbeidsforhold, siden db og areg ulike, fnr: $fnr, arbeidsforholdId: ${arbeidsforholdHendelse.id}"
-                        )
-                        arbeidsforholdService.deleteArbeidsforhold(it)
-                    }
-                }
-                arbeidsforhold.forEach { arbeidsforholdService.insertOrUpdate(it) }
-                secureLog.info(
-                    "Opprettet eller oppdatert arbeidsforhold for $fnr for disse orgnr: ${arbeidsforhold.map { it.orgnummer }}"
-                )
-                log.info(
-                    "Opprettet eller oppdatert ${arbeidsforhold.size} arbeidsforhold etter mottak av hendelse med id ${arbeidsforholdHendelse.id}"
-                )
+                updateArbeidsforhold(fnr)
             }
         }
+    }
+
+    private suspend fun updateArbeidsforhold(fnr: String) {
+        val arbeidsforhold = arbeidsforholdService.getArbeidsforhold(fnr)
+        val arbeidsforholdFraDb = arbeidsforholdService.getArbeidsforholdFromDb(fnr)
+
+        val slettesfraDb =
+            getArbeidsforholdSomSkalSlettes(
+                arbeidsforholdDb = arbeidsforholdFraDb,
+                arbeidsforholdAareg = arbeidsforhold,
+            )
+
+        if (slettesfraDb.isNotEmpty()) {
+            slettesfraDb.forEach {
+                log.info(
+                    "Sletter utdatert arbeidsforhold med id $it",
+                )
+                secureLog.info(
+                    "Sletter fra arbeidsforhold, siden db og areg ulike, fnr: $fnr, arbeidsforholdId: $it",
+                )
+                arbeidsforholdService.deleteArbeidsforhold(it)
+            }
+        }
+        arbeidsforhold.forEach { arbeidsforholdService.insertOrUpdate(it) }
+        secureLog.info(
+            "Opprettet eller oppdatert arbeidsforhold for $fnr for disse orgnr: ${arbeidsforhold.map { it.orgnummer }}",
+        )
+        log.info(
+            "Opprettet eller oppdatert ${arbeidsforhold.size} arbeidsforhold med ider: ${arbeidsforhold.map { it.id }}",
+        )
     }
 
     fun getArbeidsforholdSomSkalSlettes(

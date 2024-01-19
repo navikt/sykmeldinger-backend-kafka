@@ -303,14 +303,14 @@ private fun getArbeidsforholdKafkaConsumer(): KafkaConsumer<String, Arbeidsforho
     val kafkaConsumer =
         KafkaConsumer(
             KafkaUtils.getAivenKafkaConfig("arbeidsforhold-consumer")
-                .also {
-                    it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
-                    it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
-                }
                 .toConsumerConfig(
                     "sykmeldinger-backend-kafka-consumer",
                     JacksonKafkaDeserializer::class
-                ),
+                )
+                .also {
+                    it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
+                    it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
+                },
             StringDeserializer(),
             JacksonKafkaDeserializer(ArbeidsforholdHendelse::class),
         )
