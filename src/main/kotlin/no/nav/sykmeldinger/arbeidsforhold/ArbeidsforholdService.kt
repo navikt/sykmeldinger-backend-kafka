@@ -56,7 +56,7 @@ class ArbeidsforholdService(
         }
     }
 
-    fun getArbeidsforholdFromDb(fnr: String): List<Arbeidsforhold> {
+    suspend fun getArbeidsforholdFromDb(fnr: String): List<Arbeidsforhold> {
         return arbeidsforholdDb.getArbeidsforhold(fnr)
     }
 
@@ -68,5 +68,9 @@ class ArbeidsforholdService(
         val ansettelsesperiodeFom = LocalDate.now().minusMonths(4)
         return ansettelsesperiode.sluttdato == null ||
             ansettelsesperiode.sluttdato.isAfter(ansettelsesperiodeFom)
+    }
+
+    suspend fun deleteArbeidsforholdIds(deleted: List<Int>) {
+        arbeidsforholdDb.deleteArbeidsforholdIds(deleted)
     }
 }

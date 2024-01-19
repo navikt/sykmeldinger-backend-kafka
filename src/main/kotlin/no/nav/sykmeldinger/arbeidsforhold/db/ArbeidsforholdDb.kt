@@ -45,17 +45,19 @@ class ArbeidsforholdDb(
             }
         }
 
-    fun getArbeidsforhold(fnr: String): List<Arbeidsforhold> {
-        return database.connection.use {
-            it.prepareStatement(
-                    """
+    suspend fun getArbeidsforhold(fnr: String): List<Arbeidsforhold> {
+        return withContext(Dispatchers.IO) {
+            database.connection.use {
+                it.prepareStatement(
+                        """
                     SELECT * FROM arbeidsforhold WHERE fnr = ?;
                 """,
-                )
-                .use { ps ->
-                    ps.setString(1, fnr)
-                    ps.executeQuery().toList { toArbeidsforhold() }
-                }
+                    )
+                    .use { ps ->
+                        ps.setString(1, fnr)
+                        ps.executeQuery().toList { toArbeidsforhold() }
+                    }
+            }
         }
     }
 
@@ -72,6 +74,22 @@ class ArbeidsforholdDb(
                     ps.executeUpdate()
                 }
             connection.commit()
+        }
+    }
+
+    suspend fun deleteArbeidsforholdIds(ids: List<Int>) {
+        withContext(Dispatchers.IO) {
+            database.connection.use { connection ->
+                connection.prepareStatement("""DELETE FROM arbeidsforhold WHERE id = ?;""").use { ps
+                    ->
+                    for (id in ids) {
+                        ps.setString(1, id.toString())
+                        ps.addBatch()
+                    }
+                    ps.executeBatch()
+                }
+                connection.commit()
+            }
         }
     }
 
