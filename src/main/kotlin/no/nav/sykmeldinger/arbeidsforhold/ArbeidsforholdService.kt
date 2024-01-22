@@ -24,21 +24,20 @@ class ArbeidsforholdService(
             return emptyList()
         }
 
-        val arbeidsgiverList = ArrayList<Arbeidsforhold>()
-        arbeidsgivere
-            .filter {
-                it.arbeidssted.type == ArbeidsstedType.Underenhet &&
-                    arbeidsforholdErGyldig(it.ansettelsesperiode)
-            }
-            .sortedWith(
-                compareByDescending(nullsLast()) { it.ansettelsesperiode.sluttdato },
-            )
-            .forEach { aaregArbeidsforhold ->
-                val organisasjonsinfo =
-                    organisasjonsinfoClient.getOrganisasjonsnavn(
-                        aaregArbeidsforhold.arbeidssted.getOrgnummer()
-                    )
-                arbeidsgiverList.add(
+        val arbeidsgiverList =
+            arbeidsgivere
+                .filter {
+                    it.arbeidssted.type == ArbeidsstedType.Underenhet &&
+                        arbeidsforholdErGyldig(it.ansettelsesperiode)
+                }
+                .sortedWith(
+                    compareByDescending(nullsLast()) { it.ansettelsesperiode.sluttdato },
+                )
+                .map { aaregArbeidsforhold ->
+                    val organisasjonsinfo =
+                        organisasjonsinfoClient.getOrganisasjonsnavn(
+                            aaregArbeidsforhold.arbeidssted.getOrgnummer()
+                        )
                     Arbeidsforhold(
                         id = aaregArbeidsforhold.navArbeidsforholdId,
                         fnr = fnr,
@@ -48,12 +47,9 @@ class ArbeidsforholdService(
                         orgNavn = organisasjonsinfo.navn.getNameAsString(),
                         fom = aaregArbeidsforhold.ansettelsesperiode.startdato,
                         tom = aaregArbeidsforhold.ansettelsesperiode.sluttdato,
-                    ),
-                )
-            }
-        return arbeidsgiverList.distinctBy {
-            listOf(it.fnr, it.orgnummer, it.juridiskOrgnummer, it.orgNavn, it.fom, it.tom)
-        }
+                    )
+                }
+        return arbeidsgiverList
     }
 
     suspend fun getArbeidsforholdFromDb(fnr: String): List<Arbeidsforhold> {
