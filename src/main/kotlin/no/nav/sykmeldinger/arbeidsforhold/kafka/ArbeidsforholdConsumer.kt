@@ -7,11 +7,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.async
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import no.nav.sykmeldinger.arbeidsforhold.ArbeidsforholdService
 import no.nav.sykmeldinger.arbeidsforhold.kafka.model.ArbeidsforholdHendelse
 import no.nav.sykmeldinger.arbeidsforhold.kafka.model.Endringstype
+import no.nav.sykmeldinger.arbeidsforhold.kafka.model.Entitetsendring
 import no.nav.sykmeldinger.arbeidsforhold.model.Arbeidsforhold
 import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.secureLog
@@ -55,10 +59,23 @@ class ArbeidsforholdConsumer(
         log.info("Starting consuming topic $topic")
         while (isActive) {
             try {
-                kafkaConsumer.poll(Duration.ofSeconds(POLL_DURATION_SECONDS)).forEach {
-                    if (it.value() != null) {
-                        handleArbeidsforholdHendelse(it.value())
-                    }
+                val hendelser = kafkaConsumer.poll(Duration.ofSeconds(POLL_DURATION_SECONDS))
+                val newhendelserByFnr =
+                    hendelser
+                        .filter { it.value().endringstype != Endringstype.Sletting }
+                        .filter { hasValidEndringstype(it.value()) }
+                        .map { it.value().arbeidsforhold.arbeidstaker.getFnr() }
+                        .distinct()
+
+                newhendelserByFnr.chunked(10).forEach { updateArbeidsforholdFor(it) }
+
+                val deleted =
+                    hendelser
+                        .filter { it.value().endringstype == Endringstype.Sletting }
+                        .map { it.value().arbeidsforhold.navArbeidsforholdId }
+                deleteArbeidsforhold(deleted)
+                if (hendelser.count() > 0) {
+                    log.info("Last hendelsesId ${hendelser.last().value().id}")
                 }
             } catch (ex: Exception) {
                 log.error(
@@ -72,6 +89,23 @@ class ArbeidsforholdConsumer(
         }
         log.info("Arbeidsforhold consumer coroutine not active")
         kafkaConsumer.unsubscribe()
+    }
+
+    private fun hasValidEndringstype(arbeidsforholdHendelse: ArbeidsforholdHendelse) =
+        arbeidsforholdHendelse.entitetsendringer.any { endring ->
+            endring == Entitetsendring.Ansettelsesdetaljer ||
+                endring == Entitetsendring.Ansettelsesperiode
+        }
+
+    private suspend fun deleteArbeidsforhold(deleted: List<Int>) {
+        arbeidsforholdService.deleteArbeidsforholdIds(deleted)
+    }
+
+    private suspend fun updateArbeidsforholdFor(newhendelserByFnr: List<String>) {
+        withContext(Dispatchers.IO) {
+            val jobs = newhendelserByFnr.map { async(Dispatchers.IO) { updateArbeidsforhold(it) } }
+            jobs.awaitAll()
+        }
     }
 
     suspend fun handleArbeidsforholdHendelse(arbeidsforholdHendelse: ArbeidsforholdHendelse) {
