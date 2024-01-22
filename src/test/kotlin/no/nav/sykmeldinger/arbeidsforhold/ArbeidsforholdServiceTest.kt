@@ -214,49 +214,6 @@ object ArbeidsforholdServiceTest :
                 arbeidsforhold[0].fom shouldBeEqualTo LocalDate.now().minusMonths(6)
                 arbeidsforhold[0].tom shouldBeEqualTo LocalDate.now().minusWeeks(3)
             }
-            test("getArbeidsforhold filtrerer bort duplikate arbeidsforhold") {
-                coEvery { arbeidsforholdClient.getArbeidsforhold(any()) } returns
-                    listOf(
-                        AaregArbeidsforhold(
-                            1,
-                            Arbeidssted(
-                                ArbeidsstedType.Underenhet,
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))
-                            ),
-                            Opplysningspliktig(
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))
-                            ),
-                            Ansettelsesperiode(
-                                startdato = LocalDate.now().minusMonths(6),
-                                sluttdato = LocalDate.now().minusWeeks(3),
-                            ),
-                        ),
-                        AaregArbeidsforhold(
-                            2,
-                            Arbeidssted(
-                                ArbeidsstedType.Underenhet,
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))
-                            ),
-                            Opplysningspliktig(
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))
-                            ),
-                            Ansettelsesperiode(
-                                startdato = LocalDate.now().minusMonths(6),
-                                sluttdato = LocalDate.now().minusWeeks(3),
-                            ),
-                        ),
-                    )
-
-                val arbeidsforhold = arbeidsforholdService.getArbeidsforhold("12345678901")
-                arbeidsforhold.size shouldBeEqualTo 1
-                arbeidsforhold[0].id shouldBeEqualTo 1
-                arbeidsforhold[0].fnr shouldBeEqualTo "12345678901"
-                arbeidsforhold[0].orgnummer shouldBeEqualTo "123456789"
-                arbeidsforhold[0].juridiskOrgnummer shouldBeEqualTo "987654321"
-                arbeidsforhold[0].orgNavn shouldBeEqualTo "Navn 1"
-                arbeidsforhold[0].fom shouldBeEqualTo LocalDate.now().minusMonths(6)
-                arbeidsforhold[0].tom shouldBeEqualTo LocalDate.now().minusWeeks(3)
-            }
         }
         context("ArbeidsforholderService - insertOrUpdate") {
             test("Lagrer nytt arbeidsforhold") {

@@ -4,4 +4,5 @@ data class ArbeidsforholdHendelse(
     val id: Long,
     val endringstype: Endringstype,
     val arbeidsforhold: ArbeidsforholdKafka,
+    val entitetsendringer: List<Entitetsendring>,
 )
