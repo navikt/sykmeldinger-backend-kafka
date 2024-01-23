@@ -215,6 +215,7 @@ fun main() {
             arbeidsforholdService,
             sharedScope
         )
+
     createUnleashStateHandler(
         scope = sharedScope,
         toggle = SYKMELDINGER_ARBEIDSFORHOLD_CONSUMER,
