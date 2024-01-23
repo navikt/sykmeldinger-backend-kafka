@@ -22,6 +22,7 @@ import io.prometheus.client.hotspot.DefaultExports
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import no.nav.person.pdl.leesah.Personhendelse
 import no.nav.syfo.kafka.aiven.KafkaUtils
 import no.nav.syfo.kafka.toConsumerConfig
@@ -66,7 +67,7 @@ import org.slf4j.LoggerFactory
 
 val log: Logger = LoggerFactory.getLogger("no.nav.sykmeldinger.sykmeldinger-backend-kafka")
 val secureLog: Logger = LoggerFactory.getLogger("securelog")
-const val SYKMELDINGER_BACKEND_KAFKA_TOGGLE = "sykmeldinger-backend-kafka"
+const val SYKMELDINGER_ARBEIDSFORHOLD_CONSUMER = "SYKMELDINGER_ARBEIDSFORHOLD_CONSUMER"
 
 val objectMapper: ObjectMapper =
     jacksonObjectMapper().apply {
@@ -204,28 +205,35 @@ fun main() {
         )
     pdlHendelseConsumer.startConsumer()
 
+    val sharedScope = CoroutineScope(Dispatchers.IO)
+
     val arbeidsforholdConsumer =
         ArbeidsforholdConsumer(
             getArbeidsforholdKafkaConsumer(),
-            applicationState,
             env.arbeidsforholdTopic,
             sykmeldingDb,
-            arbeidsforholdService
+            arbeidsforholdService,
+            sharedScope
         )
-    val sharedScope = CoroutineScope(Dispatchers.IO)
     createUnleashStateHandler(
         scope = sharedScope,
-        toggle = SYKMELDINGER_BACKEND_KAFKA_TOGGLE,
+        toggle = SYKMELDINGER_ARBEIDSFORHOLD_CONSUMER,
         onToggledOn = {
-            log.info("$SYKMELDINGER_BACKEND_KAFKA_TOGGLE has been toggled on")
+            log.info("$SYKMELDINGER_ARBEIDSFORHOLD_CONSUMER has been toggled on")
             arbeidsforholdConsumer.startConsumer()
         },
         onToggledOff = {
-            log.warn("$SYKMELDINGER_BACKEND_KAFKA_TOGGLE is toggled off, unsubscribing")
+            log.warn("$SYKMELDINGER_ARBEIDSFORHOLD_CONSUMER is toggled off, unsubscribing")
             arbeidsforholdConsumer.stopConsumer()
         },
     )
-
+    Runtime.getRuntime()
+        .addShutdownHook(
+            Thread {
+                log.info("Shutting down shared coroutinescope")
+                sharedScope.cancel()
+            },
+        )
     val leaderElection = LeaderElection(httpClient, env.electorPath)
     val deleteArbeidsforholdService =
         DeleteArbeidsforholdService(arbeidsforholdDb, leaderElection, applicationState)
