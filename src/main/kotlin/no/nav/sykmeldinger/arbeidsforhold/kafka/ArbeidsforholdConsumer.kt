@@ -118,10 +118,7 @@ class ArbeidsforholdConsumer(
         if (sykmeldt != null) {
             if (arbeidsforholdHendelse.endringstype == Endringstype.Sletting) {
                 log.info(
-                    "Sletter arbeidsforhold med id ${arbeidsforholdHendelse.arbeidsforhold.navArbeidsforholdId} hvis det finnes",
-                )
-                secureLog.info(
-                    "Sletter arbeidsforhold, fnr: $fnr, arbeidsforholdId: ${arbeidsforholdHendelse.id}"
+                    "Sletter arbeidsforhold med id ${arbeidsforholdHendelse.arbeidsforhold.navArbeidsforholdId} hvis det finnes"
                 )
                 secureLog.info(
                     "Sletter arbeidsforhold, fnr: $fnr, arbeidsforholdId: ${arbeidsforholdHendelse.id}"
