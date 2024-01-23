@@ -40,10 +40,7 @@ class PersonhendelseConsumer(
 
     private suspend fun consume() {
         while (applicationState.ready) {
-            val records =
-                kafkaConsumer
-                    .poll(Duration.ofSeconds(5))
-                    .mapNotNull { it.value() }
+            val records = kafkaConsumer.poll(Duration.ofSeconds(5)).mapNotNull { it.value() }
             if (records.isNotEmpty()) {
                 personhendlseService.handlePersonhendelse(records.map { it.toDataClass() })
             }
