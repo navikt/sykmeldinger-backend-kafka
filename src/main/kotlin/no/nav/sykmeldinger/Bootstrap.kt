@@ -19,11 +19,14 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.network.sockets.SocketTimeoutException
 import io.ktor.serialization.jackson.jackson
 import io.prometheus.client.hotspot.DefaultExports
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
 import no.nav.person.pdl.leesah.Personhendelse
 import no.nav.syfo.kafka.aiven.KafkaUtils
 import no.nav.syfo.kafka.toConsumerConfig
 import no.nav.syfo.model.sykmeldingstatus.SykmeldingStatusKafkaMessageDTO
+import no.nav.syfo.unleash.createUnleashStateHandler
 import no.nav.sykmeldinger.application.ApplicationServer
 import no.nav.sykmeldinger.application.ApplicationState
 import no.nav.sykmeldinger.application.createApplicationEngine
@@ -63,6 +66,7 @@ import org.slf4j.LoggerFactory
 
 val log: Logger = LoggerFactory.getLogger("no.nav.sykmeldinger.sykmeldinger-backend-kafka")
 val secureLog: Logger = LoggerFactory.getLogger("securelog")
+const val SYKMELDINGER_BACKEND_KAFKA_TOGGLE = "sykmeldinger-backend-kafka"
 
 val objectMapper: ObjectMapper =
     jacksonObjectMapper().apply {
@@ -208,7 +212,19 @@ fun main() {
             sykmeldingDb,
             arbeidsforholdService
         )
-    arbeidsforholdConsumer.startConsumer()
+    val sharedScope = CoroutineScope(Dispatchers.IO)
+    createUnleashStateHandler(
+        scope = sharedScope,
+        toggle = SYKMELDINGER_BACKEND_KAFKA_TOGGLE,
+        onToggledOn = {
+            log.info("$SYKMELDINGER_BACKEND_KAFKA_TOGGLE has been toggled on")
+            arbeidsforholdConsumer.startConsumer()
+        },
+        onToggledOff = {
+            log.warn("$SYKMELDINGER_BACKEND_KAFKA_TOGGLE is toggled off, unsubscribing")
+            arbeidsforholdConsumer.stopConsumer()
+        },
+    )
 
     val leaderElection = LeaderElection(httpClient, env.electorPath)
     val deleteArbeidsforholdService =

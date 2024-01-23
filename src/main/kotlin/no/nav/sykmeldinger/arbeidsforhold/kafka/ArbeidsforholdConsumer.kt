@@ -46,6 +46,10 @@ class ArbeidsforholdConsumer(
         }
     }
 
+    fun stopConsumer() {
+        applicationState.ready = false
+    }
+
     private suspend fun runConsumer() {
         kafkaConsumer.subscribe(listOf(topic))
         log.info("Starting consuming topic $topic")
