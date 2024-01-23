@@ -108,6 +108,23 @@ class ArbeidsforholdConsumer(
         }
     }
 
+    private fun hasValidEndringstype(arbeidsforholdHendelse: ArbeidsforholdHendelse) =
+        arbeidsforholdHendelse.entitetsendringer.any { endring ->
+            endring == Entitetsendring.Ansettelsesdetaljer ||
+                endring == Entitetsendring.Ansettelsesperiode
+        }
+
+    private suspend fun deleteArbeidsforhold(deleted: List<Int>) {
+        arbeidsforholdService.deleteArbeidsforholdIds(deleted)
+    }
+
+    private suspend fun updateArbeidsforholdFor(newhendelserByFnr: List<String>) {
+        withContext(Dispatchers.IO) {
+            val jobs = newhendelserByFnr.map { async(Dispatchers.IO) { updateArbeidsforhold(it) } }
+            jobs.awaitAll()
+        }
+    }
+
     suspend fun handleArbeidsforholdHendelse(arbeidsforholdHendelse: ArbeidsforholdHendelse) {
         log.info(
             "Mottatt arbeidsforhold-hendelse med id ${arbeidsforholdHendelse.id} og type ${arbeidsforholdHendelse.endringstype}",
