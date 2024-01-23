@@ -2,15 +2,16 @@ package no.nav.sykmeldinger.arbeidsforhold.kafka
 
 import java.time.Duration
 import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import no.nav.sykmeldinger.application.ApplicationState
 import no.nav.sykmeldinger.arbeidsforhold.ArbeidsforholdService
 import no.nav.sykmeldinger.arbeidsforhold.kafka.model.ArbeidsforholdHendelse
 import no.nav.sykmeldinger.arbeidsforhold.kafka.model.Endringstype
@@ -23,57 +24,71 @@ import org.apache.kafka.clients.consumer.KafkaConsumer
 
 class ArbeidsforholdConsumer(
     private val kafkaConsumer: KafkaConsumer<String, ArbeidsforholdHendelse>,
-    private val applicationState: ApplicationState,
     private val topic: String,
     private val sykmeldingDb: SykmeldingDb,
     private val arbeidsforholdService: ArbeidsforholdService,
+    private val scope: CoroutineScope = CoroutineScope(Dispatchers.IO),
 ) {
+
+    private var job: Job? = null
+
     companion object {
         private const val DELAY_ON_ERROR_SECONDS = 60L
         private const val POLL_DURATION_SECONDS = 10L
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
     fun startConsumer() {
-        GlobalScope.launch(Dispatchers.IO) {
-            while (applicationState.ready) {
-                try {
-                    runConsumer()
-                } catch (ex: Exception) {
-                    log.error(
-                        "Error running kafka consumer for arbeidsforhold, unsubscribing and waiting $DELAY_ON_ERROR_SECONDS seconds for retry",
-                        ex,
-                    )
-                    kafkaConsumer.unsubscribe()
-                    delay(DELAY_ON_ERROR_SECONDS.seconds)
-                }
-            }
+        if (job == null || job!!.isCompleted) {
+            job = scope.launch(Dispatchers.IO) { runConsumer() }
+            log.info("ArbeidsforholdConsumer started")
+        } else (log.info("ArbeidsforholdConsumer already running"))
+    }
+
+    fun stopConsumer() {
+        if (job != null && job!!.isActive) {
+            job?.cancel()
+            job = null
+            log.info("ArbeidsforholdConsumer stopped")
+        } else {
+            log.info("ArbeidsforholdConsumer already stopped")
         }
     }
 
-    private suspend fun runConsumer() {
+    private suspend fun runConsumer() = coroutineScope {
         kafkaConsumer.subscribe(listOf(topic))
         log.info("Starting consuming topic $topic")
-        while (applicationState.ready) {
-            val hendelser = kafkaConsumer.poll(Duration.ofSeconds(POLL_DURATION_SECONDS))
-            val newhendelserByFnr =
-                hendelser
-                    .filter { it.value().endringstype != Endringstype.Sletting }
-                    .filter { hasValidEndringstype(it.value()) }
-                    .map { it.value().arbeidsforhold.arbeidstaker.getFnr() }
-                    .distinct()
+        while (isActive) {
+            try {
+                val hendelser = kafkaConsumer.poll(Duration.ofSeconds(POLL_DURATION_SECONDS))
+                val newhendelserByFnr =
+                    hendelser
+                        .filter { it.value().endringstype != Endringstype.Sletting }
+                        .filter { hasValidEndringstype(it.value()) }
+                        .map { it.value().arbeidsforhold.arbeidstaker.getFnr() }
+                        .distinct()
 
-            newhendelserByFnr.chunked(10).forEach { updateArbeidsforholdFor(it) }
+                newhendelserByFnr.chunked(10).forEach { updateArbeidsforholdFor(it) }
 
-            val deleted =
-                hendelser
-                    .filter { it.value().endringstype == Endringstype.Sletting }
-                    .map { it.value().arbeidsforhold.navArbeidsforholdId }
-            deleteArbeidsforhold(deleted)
-            if (hendelser.count() > 0) {
-                log.info("Last hendelsesId ${hendelser.last().value().id}")
+                val deleted =
+                    hendelser
+                        .filter { it.value().endringstype == Endringstype.Sletting }
+                        .map { it.value().arbeidsforhold.navArbeidsforholdId }
+                deleteArbeidsforhold(deleted)
+                if (hendelser.count() > 0) {
+                    log.info("Last hendelsesId ${hendelser.last().value().id}")
+                }
+            } catch (ex: Exception) {
+                log.error(
+                    "Error running kafka consumer for arbeidsforhold, unsubscribing and waiting $DELAY_ON_ERROR_SECONDS seconds for retry",
+                    ex,
+                )
+                kafkaConsumer.unsubscribe()
+                delay(DELAY_ON_ERROR_SECONDS.seconds)
+                kafkaConsumer.subscribe(listOf(topic))
             }
         }
+        log.info("Arbeidsforhold consumer coroutine not active")
+        kafkaConsumer.unsubscribe()
     }
 
     private fun hasValidEndringstype(arbeidsforholdHendelse: ArbeidsforholdHendelse) =
@@ -95,7 +110,7 @@ class ArbeidsforholdConsumer(
 
     suspend fun handleArbeidsforholdHendelse(arbeidsforholdHendelse: ArbeidsforholdHendelse) {
         log.info(
-            "Mottatt arbeidsforhold-hendelse med id ${arbeidsforholdHendelse.id} og type ${arbeidsforholdHendelse.endringstype}"
+            "Mottatt arbeidsforhold-hendelse med id ${arbeidsforholdHendelse.id} og type ${arbeidsforholdHendelse.endringstype}",
         )
         val fnr = arbeidsforholdHendelse.arbeidsforhold.arbeidstaker.getFnr()
         val sykmeldt = sykmeldingDb.getSykmeldt(fnr)
@@ -109,7 +124,7 @@ class ArbeidsforholdConsumer(
                     "Sletter arbeidsforhold, fnr: $fnr, arbeidsforholdId: ${arbeidsforholdHendelse.id}"
                 )
                 arbeidsforholdService.deleteArbeidsforhold(
-                    arbeidsforholdHendelse.arbeidsforhold.navArbeidsforholdId
+                    arbeidsforholdHendelse.arbeidsforhold.navArbeidsforholdId,
                 )
             } else {
                 updateArbeidsforhold(fnr)

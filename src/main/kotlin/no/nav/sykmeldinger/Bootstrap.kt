@@ -19,11 +19,15 @@ import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.network.sockets.SocketTimeoutException
 import io.ktor.serialization.jackson.jackson
 import io.prometheus.client.hotspot.DefaultExports
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import no.nav.person.pdl.leesah.Personhendelse
 import no.nav.syfo.kafka.aiven.KafkaUtils
 import no.nav.syfo.kafka.toConsumerConfig
 import no.nav.syfo.model.sykmeldingstatus.SykmeldingStatusKafkaMessageDTO
+import no.nav.syfo.unleash.createUnleashStateHandler
 import no.nav.sykmeldinger.application.ApplicationServer
 import no.nav.sykmeldinger.application.ApplicationState
 import no.nav.sykmeldinger.application.createApplicationEngine
@@ -63,6 +67,7 @@ import org.slf4j.LoggerFactory
 
 val log: Logger = LoggerFactory.getLogger("no.nav.sykmeldinger.sykmeldinger-backend-kafka")
 val secureLog: Logger = LoggerFactory.getLogger("securelog")
+const val SYKMELDINGER_ARBEIDSFORHOLD_CONSUMER = "SYKMELDINGER_ARBEIDSFORHOLD_CONSUMER"
 
 val objectMapper: ObjectMapper =
     jacksonObjectMapper().apply {
@@ -200,16 +205,36 @@ fun main() {
         )
     pdlHendelseConsumer.startConsumer()
 
+    val sharedScope = CoroutineScope(Dispatchers.IO)
+
     val arbeidsforholdConsumer =
         ArbeidsforholdConsumer(
             getArbeidsforholdKafkaConsumer(),
-            applicationState,
             env.arbeidsforholdTopic,
             sykmeldingDb,
-            arbeidsforholdService
+            arbeidsforholdService,
+            sharedScope
         )
-    arbeidsforholdConsumer.startConsumer()
 
+    createUnleashStateHandler(
+        scope = sharedScope,
+        toggle = SYKMELDINGER_ARBEIDSFORHOLD_CONSUMER,
+        onToggledOn = {
+            log.info("$SYKMELDINGER_ARBEIDSFORHOLD_CONSUMER has been toggled on")
+            arbeidsforholdConsumer.startConsumer()
+        },
+        onToggledOff = {
+            log.warn("$SYKMELDINGER_ARBEIDSFORHOLD_CONSUMER is toggled off, unsubscribing")
+            arbeidsforholdConsumer.stopConsumer()
+        },
+    )
+    Runtime.getRuntime()
+        .addShutdownHook(
+            Thread {
+                log.info("Shutting down shared coroutinescope")
+                sharedScope.cancel()
+            },
+        )
     val leaderElection = LeaderElection(httpClient, env.electorPath)
     val deleteArbeidsforholdService =
         DeleteArbeidsforholdService(arbeidsforholdDb, leaderElection, applicationState)

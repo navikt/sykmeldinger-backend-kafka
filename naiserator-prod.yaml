@@ -48,6 +48,7 @@ spec:
   leaderElection: true
   envFrom:
     - secret: google-sql-sykmeldinger-backend-sykmeldinger-sykmeldin-7ee1e806
+    - secret: sykmelding-backend-unleash-api-token
   secureLogs:
     enabled: true
   accessPolicy:
@@ -56,6 +57,7 @@ spec:
         - host: pdl-api.prod-fss-pub.nais.io
         - host: ereg-services.prod-fss-pub.nais.io
         - host: aareg-services.prod-fss-pub.nais.io
+        - host: teamsykmelding-unleash-api.nav.cloud.nais.io
   env:
     - name: CLOUD_SQL_INSTANCE
       value: teamsykmelding-prod-2acd:europe-north1:sykmeldinger-db-instance

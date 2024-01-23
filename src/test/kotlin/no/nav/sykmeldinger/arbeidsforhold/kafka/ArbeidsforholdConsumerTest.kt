@@ -7,7 +7,6 @@ import io.mockk.coVerify
 import io.mockk.mockk
 import java.time.LocalDate
 import no.nav.sykmeldinger.TestDB
-import no.nav.sykmeldinger.application.ApplicationState
 import no.nav.sykmeldinger.arbeidsforhold.ArbeidsforholdService
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.client.ArbeidsforholdClient
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.AaregArbeidsforhold
@@ -49,7 +48,6 @@ object ArbeidsforholdConsumerTest :
             val arbeidsforholdConsumer =
                 ArbeidsforholdConsumer(
                     kafkaConsumer,
-                    ApplicationState(alive = true, ready = true),
                     "topic",
                     sykmeldingDb,
                     arbeidsforholdService,

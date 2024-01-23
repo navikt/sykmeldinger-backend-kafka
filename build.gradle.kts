@@ -21,6 +21,7 @@ val confluentVersion = "7.5.3"
 val commonsCodecVersion = "1.16.0"
 val ktfmtVersion = "0.44"
 val avroVersion = "1.11.3"
+val unleashedVersion = "9.2.0"
 
 plugins {
     id("application")
@@ -71,6 +72,8 @@ dependencies {
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
+
+    implementation("io.getunleash:unleash-client-java:$unleashedVersion")
 
     implementation("com.zaxxer:HikariCP:$hikariVersion")
     implementation("org.postgresql:postgresql:$postgresVersion")

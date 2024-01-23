@@ -1,0 +1,31 @@
+name: Deploy unleash api key
+on:
+  push:
+    paths:
+      - .github/workflows/deploy-unleash.yml
+      - nais-unleash.yaml
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-unleash-token-dev:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: nais/deploy/actions/deploy@v2
+      env:
+        APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
+        CLUSTER: dev-gcp
+        RESOURCE: nais-unleash.yaml
+        VAR: unleash_env=development
+  deploy-unleash-token-production:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: nais/deploy/actions/deploy@v2
+        env:
+          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
+          CLUSTER: prod-gcp
+          RESOURCE: nais-unleash.yaml
+          VAR: unleash_env=production
