@@ -329,7 +329,7 @@ private fun getArbeidsforholdKafkaConsumer(): KafkaConsumer<String, Arbeidsforho
         KafkaConsumer(
             KafkaUtils.getAivenKafkaConfig("arbeidsforhold-consumer")
                 .toConsumerConfig(
-                    "sykmeldinger-backend-kafka-consumer",
+                    "sykmeldinger-arbeidsforhold-consumer",
                     JacksonKafkaDeserializer::class
                 )
                 .also {
