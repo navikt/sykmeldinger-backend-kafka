@@ -5,6 +5,7 @@ import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -97,12 +98,12 @@ class ArbeidsforholdConsumer(
                 endring == Entitetsendring.Ansettelsesperiode
         }
 
-    private suspend fun deleteArbeidsforhold(deleted: List<Int>) {
+    private suspend fun deleteArbeidsforhold(deleted: List<Int>) = withContext(NonCancellable) {
         arbeidsforholdService.deleteArbeidsforholdIds(deleted)
     }
 
-    private suspend fun updateArbeidsforholdFor(newhendelserByFnr: List<String>) {
-        withContext(Dispatchers.IO) {
+    private suspend fun updateArbeidsforholdFor(newhendelserByFnr: List<String>)  {
+        withContext(NonCancellable) {
             val jobs = newhendelserByFnr.map { async(Dispatchers.IO) { updateArbeidsforhold(it) } }
             jobs.awaitAll()
         }
