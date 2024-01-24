@@ -98,11 +98,10 @@ class ArbeidsforholdConsumer(
                 endring == Entitetsendring.Ansettelsesperiode
         }
 
-    private suspend fun deleteArbeidsforhold(deleted: List<Int>) = withContext(NonCancellable) {
-        arbeidsforholdService.deleteArbeidsforholdIds(deleted)
-    }
+    private suspend fun deleteArbeidsforhold(deleted: List<Int>) =
+        withContext(NonCancellable) { arbeidsforholdService.deleteArbeidsforholdIds(deleted) }
 
-    private suspend fun updateArbeidsforholdFor(newhendelserByFnr: List<String>)  {
+    private suspend fun updateArbeidsforholdFor(newhendelserByFnr: List<String>) {
         withContext(NonCancellable) {
             val jobs = newhendelserByFnr.map { async(Dispatchers.IO) { updateArbeidsforhold(it) } }
             jobs.awaitAll()
