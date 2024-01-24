@@ -2,6 +2,7 @@ package no.nav.sykmeldinger.arbeidsforhold.kafka
 
 import java.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -32,6 +33,8 @@ class ArbeidsforholdConsumer(
 ) {
 
     private var job: Job? = null
+    private val hendelsesTyper: MutableMap<String, Int> = mutableMapOf()
+    private var lastOffset: Long = 0
 
     companion object {
         private const val DELAY_ON_ERROR_SECONDS = 60L
@@ -57,14 +60,18 @@ class ArbeidsforholdConsumer(
 
     private suspend fun runConsumer() = coroutineScope {
         kafkaConsumer.subscribe(listOf(topic))
+        startLogging()
         log.info("Starting consuming topic $topic")
         while (isActive) {
             try {
                 val hendelser = kafkaConsumer.poll(Duration.ofSeconds(POLL_DURATION_SECONDS))
-                val newhendelserByFnr =
+                val arbeidsforholdEndringer =
                     hendelser
                         .filter { it.value().endringstype != Endringstype.Sletting }
                         .filter { hasValidEndringstype(it.value()) }
+
+                val newhendelserByFnr =
+                    arbeidsforholdEndringer
                         .map { it.value().arbeidsforhold.arbeidstaker.getFnr() }
                         .distinct()
 
@@ -74,10 +81,25 @@ class ArbeidsforholdConsumer(
                     hendelser
                         .filter { it.value().endringstype == Endringstype.Sletting }
                         .map { it.value().arbeidsforhold.navArbeidsforholdId }
+
                 deleteArbeidsforhold(deleted)
+
+                val hendelsesTypesCount =
+                    arbeidsforholdEndringer
+                        .flatMap { it.value().entitetsendringer }
+                        .groupingBy { it.name }
+                        .eachCount()
+
+                for ((type, count) in hendelsesTypesCount) {
+                    hendelsesTyper[type] = hendelsesTyper.getOrDefault(type, 0) + count
+                }
+                hendelsesTyper["Slettet"] = hendelsesTyper.getOrDefault("Slettet", 0) + deleted.size
+
                 if (hendelser.count() > 0) {
                     log.info("Last hendelsesId ${hendelser.last().value().id}")
+                    lastOffset = hendelser.last().offset()
                 }
+
             } catch (ex: Exception) {
                 log.error(
                     "Error running kafka consumer for arbeidsforhold, unsubscribing and waiting $DELAY_ON_ERROR_SECONDS seconds for retry",
@@ -90,6 +112,28 @@ class ArbeidsforholdConsumer(
         }
         log.info("Arbeidsforhold consumer coroutine not active")
         kafkaConsumer.unsubscribe()
+    }
+
+    private fun CoroutineScope.startLogging(): Job {
+        return launch(Dispatchers.IO) {
+            try {
+                while (isActive) {
+                    delay(10.seconds)
+                    log.info(
+                            hendelsesTyper.entries.joinToString(
+                                    separator = ", ",
+                                    prefix = "Offset: ${lastOffset}, HendelsesTyper: {",
+                                    postfix = "}",
+                                    transform = { entry -> "'${entry.key}': ${entry.value}" },
+                            ),
+                    )
+                }
+            } catch (ex: CancellationException) {
+                log.info("logger cancelled")
+            } catch (ex: Exception) {
+                log.info("Error in logger", ex)
+            }
+        }
     }
 
     private fun hasValidEndringstype(arbeidsforholdHendelse: ArbeidsforholdHendelse) =
@@ -118,10 +162,10 @@ class ArbeidsforholdConsumer(
         if (sykmeldt != null) {
             if (arbeidsforholdHendelse.endringstype == Endringstype.Sletting) {
                 log.info(
-                    "Sletter arbeidsforhold med id ${arbeidsforholdHendelse.arbeidsforhold.navArbeidsforholdId} hvis det finnes"
+                        "Sletter arbeidsforhold med id ${arbeidsforholdHendelse.arbeidsforhold.navArbeidsforholdId} hvis det finnes",
                 )
                 secureLog.info(
-                    "Sletter arbeidsforhold, fnr: $fnr, arbeidsforholdId: ${arbeidsforholdHendelse.id}"
+                        "Sletter arbeidsforhold, fnr: $fnr, arbeidsforholdId: ${arbeidsforholdHendelse.id}",
                 )
                 arbeidsforholdService.deleteArbeidsforhold(
                     arbeidsforholdHendelse.arbeidsforhold.navArbeidsforholdId,
@@ -154,12 +198,6 @@ class ArbeidsforholdConsumer(
             }
         }
         arbeidsforhold.forEach { arbeidsforholdService.insertOrUpdate(it) }
-        secureLog.info(
-            "Opprettet eller oppdatert arbeidsforhold for $fnr for disse orgnr: ${arbeidsforhold.map { it.orgnummer }}",
-        )
-        log.info(
-            "Opprettet eller oppdatert ${arbeidsforhold.size} arbeidsforhold med ider: ${arbeidsforhold.map { it.id }}",
-        )
     }
 
     fun getArbeidsforholdSomSkalSlettes(
@@ -168,7 +206,7 @@ class ArbeidsforholdConsumer(
     ): List<Int> {
         if (
             arbeidsforholdDb.size == arbeidsforholdAareg.size &&
-                arbeidsforholdDb.toHashSet() == arbeidsforholdAareg.toHashSet()
+            arbeidsforholdDb.toHashSet() == arbeidsforholdAareg.toHashSet()
         ) {
             return emptyList()
         }
