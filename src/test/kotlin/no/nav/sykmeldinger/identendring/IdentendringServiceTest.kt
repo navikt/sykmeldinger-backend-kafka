@@ -32,7 +32,8 @@ object IdentendringServiceTest :
                 PdlPerson(
                     navn = Navn("Fornavn", null, "Etternavn"),
                     fnr = "10987654321",
-                    oldFnr = emptyList()
+                    oldFnr = emptyList(),
+                    foedselsdato = null,
                 )
         }
         context("Update ident") {
@@ -43,7 +44,8 @@ object IdentendringServiceTest :
                     PdlPerson(
                         navn = Navn("Fornavn", null, "Etternavn"),
                         fnr = "10987654321",
-                        oldFnr = listOf(fnr)
+                        oldFnr = listOf(fnr),
+                        foedselsdato = null,
                     )
                 val sykmeldingId = UUID.randomUUID().toString()
                 arbeidsforholdDb.insertOrUpdate(getArbeidsforhold(fnr))
@@ -79,7 +81,8 @@ object IdentendringServiceTest :
                     PdlPerson(
                         navn = Navn("Fornavn", null, "Etternavn"),
                         fnr = nyttFnr,
-                        oldFnr = listOf(fnr)
+                        oldFnr = listOf(fnr),
+                        foedselsdato = null,
                     )
 
                 val sykmeldingId = UUID.randomUUID().toString()

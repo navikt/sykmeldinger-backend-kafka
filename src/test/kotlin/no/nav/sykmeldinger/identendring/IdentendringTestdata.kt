@@ -15,12 +15,13 @@ import no.nav.sykmeldinger.sykmelding.model.Sykmelding
 import no.nav.sykmeldinger.sykmelding.model.Sykmeldingsperiode
 import no.nav.sykmeldinger.sykmelding.model.Sykmeldt
 
-fun getSykmeldt(fnr: String): Sykmeldt =
+fun getSykmeldt(fnr: String, foedselsdato: LocalDate? = null): Sykmeldt =
     Sykmeldt(
         fnr = fnr,
         fornavn = "Annet",
         mellomnavn = "Mellomnavn",
         etternavn = "Etternavn",
+        foedselsdato = foedselsdato
     )
 
 fun getArbeidsforhold(fnr: String) =

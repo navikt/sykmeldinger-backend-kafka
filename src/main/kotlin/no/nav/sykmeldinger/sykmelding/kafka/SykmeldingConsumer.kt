@@ -146,6 +146,7 @@ fun PdlPerson.toSykmeldt(): Sykmeldt {
         fnr = fnr,
         fornavn = navn.fornavn,
         mellomnavn = navn.mellomnavn,
-        etternavn = navn.etternavn
+        etternavn = navn.etternavn,
+        foedselsdato = foedselsdato
     )
 }

@@ -1,5 +1,6 @@
 package no.nav.sykmeldinger.pdl.service
 
+import java.time.LocalDate
 import no.nav.sykmeldinger.azuread.AccessTokenClient
 import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.objectMapper
@@ -39,11 +40,20 @@ class PdlPersonService(
             log.error("Fant ikke person i PDL {}", callId)
             throw PersonNotFoundInPdl("Fant ikke person i PDL")
         }
-        if (pdlResponse.data.person.navn.isNullOrEmpty()) {
+        if (pdlResponse.data.person.navnResponse.isNullOrEmpty()) {
             logPdlResponse("Fant ikke navn på person i PDL", ident, pdlResponse)
             log.error("Fant ikke navn på person i PDL {}", callId)
             throw PersonNameNotFoundInPdl("Fant ikke navn på person i PDL")
         }
+        var foedselsdato: LocalDate? = null
+        pdlResponse.data.person.foedsel?.firstOrNull()?.foedselsdato?.let { dato ->
+            foedselsdato = LocalDate.parse(dato)
+            log.info("Fant fødselsdato til person i PDL {}", foedselsdato.toString())
+        }
+            ?: run {
+                log.error("Fant ikke fødselsdato på person i PDL")
+                foedselsdato = null
+            }
         if (
             pdlResponse.data.hentIdenter == null || pdlResponse.data.hentIdenter.identer.isEmpty()
         ) {
@@ -58,9 +68,10 @@ class PdlPersonService(
         }
 
         return PdlPerson(
-            getNavn(pdlResponse.data.person.navn[0]),
+            getNavn(pdlResponse.data.person.navnResponse[0]),
             pdlResponse.data.hentIdenter.fnr,
-            pdlResponse.data.hentIdenter.oldFnr
+            pdlResponse.data.hentIdenter.oldFnr,
+            foedselsdato
         )
     }
 
@@ -84,7 +95,9 @@ class PdlPersonService(
                 }
             }
         }
-        if (pdlResponse.data.person == null || pdlResponse.data.person.navn.isNullOrEmpty()) {
+        if (
+            pdlResponse.data.person == null || pdlResponse.data.person.navnResponse.isNullOrEmpty()
+        ) {
             secureLog.info("Fant ikke navn på person i PDL, nyttFnr: $nyttFnr")
             log.warn("Fant ikke navn på person i PDL")
             throw PersonNotFoundInPdl("Fant ikke navn på person i PDL")
@@ -103,14 +116,14 @@ class PdlPersonService(
         ) {
             throw InactiveIdentException("PDL svarer men ident er ikke aktiv")
         }
-        return getNavn(pdlResponse.data.person.navn[0])
+        return getNavn(pdlResponse.data.person.navnResponse[0])
     }
 
-    private fun getNavn(navn: no.nav.sykmeldinger.pdl.client.model.Navn): Navn {
+    private fun getNavn(navnResponse: no.nav.sykmeldinger.pdl.client.model.NavnResponse): Navn {
         return Navn(
-            fornavn = navn.fornavn,
-            mellomnavn = navn.mellomnavn,
-            etternavn = navn.etternavn
+            fornavn = navnResponse.fornavn,
+            mellomnavn = navnResponse.mellomnavn,
+            etternavn = navnResponse.etternavn
         )
     }
 }

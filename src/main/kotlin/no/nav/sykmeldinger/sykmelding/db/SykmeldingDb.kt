@@ -1,7 +1,10 @@
 package no.nav.sykmeldinger.sykmelding.db
 
 import java.sql.Connection
+import java.sql.Date
 import java.sql.ResultSet
+import java.sql.Types
+import java.time.LocalDate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import no.nav.syfo.model.RuleInfo
@@ -166,11 +169,12 @@ class SykmeldingDb(
     private fun Connection.saveOrUpdateSykmeldt(sykmeldt: Sykmeldt) {
         prepareStatement(
                 """ 
-                    insert into sykmeldt(fnr, fornavn, mellomnavn, etternavn) 
-                    values (?, ?, ?, ?) on conflict (fnr) do update
+                    insert into sykmeldt(fnr, fornavn, mellomnavn, etternavn, foedselsdato) 
+                    values (?, ?, ?, ?, ?) on conflict (fnr) do update
                      set fornavn = excluded.fornavn,
                          mellomnavn = excluded.mellomnavn,
-                         etternavn = excluded.etternavn;
+                         etternavn = excluded.etternavn,
+                         foedselsdato = excluded.foedselsdato;
             """
                     .trimIndent(),
             )
@@ -179,6 +183,11 @@ class SykmeldingDb(
                 ps.setString(2, sykmeldt.fornavn)
                 ps.setString(3, sykmeldt.mellomnavn)
                 ps.setString(4, sykmeldt.etternavn)
+                if (sykmeldt.foedselsdato != null) {
+                    ps.setDate(5, Date.valueOf(sykmeldt.foedselsdato))
+                } else {
+                    ps.setNull(5, Types.DATE)
+                }
                 ps.executeUpdate()
             }
     }
@@ -199,13 +208,17 @@ class SykmeldingDb(
     }
 }
 
-fun ResultSet.toSykmeldt(): Sykmeldt =
-    Sykmeldt(
+fun ResultSet.toSykmeldt(): Sykmeldt {
+    val foedselsdato =
+        if (getDate("foedselsdato") != null) LocalDate.parse(getString("foedselsdato")) else null
+    return Sykmeldt(
         fnr = getString("fnr"),
         fornavn = getString("fornavn"),
         mellomnavn = getString("mellomnavn"),
         etternavn = getString("etternavn"),
+        foedselsdato = foedselsdato,
     )
+}
 
 private fun Sykmelding.toPGObject() =
     PGobject().also {

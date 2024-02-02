@@ -11,10 +11,15 @@ data class ResponseData(
 )
 
 data class PersonResponse(
-    val navn: List<Navn>?,
+    val navnResponse: List<NavnResponse>?,
+    val foedsel: List<Foedsel>?,
 )
 
-data class Navn(
+data class Foedsel(
+    val foedselsdato: String?,
+)
+
+data class NavnResponse(
     val fornavn: String,
     val mellomnavn: String?,
     val etternavn: String,

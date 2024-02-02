@@ -31,7 +31,7 @@ object NarmesteLederServiceTest :
 
         beforeEach {
             coEvery { pdlPersonService.getPerson(any(), any()) } returns
-                PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), lederFnr, emptyList())
+                PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), lederFnr, emptyList(), null)
             TestDB.clearAllData()
         }
 
@@ -69,9 +69,10 @@ object NarmesteLederServiceTest :
                     PdlPerson(
                         Navn("Fornavn", "Mellomnavn", "Etternavn"),
                         lederFnr,
-                        emptyList()
+                        emptyList(),
+                        null,
                     ) andThen
-                    PdlPerson(Navn("Nytt", null, "Navn"), lederFnr, emptyList())
+                    PdlPerson(Navn("Nytt", null, "Navn"), lederFnr, emptyList(), null)
 
                 val nlId = UUID.randomUUID()
                 narmesteLederService.updateNarmesteLeder(
