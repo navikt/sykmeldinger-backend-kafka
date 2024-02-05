@@ -11,7 +11,7 @@ data class ResponseData(
 )
 
 data class PersonResponse(
-    val navnResponse: List<NavnResponse>?,
+    val navn: List<NavnResponse>?,
     val foedsel: List<Foedsel>?,
 )
 

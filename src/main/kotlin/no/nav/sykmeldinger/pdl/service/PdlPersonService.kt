@@ -6,6 +6,7 @@ import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.objectMapper
 import no.nav.sykmeldinger.pdl.client.PdlClient
 import no.nav.sykmeldinger.pdl.client.model.GetPersonResponse
+import no.nav.sykmeldinger.pdl.client.model.NavnResponse
 import no.nav.sykmeldinger.pdl.error.InactiveIdentException
 import no.nav.sykmeldinger.pdl.error.PersonNameNotFoundInPdl
 import no.nav.sykmeldinger.pdl.error.PersonNotFoundInPdl
@@ -40,7 +41,7 @@ class PdlPersonService(
             log.error("Fant ikke person i PDL {}", callId)
             throw PersonNotFoundInPdl("Fant ikke person i PDL")
         }
-        if (pdlResponse.data.person.navnResponse.isNullOrEmpty()) {
+        if (pdlResponse.data.person.navn.isNullOrEmpty()) {
             logPdlResponse("Fant ikke navn på person i PDL", ident, pdlResponse)
             log.error("Fant ikke navn på person i PDL {}", callId)
             throw PersonNameNotFoundInPdl("Fant ikke navn på person i PDL")
@@ -68,7 +69,7 @@ class PdlPersonService(
         }
 
         return PdlPerson(
-            getNavn(pdlResponse.data.person.navnResponse[0]),
+            getNavn(pdlResponse.data.person.navn[0]),
             pdlResponse.data.hentIdenter.fnr,
             pdlResponse.data.hentIdenter.oldFnr,
             foedselsdato
@@ -96,7 +97,7 @@ class PdlPersonService(
             }
         }
         if (
-            pdlResponse.data.person == null || pdlResponse.data.person.navnResponse.isNullOrEmpty()
+            pdlResponse.data.person == null || pdlResponse.data.person.navn.isNullOrEmpty()
         ) {
             secureLog.info("Fant ikke navn på person i PDL, nyttFnr: $nyttFnr")
             log.warn("Fant ikke navn på person i PDL")
@@ -116,14 +117,14 @@ class PdlPersonService(
         ) {
             throw InactiveIdentException("PDL svarer men ident er ikke aktiv")
         }
-        return getNavn(pdlResponse.data.person.navnResponse[0])
+        return getNavn(pdlResponse.data.person.navn[0])
     }
 
-    private fun getNavn(navnResponse: no.nav.sykmeldinger.pdl.client.model.NavnResponse): Navn {
+    private fun getNavn(navn: NavnResponse): Navn {
         return Navn(
-            fornavn = navnResponse.fornavn,
-            mellomnavn = navnResponse.mellomnavn,
-            etternavn = navnResponse.etternavn
+            fornavn = navn.fornavn,
+            mellomnavn = navn.mellomnavn,
+            etternavn = navn.etternavn
         )
     }
 }
