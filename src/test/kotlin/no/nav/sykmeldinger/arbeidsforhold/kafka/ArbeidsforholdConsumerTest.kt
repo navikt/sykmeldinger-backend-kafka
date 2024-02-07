@@ -85,6 +85,7 @@ object ArbeidsforholdConsumerTest :
                             "Per",
                             null,
                             "Person",
+                            null,
                         ),
                     )
                     val arbeidsforholdHendelse =
@@ -142,6 +143,7 @@ object ArbeidsforholdConsumerTest :
                             "Per",
                             null,
                             "Person",
+                            null,
                         ),
                     )
                     val arbeidsforholdHendelse =
@@ -191,6 +193,7 @@ object ArbeidsforholdConsumerTest :
                             "Per",
                             null,
                             "Person",
+                            null,
                         ),
                     )
                     arbeidsforholdService.insertOrUpdate(
@@ -242,6 +245,7 @@ object ArbeidsforholdConsumerTest :
                             "Per",
                             null,
                             "Person",
+                            null,
                         ),
                     )
                     arbeidsforholdService.insertOrUpdate(
@@ -329,6 +333,7 @@ object ArbeidsforholdConsumerTest :
                             "Per",
                             null,
                             "Person",
+                            null,
                         ),
                     )
                     val arbeidsforholdHendelse =
@@ -444,6 +449,7 @@ object ArbeidsforholdConsumerTest :
                             "Per",
                             null,
                             "Person",
+                            null,
                         ),
                     )
                     val arbeidsforholdHendelse =

@@ -99,7 +99,6 @@ class ArbeidsforholdConsumer(
                     log.info("Last hendelsesId ${hendelser.last().value().id}")
                     lastOffset = hendelser.last().offset()
                 }
-
             } catch (ex: Exception) {
                 log.error(
                     "Error running kafka consumer for arbeidsforhold, unsubscribing and waiting $DELAY_ON_ERROR_SECONDS seconds for retry",
@@ -120,12 +119,12 @@ class ArbeidsforholdConsumer(
                 while (isActive) {
                     delay(10.seconds)
                     log.info(
-                            hendelsesTyper.entries.joinToString(
-                                    separator = ", ",
-                                    prefix = "Offset: ${lastOffset}, HendelsesTyper: {",
-                                    postfix = "}",
-                                    transform = { entry -> "'${entry.key}': ${entry.value}" },
-                            ),
+                        hendelsesTyper.entries.joinToString(
+                            separator = ", ",
+                            prefix = "Offset: ${lastOffset}, HendelsesTyper: {",
+                            postfix = "}",
+                            transform = { entry -> "'${entry.key}': ${entry.value}" },
+                        ),
                     )
                 }
             } catch (ex: CancellationException) {
@@ -162,10 +161,10 @@ class ArbeidsforholdConsumer(
         if (sykmeldt != null) {
             if (arbeidsforholdHendelse.endringstype == Endringstype.Sletting) {
                 log.info(
-                        "Sletter arbeidsforhold med id ${arbeidsforholdHendelse.arbeidsforhold.navArbeidsforholdId} hvis det finnes",
+                    "Sletter arbeidsforhold med id ${arbeidsforholdHendelse.arbeidsforhold.navArbeidsforholdId} hvis det finnes",
                 )
                 secureLog.info(
-                        "Sletter arbeidsforhold, fnr: $fnr, arbeidsforholdId: ${arbeidsforholdHendelse.id}",
+                    "Sletter arbeidsforhold, fnr: $fnr, arbeidsforholdId: ${arbeidsforholdHendelse.id}",
                 )
                 arbeidsforholdService.deleteArbeidsforhold(
                     arbeidsforholdHendelse.arbeidsforhold.navArbeidsforholdId,
@@ -206,7 +205,7 @@ class ArbeidsforholdConsumer(
     ): List<Int> {
         if (
             arbeidsforholdDb.size == arbeidsforholdAareg.size &&
-            arbeidsforholdDb.toHashSet() == arbeidsforholdAareg.toHashSet()
+                arbeidsforholdDb.toHashSet() == arbeidsforholdAareg.toHashSet()
         ) {
             return emptyList()
         }

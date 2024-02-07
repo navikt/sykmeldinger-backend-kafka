@@ -33,7 +33,12 @@ class PersonhendelseServiceTest :
         beforeEach {
             clearMocks(pdlPersonService, identendringService)
             coEvery { pdlPersonService.getPerson(any(), any()) } returns
-                PdlPerson(Navn("Fornavn", "Mellomnavn", "Etternavn"), "12345678910", emptyList())
+                PdlPerson(
+                    Navn("Fornavn", "Mellomnavn", "Etternavn"),
+                    "12345678910",
+                    emptyList(),
+                    null
+                )
             TestDB.clearAllData()
         }
         context("Identendring") {
