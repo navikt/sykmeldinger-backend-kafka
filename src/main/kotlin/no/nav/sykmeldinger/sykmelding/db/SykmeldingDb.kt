@@ -15,6 +15,7 @@ import no.nav.sykmeldinger.status.db.toPGObject
 import no.nav.sykmeldinger.sykmelding.model.Sykmelding
 import no.nav.sykmeldinger.sykmelding.model.Sykmeldt
 import org.postgresql.util.PGobject
+import org.postgresql.util.PSQLException
 
 data class UpdateResult(val table: String, val updatedRows: Int)
 
@@ -29,9 +30,13 @@ class SykmeldingDb(
                 results.add(
                     connection.updateFnrInTable("sykmelding", oldFnr = oldFnr, newFNR = newFNR)
                 )
-                results.add(
-                    connection.updateFnrInTable("sykmeldt", oldFnr = oldFnr, newFNR = newFNR)
-                )
+                if(connection.sykmeldtExists(newFNR)) {
+                    results.add(connection.deleteSykmeldt(oldFnr))
+                } else {
+                    results.add(
+                        connection.updateFnrInTable("sykmeldt", oldFnr = oldFnr, newFNR = newFNR)
+                    )
+                }
                 results.add(
                     connection.updateFnrInTable("arbeidsforhold", oldFnr = oldFnr, newFNR = newFNR)
                 )
@@ -39,6 +44,26 @@ class SykmeldingDb(
             }
             results
         }
+
+    private fun Connection.deleteSykmeldt(fnr: String) : UpdateResult {
+        val update = prepareStatement("""
+            delete from sykmeldt where fnr = ?;
+        """.trimIndent()).use {
+            it.setString(1, fnr)
+            it.executeUpdate()
+        }
+
+        return UpdateResult("sykmeldt", update)
+    }
+     private fun Connection.sykmeldtExists(fnr: String) : Boolean {
+        return prepareStatement("""
+            select true from sykmeldt where fnr = ?;
+        """).use {
+            it.setString(1, fnr)
+            it.executeQuery()?.next() ?: false
+        }
+    }
+
 
     private fun Connection.updateFnrInTable(
         table: String,

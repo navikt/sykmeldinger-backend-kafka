@@ -36,7 +36,43 @@ object IdentendringServiceTest :
                     foedselsdato = null,
                 )
         }
+
         context("Update ident") {
+            test("Update fnr should no throw duplicate key violation") {
+                val fnr = "12345678910"
+                val nyttFnr = "10987654321"
+                coEvery { pdlPersonService.getPerson(any(), any()) } returns
+                    PdlPerson(
+                        navn = Navn("Fornavn", null, "Etternavn"),
+                        fnr = "10987654321",
+                        oldFnr = listOf(fnr),
+                        foedselsdato = null,
+                    )
+                val sykmeldingId = UUID.randomUUID().toString()
+                arbeidsforholdDb.insertOrUpdate(getArbeidsforhold(fnr))
+                sykmeldingDb.saveOrUpdateSykmeldt(getSykmeldt(fnr))
+                sykmeldingDb.saveOrUpdateSykmeldt(getSykmeldt(nyttFnr))
+                sykmeldingDb.saveOrUpdate(
+                    sykmeldingId,
+                    getSykmelding(),
+                    getSykmeldt(fnr),
+                    okSykmelding = false
+                )
+                val identListe =
+                    listOf(
+                        nyttFnr,
+                        fnr,
+                        "2222",
+                    )
+                identendringService.updateIdent(identListe)
+
+                sykmeldingDb.getSykmeldt(fnr) shouldBeEqualTo null
+                sykmeldingDb.getSykmeldt(nyttFnr)?.fornavn shouldBeEqualTo "Annet"
+                sykmeldingDb.getSykmeldingIds(fnr).size shouldBeEqualTo 0
+                sykmeldingDb.getSykmeldingIds(nyttFnr).size shouldBeEqualTo 1
+                arbeidsforholdDb.getArbeidsforhold(fnr).size shouldBeEqualTo 0
+                arbeidsforholdDb.getArbeidsforhold(nyttFnr).size shouldBeEqualTo 1
+            }
             test("Opdater ident") {
                 val fnr = "12345678910"
                 val nyttFnr = "10987654321"
