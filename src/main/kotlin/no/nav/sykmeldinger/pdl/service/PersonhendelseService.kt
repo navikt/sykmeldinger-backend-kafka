@@ -10,6 +10,7 @@ import no.nav.sykmeldinger.pdl.PersonhendelseDataClass
 import no.nav.sykmeldinger.pdl.error.PersonNameNotFoundInPdl
 import no.nav.sykmeldinger.pdl.error.PersonNotFoundInPdl
 import no.nav.sykmeldinger.secureLog
+import org.postgresql.util.PSQLException
 
 class PersonhendelseService(
     private val identendringService: IdentendringService,
@@ -28,7 +29,11 @@ class PersonhendelseService(
             .forEach {
                 try {
                     identendringService.updateIdent(it)
-                } catch (ex: PersonNameNotFoundInPdl) {
+                } catch (ex: PSQLException) {
+                    log.error("Error updating ident in database (see securelogs for more info)")
+                    secureLog.error("Error updating identer", ex)
+                }
+                catch (ex: PersonNameNotFoundInPdl) {
                     logPersonhendelseError(
                         personhendelser,
                         it,
