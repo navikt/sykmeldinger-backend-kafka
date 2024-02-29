@@ -41,6 +41,8 @@ import no.nav.sykmeldinger.arbeidsforhold.delete.DeleteArbeidsforholdService
 import no.nav.sykmeldinger.arbeidsforhold.kafka.ArbeidsforholdConsumer
 import no.nav.sykmeldinger.arbeidsforhold.kafka.model.ArbeidsforholdHendelse
 import no.nav.sykmeldinger.azuread.AccessTokenClient
+import no.nav.sykmeldinger.behandlingsutfall.db.BehandlingsutfallDB
+import no.nav.sykmeldinger.behandlingsutfall.kafka.BehandlingsutfallConsumer
 import no.nav.sykmeldinger.identendring.IdentendringService
 import no.nav.sykmeldinger.kafka.toConsumerConfig
 import no.nav.sykmeldinger.narmesteleder.NarmesteLederService
@@ -161,7 +163,10 @@ fun main() {
             narmesteLederService,
             applicationState
         )
-
+    val behandlingsutfallDB = BehandlingsutfallDB(database)
+    val behandlingsutfallConsumer =
+        BehandlingsutfallConsumer(getKafkaConsumer(), applicationState, env, behandlingsutfallDB)
+    behandlingsutfallConsumer.startConsumer()
     narmesteLederConsumer.startConsumer()
 
     val arbeidsforholdClient =
