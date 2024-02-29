@@ -5,6 +5,8 @@ import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.mockk
 import java.util.UUID
+import no.nav.syfo.model.Status
+import no.nav.syfo.model.ValidationResult
 import no.nav.sykmeldinger.TestDB
 import no.nav.sykmeldinger.arbeidsforhold.db.ArbeidsforholdDb
 import no.nav.sykmeldinger.pdl.error.PersonNotFoundInPdl
@@ -56,7 +58,7 @@ object IdentendringServiceTest :
                     sykmeldingId,
                     getSykmelding(),
                     getSykmeldt(fnr),
-                    okSykmelding = false
+                    validationResult = ValidationResult(Status.OK, emptyList())
                 )
                 val identListe =
                     listOf(
@@ -90,7 +92,7 @@ object IdentendringServiceTest :
                     sykmeldingId,
                     getSykmelding(),
                     getSykmeldt(fnr),
-                    okSykmelding = false
+                    validationResult = ValidationResult(Status.OK, emptyList())
                 )
                 val identListe =
                     listOf(
@@ -128,7 +130,7 @@ object IdentendringServiceTest :
                     sykmeldingId,
                     getSykmelding(),
                     getSykmeldt(fnr),
-                    okSykmelding = false
+                    validationResult = ValidationResult(Status.OK, emptyList())
                 )
                 val identListe =
                     listOf(
@@ -158,7 +160,7 @@ object IdentendringServiceTest :
                     sykmeldingId,
                     getSykmelding(),
                     getSykmeldt(fnr),
-                    okSykmelding = false
+                    validationResult = ValidationResult(Status.OK, emptyList())
                 )
                 val identListe =
                     listOf(

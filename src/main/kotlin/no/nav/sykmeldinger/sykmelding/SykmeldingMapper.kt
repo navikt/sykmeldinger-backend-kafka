@@ -88,10 +88,9 @@ class SykmeldingMapper private constructor() {
                     } else {
                         MeldingTilNav(
                             bistandUmiddelbart =
-                                receivedSykmelding.sykmelding.meldingTilNAV?.bistandUmiddelbart
-                                    ?: false,
+                                receivedSykmelding.sykmelding.meldingTilNAV.bistandUmiddelbart,
                             beskrivBistand =
-                                receivedSykmelding.sykmelding.meldingTilNAV?.beskrivBistand,
+                                receivedSykmelding.sykmelding.meldingTilNAV.beskrivBistand,
                         )
                     },
                 meldingTilArbeidsgiver = receivedSykmelding.sykmelding.meldingTilArbeidsgiver,
@@ -222,7 +221,7 @@ class SykmeldingMapper private constructor() {
             }
             if (
                 hovedDiagnose != null &&
-                    diagnoserSomGirRedusertArbgiverPeriode.contains(hovedDiagnose!!.kode)
+                    diagnoserSomGirRedusertArbgiverPeriode.contains(hovedDiagnose.kode)
             ) {
                 return true
             } else if (
@@ -252,10 +251,10 @@ class SykmeldingMapper private constructor() {
                 erIArbeid =
                     if (erIArbeid != null) {
                         ErIArbeid(
-                            egetArbeidPaSikt = erIArbeid!!.egetArbeidPaSikt,
-                            annetArbeidPaSikt = erIArbeid!!.annetArbeidPaSikt,
-                            arbeidFOM = erIArbeid!!.arbeidFOM,
-                            vurderingsdato = erIArbeid!!.vurderingsdato,
+                            egetArbeidPaSikt = erIArbeid.egetArbeidPaSikt,
+                            annetArbeidPaSikt = erIArbeid.annetArbeidPaSikt,
+                            arbeidFOM = erIArbeid.arbeidFOM,
+                            vurderingsdato = erIArbeid.vurderingsdato,
                         )
                     } else {
                         null
@@ -263,9 +262,9 @@ class SykmeldingMapper private constructor() {
                 erIkkeIArbeid =
                     if (erIkkeIArbeid != null) {
                         ErIkkeIArbeid(
-                            arbeidsforPaSikt = erIkkeIArbeid!!.arbeidsforPaSikt,
-                            arbeidsforFOM = erIkkeIArbeid!!.arbeidsforFOM,
-                            vurderingsdato = erIkkeIArbeid!!.vurderingsdato,
+                            arbeidsforPaSikt = erIkkeIArbeid.arbeidsforPaSikt,
+                            arbeidsforFOM = erIkkeIArbeid.arbeidsforFOM,
+                            vurderingsdato = erIkkeIArbeid.vurderingsdato,
                         )
                     } else {
                         null
@@ -314,8 +313,8 @@ class SykmeldingMapper private constructor() {
                         null
                     } else {
                         AnnenFraversArsak(
-                            beskrivelse = annenFraversArsak!!.beskrivelse,
-                            grunn = annenFraversArsak!!.grunn.map { it.toAnnenFraverGrunn() },
+                            beskrivelse = annenFraversArsak.beskrivelse,
+                            grunn = annenFraversArsak.grunn.map { it.toAnnenFraverGrunn() },
                         )
                     },
                 svangerskap = svangerskap,

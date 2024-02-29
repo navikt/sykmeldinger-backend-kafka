@@ -15,7 +15,6 @@ val kotestVersion = "5.8.0"
 val postgresVersion = "42.7.2"
 val hikariVersion = "5.1.0"
 val googlePostgresVersion = "1.16.0"
-val smCommonVersion = "2.0.8"
 val flywayVersion = "10.8.1"
 val confluentVersion = "7.6.0"
 val commonsCodecVersion = "1.16.1"
@@ -79,13 +78,11 @@ dependencies {
     implementation("org.postgresql:postgresql:$postgresVersion")
     implementation("com.google.cloud.sql:postgres-socket-factory:$googlePostgresVersion")
 
-    implementation("no.nav.helse:syfosm-common-kafka:$smCommonVersion")
     constraints {
         implementation("org.xerial.snappy:snappy-java:1.1.10.5") {
             because("override transient from org.apache.kafka:kafka_2.12")
         }
     }
-    implementation("no.nav.helse:syfosm-common-models:$smCommonVersion")
     implementation("io.confluent:kafka-avro-serializer:$confluentVersion")
     constraints {
         implementation("org.apache.avro:avro:$avroVersion") {
