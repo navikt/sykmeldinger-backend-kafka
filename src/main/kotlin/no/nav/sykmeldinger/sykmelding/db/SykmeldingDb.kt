@@ -10,6 +10,7 @@ import kotlinx.coroutines.withContext
 import no.nav.syfo.model.ValidationResult
 import no.nav.sykmeldinger.application.db.DatabaseInterface
 import no.nav.sykmeldinger.application.db.toList
+import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.objectMapper
 import no.nav.sykmeldinger.status.db.toPGObject
 import no.nav.sykmeldinger.sykmelding.model.Sykmelding
@@ -95,7 +96,7 @@ class SykmeldingDb(
         sykmeldingId: String,
         sykmelding: Sykmelding,
         sykmeldt: Sykmeldt,
-        validationResult: ValidationResult,
+        validationResult: ValidationResult?,
     ) {
         database.connection.use { connection ->
             connection
@@ -115,8 +116,11 @@ class SykmeldingDb(
                     preparedStatement.executeUpdate()
                 }
             connection.saveOrUpdateSykmeldt(sykmeldt)
-            connection.insertBehandlingsutfall(sykmeldingId, validationResult)
-
+            if (validationResult != null) {
+                connection.insertBehandlingsutfall(sykmeldingId, validationResult)
+            } else {
+                log.warn("ValidationResult is null for sykmeldingId $sykmeldingId")
+            }
             connection.commit()
         }
     }

@@ -12,7 +12,7 @@ class SykmeldingService(
         sykmeldingId: String,
         sykmelding: Sykmelding,
         sykmeldt: Sykmeldt,
-        validationResult: ValidationResult,
+        validationResult: ValidationResult?,
     ) {
         return sykmeldingDb.saveOrUpdate(sykmeldingId, sykmelding, sykmeldt, validationResult)
     }
