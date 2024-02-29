@@ -32,8 +32,7 @@ class PersonhendelseService(
                 } catch (ex: PSQLException) {
                     log.error("Error updating ident in database (see securelogs for more info)")
                     secureLog.error("Error updating identer", ex)
-                }
-                catch (ex: PersonNameNotFoundInPdl) {
+                } catch (ex: PersonNameNotFoundInPdl) {
                     logPersonhendelseError(
                         personhendelser,
                         it,

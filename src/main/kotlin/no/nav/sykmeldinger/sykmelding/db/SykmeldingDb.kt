@@ -7,7 +7,7 @@ import java.sql.Types
 import java.time.LocalDate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import no.nav.syfo.model.RuleInfo
+import no.nav.syfo.model.ValidationResult
 import no.nav.sykmeldinger.application.db.DatabaseInterface
 import no.nav.sykmeldinger.application.db.toList
 import no.nav.sykmeldinger.objectMapper
@@ -15,7 +15,6 @@ import no.nav.sykmeldinger.status.db.toPGObject
 import no.nav.sykmeldinger.sykmelding.model.Sykmelding
 import no.nav.sykmeldinger.sykmelding.model.Sykmeldt
 import org.postgresql.util.PGobject
-import org.postgresql.util.PSQLException
 
 data class UpdateResult(val table: String, val updatedRows: Int)
 
@@ -30,7 +29,7 @@ class SykmeldingDb(
                 results.add(
                     connection.updateFnrInTable("sykmelding", oldFnr = oldFnr, newFNR = newFNR)
                 )
-                if(connection.sykmeldtExists(newFNR)) {
+                if (connection.sykmeldtExists(newFNR)) {
                     results.add(connection.deleteSykmeldt(oldFnr))
                 } else {
                     results.add(
@@ -45,25 +44,33 @@ class SykmeldingDb(
             results
         }
 
-    private fun Connection.deleteSykmeldt(fnr: String) : UpdateResult {
-        val update = prepareStatement("""
+    private fun Connection.deleteSykmeldt(fnr: String): UpdateResult {
+        val update =
+            prepareStatement(
+                    """
             delete from sykmeldt where fnr = ?;
-        """.trimIndent()).use {
-            it.setString(1, fnr)
-            it.executeUpdate()
-        }
+        """
+                        .trimIndent()
+                )
+                .use {
+                    it.setString(1, fnr)
+                    it.executeUpdate()
+                }
 
         return UpdateResult("sykmeldt", update)
     }
-     private fun Connection.sykmeldtExists(fnr: String) : Boolean {
-        return prepareStatement("""
-            select true from sykmeldt where fnr = ?;
-        """).use {
-            it.setString(1, fnr)
-            it.executeQuery()?.next() ?: false
-        }
-    }
 
+    private fun Connection.sykmeldtExists(fnr: String): Boolean {
+        return prepareStatement(
+                """
+            select true from sykmeldt where fnr = ?;
+        """
+            )
+            .use {
+                it.setString(1, fnr)
+                it.executeQuery()?.next() ?: false
+            }
+    }
 
     private fun Connection.updateFnrInTable(
         table: String,
@@ -88,7 +95,7 @@ class SykmeldingDb(
         sykmeldingId: String,
         sykmelding: Sykmelding,
         sykmeldt: Sykmeldt,
-        okSykmelding: Boolean
+        validationResult: ValidationResult,
     ) {
         database.connection.use { connection ->
             connection
@@ -108,9 +115,8 @@ class SykmeldingDb(
                     preparedStatement.executeUpdate()
                 }
             connection.saveOrUpdateSykmeldt(sykmeldt)
-            if (okSykmelding) {
-                connection.insertOKBehandlingsutfall(sykmeldingId)
-            }
+            connection.insertBehandlingsutfall(sykmeldingId, validationResult)
+
             connection.commit()
         }
     }
@@ -217,7 +223,10 @@ class SykmeldingDb(
             }
     }
 
-    private fun Connection.insertOKBehandlingsutfall(sykmeldingId: String) {
+    private fun Connection.insertBehandlingsutfall(
+        sykmeldingId: String,
+        validationResult: ValidationResult
+    ) {
         prepareStatement(
                 """
                insert into behandlingsutfall(sykmelding_id, behandlingsutfall, rule_hits) values(?, ?, ?) on conflict(sykmelding_id) do nothing;
@@ -226,8 +235,8 @@ class SykmeldingDb(
             .use { ps ->
                 var index = 1
                 ps.setString(index++, sykmeldingId)
-                ps.setString(index++, "OK")
-                ps.setObject(index, toPGObject(emptyList<RuleInfo>()))
+                ps.setString(index++, validationResult.status.name)
+                ps.setObject(index, toPGObject(validationResult.ruleHits))
                 ps.executeUpdate()
             }
     }

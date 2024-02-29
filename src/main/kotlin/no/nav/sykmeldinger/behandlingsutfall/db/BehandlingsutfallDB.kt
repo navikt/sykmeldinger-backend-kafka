@@ -10,8 +10,7 @@ class BehandlingsutfallDB(private val database: DatabaseInterface) {
             connection
                 .prepareStatement(
                     """
-               insert into behandlingsutfall(sykmelding_id, behandlingsutfall, rule_hits) values(?, ?, ?) on conflict(sykmelding_id) do update 
-               set behandlingsutfall = excluded.behandlingsutfall, rule_hits = excluded.rule_hits;
+               insert into behandlingsutfall(sykmelding_id, behandlingsutfall, rule_hits) values(?, ?, ?) on conflict(sykmelding_id) do nothing ;
             """,
                 )
                 .use { ps ->

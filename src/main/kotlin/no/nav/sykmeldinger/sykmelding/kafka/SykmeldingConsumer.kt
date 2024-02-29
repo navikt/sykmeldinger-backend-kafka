@@ -81,22 +81,7 @@ class SykmeldingConsumer(
                                 objectMapper.readValue(it, ReceivedSykmelding::class.java)
                             }
 
-                        val okSykmelding =
-                            when (cr.topic()) {
-                                OK_TOPIC -> {
-                                    true
-                                }
-                                MANUELL_TOPIC -> {
-                                    false
-                                }
-                                AVVIST_TOPIC -> {
-                                    false
-                                }
-                                else -> {
-                                    false
-                                }
-                            }
-                        handleSykmelding(cr.key(), sykmelding, okSykmelding)
+                        handleSykmelding(cr.key(), sykmelding)
                     }
                 }
             }
@@ -105,7 +90,6 @@ class SykmeldingConsumer(
     private suspend fun handleSykmelding(
         sykmeldingId: String,
         receivedSykmelding: ReceivedSykmelding?,
-        okSykmelding: Boolean,
     ) {
         if (receivedSykmelding != null) {
             val sykmelding = SykmeldingMapper.mapToSykmelding(receivedSykmelding)
@@ -116,7 +100,12 @@ class SykmeldingConsumer(
                         .toSykmeldt()
                 val arbeidsforhold = arbeidsforholdService.getArbeidsforhold(sykmeldt.fnr)
                 arbeidsforhold.forEach { arbeidsforholdService.insertOrUpdate(it) }
-                sykmeldingService.saveOrUpdate(sykmeldingId, sykmelding, sykmeldt, okSykmelding)
+                sykmeldingService.saveOrUpdate(
+                    sykmeldingId,
+                    sykmelding,
+                    sykmeldt,
+                    receivedSykmelding.validationResult
+                )
             } catch (e: PersonNotFoundInPdl) {
                 if (cluster != "dev-gcp") {
                     log.error("Person not found in PDL, for sykmelding $sykmeldingId", e)

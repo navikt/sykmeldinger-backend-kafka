@@ -96,9 +96,7 @@ class PdlPersonService(
                 }
             }
         }
-        if (
-            pdlResponse.data.person == null || pdlResponse.data.person.navn.isNullOrEmpty()
-        ) {
+        if (pdlResponse.data.person == null || pdlResponse.data.person.navn.isNullOrEmpty()) {
             secureLog.info("Fant ikke navn på person i PDL, nyttFnr: $nyttFnr")
             log.warn("Fant ikke navn på person i PDL")
             throw PersonNotFoundInPdl("Fant ikke navn på person i PDL")

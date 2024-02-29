@@ -25,7 +25,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import no.nav.person.pdl.leesah.Personhendelse
 import no.nav.syfo.kafka.aiven.KafkaUtils
-import no.nav.syfo.kafka.toConsumerConfig
 import no.nav.syfo.model.sykmeldingstatus.SykmeldingStatusKafkaMessageDTO
 import no.nav.syfo.unleash.createUnleashStateHandler
 import no.nav.sykmeldinger.application.ApplicationServer
@@ -45,6 +44,7 @@ import no.nav.sykmeldinger.azuread.AccessTokenClient
 import no.nav.sykmeldinger.behandlingsutfall.db.BehandlingsutfallDB
 import no.nav.sykmeldinger.behandlingsutfall.kafka.BehandlingsutfallConsumer
 import no.nav.sykmeldinger.identendring.IdentendringService
+import no.nav.sykmeldinger.kafka.toConsumerConfig
 import no.nav.sykmeldinger.narmesteleder.NarmesteLederService
 import no.nav.sykmeldinger.narmesteleder.db.NarmestelederDb
 import no.nav.sykmeldinger.narmesteleder.kafka.NarmesteLederConsumer
