@@ -1,12 +1,15 @@
 package no.nav.sykmeldinger.arbeidsforhold
 
 import java.time.LocalDate
+import net.logstash.logback.argument.StructuredArguments.kv
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.client.ArbeidsforholdClient
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Ansettelsesperiode
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.ArbeidsstedType
 import no.nav.sykmeldinger.arbeidsforhold.client.organisasjon.client.OrganisasjonsinfoClient
 import no.nav.sykmeldinger.arbeidsforhold.db.ArbeidsforholdDb
 import no.nav.sykmeldinger.arbeidsforhold.model.Arbeidsforhold
+import no.nav.sykmeldinger.log
+import no.nav.sykmeldinger.secureLog
 
 class ArbeidsforholdService(
     private val arbeidsforholdClient: ArbeidsforholdClient,
@@ -17,18 +20,29 @@ class ArbeidsforholdService(
         arbeidsforholdDb.insertOrUpdate(arbeidsforhold)
     }
 
-    suspend fun getArbeidsforhold(fnr: String): List<Arbeidsforhold> {
+    suspend fun getArbeidsforhold(
+        fnr: String,
+        sykmeldingFom: LocalDate,
+        sykmeldingTom: LocalDate
+    ): List<Arbeidsforhold> {
         val arbeidsgivere = arbeidsforholdClient.getArbeidsforhold(fnr = fnr)
 
         if (arbeidsgivere.isEmpty()) {
             return emptyList()
         }
-
+        val ansettelsesperiodePairs =
+            arbeidsgivere.map { it.ansettelsesperiode.startdato to it.ansettelsesperiode.sluttdato }
+        secureLogInfo(
+            ansettelsesPerioder = ansettelsesperiodePairs.toTypedArray(),
+            sykmeldingsPeriode = sykmeldingFom to sykmeldingTom,
+            fnr = fnr,
+            tekst = "Getting all arbeidsforhold"
+        )
         val arbeidsgiverList =
             arbeidsgivere
                 .filter {
                     it.arbeidssted.type == ArbeidsstedType.Underenhet &&
-                        arbeidsforholdErGyldig(it.ansettelsesperiode)
+                        arbeidsforholdErGyldig(it.ansettelsesperiode, sykmeldingFom, sykmeldingTom)
                 }
                 .sortedWith(
                     compareByDescending(nullsLast()) { it.ansettelsesperiode.sluttdato },
@@ -49,7 +63,31 @@ class ArbeidsforholdService(
                         tom = aaregArbeidsforhold.ansettelsesperiode.sluttdato,
                     )
                 }
+        val endeligAnsettelsesperiodePairs = arbeidsgiverList.map { it.fom to it.tom }
+        secureLogInfo(
+            ansettelsesPerioder = endeligAnsettelsesperiodePairs.toTypedArray(),
+            sykmeldingsPeriode = sykmeldingFom to sykmeldingTom,
+            fnr = fnr,
+            tekst = "Filtered out valid arbeidsforhold"
+        )
         return arbeidsgiverList
+    }
+
+    private fun secureLogInfo(
+        vararg ansettelsesPerioder: Pair<LocalDate, LocalDate?>,
+        sykmeldingsPeriode: Pair<LocalDate, LocalDate>,
+        fnr: String,
+        tekst: String,
+    ) {
+        val ansettelsesPerioder =
+            ansettelsesPerioder.map { periode -> "${periode.first} - ${periode.second}" }
+        val sykmeldingFomTom = "${sykmeldingsPeriode.first} - ${sykmeldingsPeriode.second}"
+        secureLog.info(
+            "$tekst {} {} {}",
+            kv("fnr", fnr),
+            kv("sykmeldingsperiode", sykmeldingFomTom),
+            kv("ansettelsesperioder", ansettelsesPerioder)
+        )
     }
 
     suspend fun getArbeidsforholdFromDb(fnr: String): List<Arbeidsforhold> {
@@ -60,10 +98,19 @@ class ArbeidsforholdService(
         arbeidsforholdDb.deleteArbeidsforhold(id)
     }
 
-    private fun arbeidsforholdErGyldig(ansettelsesperiode: Ansettelsesperiode): Boolean {
-        val ansettelsesperiodeFom = LocalDate.now().minusMonths(4)
-        return ansettelsesperiode.sluttdato == null ||
-            ansettelsesperiode.sluttdato.isAfter(ansettelsesperiodeFom)
+    private fun arbeidsforholdErGyldig(
+        ansettelsesperiode: Ansettelsesperiode,
+        sykmeldingFom: LocalDate,
+        sykmeldingTom: LocalDate,
+    ): Boolean {
+        val checkSluttdato =
+            ansettelsesperiode.sluttdato == null ||
+                ansettelsesperiode.sluttdato.isAfter(sykmeldingFom) ||
+                ansettelsesperiode.sluttdato == sykmeldingFom
+        val checkStartdato =
+            ansettelsesperiode.startdato.isBefore(sykmeldingTom) ||
+                ansettelsesperiode.startdato == sykmeldingTom
+        return checkStartdato && checkSluttdato
     }
 
     suspend fun deleteArbeidsforholdIds(deleted: List<Int>) {

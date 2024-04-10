@@ -7,6 +7,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.ktor.client.plugins.ClientRequestException
 import java.time.Duration
+import java.time.LocalDate
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -114,7 +115,8 @@ class SykmeldingConsumer(
                     pdlPersonService
                         .getPerson(receivedSykmelding.personNrPasient, sykmeldingId)
                         .toSykmeldt()
-                val arbeidsforhold = arbeidsforholdService.getArbeidsforhold(sykmeldt.fnr)
+                val (fom, tom) = getRecievedSykmeldingFomTom(receivedSykmelding)
+                val arbeidsforhold = arbeidsforholdService.getArbeidsforhold(sykmeldt.fnr, fom, tom)
                 arbeidsforhold.forEach { arbeidsforholdService.insertOrUpdate(it) }
                 sykmeldingService.saveOrUpdate(sykmeldingId, sykmelding, sykmeldt, okSykmelding)
             } catch (e: PersonNotFoundInPdl) {
@@ -138,6 +140,14 @@ class SykmeldingConsumer(
             sykmeldingService.deleteSykmelding(sykmeldingId)
             log.info("Deleted sykmelding etc with sykmeldingId: $sykmeldingId")
         }
+    }
+
+    private fun getRecievedSykmeldingFomTom(
+        receivedSykmelding: ReceivedSykmelding
+    ): Pair<LocalDate, LocalDate> {
+        val fom = receivedSykmelding.sykmelding.perioder.first().fom
+        val tom = receivedSykmelding.sykmelding.perioder.last().tom
+        return fom to tom
     }
 }
 
