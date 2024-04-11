@@ -71,12 +71,14 @@ class ArbeidsforholdConsumer(
                         .filter { it.value().endringstype != Endringstype.Sletting }
                         .filter { hasValidEndringstype(it.value()) }
 
-                val newhendelserByFnr =
+                val oppdaterArbeidsforholdForFnrListe =
                     arbeidsforholdEndringer
                         .map { it.value().arbeidsforhold.arbeidstaker.getFnr() }
                         .distinct()
 
-                newhendelserByFnr.chunked(10).forEach { updateArbeidsforholdFor(it) }
+                oppdaterArbeidsforholdForFnrListe.chunked(10).forEach {
+                    updateArbeidsforholdFor(it)
+                }
 
                 val deleted =
                     hendelser
@@ -145,10 +147,10 @@ class ArbeidsforholdConsumer(
     private suspend fun deleteArbeidsforhold(deleted: List<Int>) =
         withContext(NonCancellable) { arbeidsforholdService.deleteArbeidsforholdIds(deleted) }
 
-    private suspend fun updateArbeidsforholdFor(newhendelserByFnr: List<String>) {
+    private suspend fun updateArbeidsforholdFor(fnrListe: List<String>) {
         withContext(NonCancellable) {
             val jobs =
-                newhendelserByFnr.map {
+                fnrListe.map {
                     async(Dispatchers.IO) {
                         secureLog.info(
                             "Prøver å oppdatere arbeidsforhold fra arbeidsforhold hendelse for {}",
