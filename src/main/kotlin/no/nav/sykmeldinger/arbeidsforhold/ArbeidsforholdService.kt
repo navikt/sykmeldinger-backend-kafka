@@ -8,7 +8,6 @@ import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Arbeidsste
 import no.nav.sykmeldinger.arbeidsforhold.client.organisasjon.client.OrganisasjonsinfoClient
 import no.nav.sykmeldinger.arbeidsforhold.db.ArbeidsforholdDb
 import no.nav.sykmeldinger.arbeidsforhold.model.Arbeidsforhold
-import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.secureLog
 
 class ArbeidsforholdService(
@@ -42,7 +41,7 @@ class ArbeidsforholdService(
             arbeidsgivere
                 .filter {
                     it.arbeidssted.type == ArbeidsstedType.Underenhet &&
-                        arbeidsforholdErGyldig(it.ansettelsesperiode, sykmeldingFom, sykmeldingTom)
+                        erArbeidsforholdGyldig(it.ansettelsesperiode, sykmeldingFom, sykmeldingTom)
                 }
                 .sortedWith(
                     compareByDescending(nullsLast()) { it.ansettelsesperiode.sluttdato },
@@ -98,7 +97,7 @@ class ArbeidsforholdService(
         arbeidsforholdDb.deleteArbeidsforhold(id)
     }
 
-    private fun arbeidsforholdErGyldig(
+    private fun erArbeidsforholdGyldig(
         ansettelsesperiode: Ansettelsesperiode,
         sykmeldingFom: LocalDate,
         sykmeldingTom: LocalDate,

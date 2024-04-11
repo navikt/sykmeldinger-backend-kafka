@@ -115,7 +115,7 @@ class SykmeldingConsumer(
                     pdlPersonService
                         .getPerson(receivedSykmelding.personNrPasient, sykmeldingId)
                         .toSykmeldt()
-                val (fom, tom) = getRecievedSykmeldingFomTom(receivedSykmelding)
+                val (fom, tom) = getReceivedSykmeldingFomTom(receivedSykmelding)
                 val arbeidsforhold = arbeidsforholdService.getArbeidsforhold(sykmeldt.fnr, fom, tom)
                 arbeidsforhold.forEach { arbeidsforholdService.insertOrUpdate(it) }
                 sykmeldingService.saveOrUpdate(sykmeldingId, sykmelding, sykmeldt, okSykmelding)
@@ -142,7 +142,7 @@ class SykmeldingConsumer(
         }
     }
 
-    private fun getRecievedSykmeldingFomTom(
+    private fun getReceivedSykmeldingFomTom(
         receivedSykmelding: ReceivedSykmelding
     ): Pair<LocalDate, LocalDate> {
         val fom = receivedSykmelding.sykmelding.perioder.first().fom
