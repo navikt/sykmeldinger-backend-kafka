@@ -5,6 +5,8 @@ import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import no.nav.syfo.model.Status
+import no.nav.syfo.model.ValidationResult
 import no.nav.sykmeldinger.TestDB
 import no.nav.sykmeldinger.arbeidsforhold.ArbeidsforholdService
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.client.ArbeidsforholdClient
@@ -58,7 +60,12 @@ class ArbeidsforholdConsumerTest :
 
             beforeEach {
                 TestDB.clearAllData()
-                sykmeldingDb.saveOrUpdate("1", sykmelding, sykmeldt, true)
+                sykmeldingDb.saveOrUpdate(
+                    "1",
+                    sykmelding,
+                    sykmeldt,
+                    ValidationResult(Status.OK, emptyList())
+                )
                 sykmeldingDb.saveOrUpdateSykmeldt(sykmeldt)
                 clearMocks(organisasjonsinfoClient, arbeidsforholdClient)
                 coEvery { organisasjonsinfoClient.getOrganisasjonsnavn(any()) } returns

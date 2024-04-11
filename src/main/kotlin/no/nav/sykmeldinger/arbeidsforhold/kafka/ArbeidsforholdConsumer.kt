@@ -153,7 +153,7 @@ class ArbeidsforholdConsumer(
                 fnrListe.map {
                     async(Dispatchers.IO) {
                         secureLog.info(
-                            "Prøver å oppdatere arbeidsforhold fra arbeidsforhold hendelse for {}",
+                            "Prøver å oppdatere arbeidsforhold fra arbeidsforholdhendelse for {}",
                             kv("fnr", it)
                         )
                         updateArbeidsforhold(it)

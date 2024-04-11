@@ -1,6 +1,8 @@
 package no.nav.sykmeldinger.sykmelding.db
 
 import io.kotest.core.spec.style.FunSpec
+import no.nav.syfo.model.Status
+import no.nav.syfo.model.ValidationResult
 import no.nav.sykmeldinger.TestDB
 import no.nav.sykmeldinger.utils.TestHelper.Companion.januar
 import no.nav.sykmeldinger.utils.fnr
@@ -18,7 +20,12 @@ class SykmeldingDbTest :
         context("sykmeldingPerioder") {
             test("henter sykmelding med perioder") {
                 val sykmelding = sykmelding
-                sykmeldingDb.saveOrUpdate("1", sykmelding, sykmeldt, false)
+                sykmeldingDb.saveOrUpdate(
+                    "1",
+                    sykmelding,
+                    sykmeldt,
+                    ValidationResult(Status.OK, emptyList())
+                )
                 val sykmeldingerKunPerioder = sykmeldingDb.getSykmeldingerKunPerioder(fnr)
 
                 sykmeldingerKunPerioder!!.size shouldBeEqualTo 1
@@ -33,7 +40,12 @@ class SykmeldingDbTest :
             }
             test("henter sykmelding fom og tom med perioder") {
                 val sykmelding = sykmelding
-                sykmeldingDb.saveOrUpdate("1", sykmelding, sykmeldt, false)
+                sykmeldingDb.saveOrUpdate(
+                    "1",
+                    sykmelding,
+                    sykmeldt,
+                    ValidationResult(Status.OK, emptyList())
+                )
                 val lastSykmeldingFomTom = sykmeldingDb.getLastSykmeldingFomTom(fnr)
 
                 lastSykmeldingFomTom shouldBeEqualTo (1.januar(2024) to 31.januar(2024))
@@ -43,8 +55,18 @@ class SykmeldingDbTest :
                 lastSykmeldingFomTom shouldBeEqualTo null
             }
             test("henter siste sykmelding i db med flere sykmeldinger") {
-                sykmeldingDb.saveOrUpdate("1", sykmelding, sykmeldt, false)
-                sykmeldingDb.saveOrUpdate("2", sykmeldingForlengelse, sykmeldt, false)
+                sykmeldingDb.saveOrUpdate(
+                    "1",
+                    sykmelding,
+                    sykmeldt,
+                    ValidationResult(Status.OK, emptyList())
+                )
+                sykmeldingDb.saveOrUpdate(
+                    "2",
+                    sykmeldingForlengelse,
+                    sykmeldt,
+                    ValidationResult(Status.OK, emptyList())
+                )
                 val lastSykmeldingFomTom = sykmeldingDb.getLastSykmeldingFomTom(fnr)
                 lastSykmeldingFomTom shouldBeEqualTo (1.januar(2024) to 31.januar(2024))
             }
