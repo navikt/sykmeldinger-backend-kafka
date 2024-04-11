@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.FunSpec
 import no.nav.syfo.model.Status
 import no.nav.syfo.model.ValidationResult
 import no.nav.sykmeldinger.TestDB
+import no.nav.sykmeldinger.utils.TestHelper.Companion.februar
 import no.nav.sykmeldinger.utils.TestHelper.Companion.januar
 import no.nav.sykmeldinger.utils.fnr
 import no.nav.sykmeldinger.utils.sykmelding
@@ -68,7 +69,7 @@ class SykmeldingDbTest :
                     ValidationResult(Status.OK, emptyList())
                 )
                 val lastSykmeldingFomTom = sykmeldingDb.getLastSykmeldingFomTom(fnr)
-                lastSykmeldingFomTom shouldBeEqualTo (1.januar(2024) to 31.januar(2024))
+                lastSykmeldingFomTom shouldBeEqualTo (1.februar(2024) to 29.februar(2024))
             }
         }
     })

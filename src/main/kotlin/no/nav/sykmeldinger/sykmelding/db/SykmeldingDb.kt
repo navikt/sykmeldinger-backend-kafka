@@ -196,7 +196,7 @@ class SykmeldingDb(
 
     fun getLastSykmeldingFomTom(fnr: String): Pair<LocalDate, LocalDate>? {
         val lastSykmeldingSykmeldingsPerioder =
-            getSykmeldingerKunPerioder(fnr)?.first()?.sykmeldingsperioder ?: return null
+            getSykmeldingerKunPerioder(fnr)?.last()?.sykmeldingsperioder ?: return null
         val fom = lastSykmeldingSykmeldingsPerioder.first().fom
         val tom = lastSykmeldingSykmeldingsPerioder.last().tom
         return fom to tom
@@ -219,7 +219,7 @@ class SykmeldingDb(
                         if (sykmeldinger.isEmpty()) {
                             return null
                         }
-                        sykmeldinger.sortBy { it.sykmeldingsperioder.first().fom }
+                        sykmeldinger.sortBy { it.mottattTidspunkt }
                         sykmeldinger
                     }
                 }
