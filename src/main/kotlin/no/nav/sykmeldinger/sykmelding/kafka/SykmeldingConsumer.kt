@@ -134,8 +134,8 @@ class SykmeldingConsumer(
     private fun getReceivedSykmeldingFomTom(
         receivedSykmelding: ReceivedSykmelding
     ): Pair<LocalDate, LocalDate> {
-        val fom = receivedSykmelding.sykmelding.perioder.first().fom
-        val tom = receivedSykmelding.sykmelding.perioder.last().tom
+        val fom = receivedSykmelding.sykmelding.perioder.minOf { it.fom }
+        val tom = receivedSykmelding.sykmelding.perioder.maxOf { it.tom }
         return fom to tom
     }
 }

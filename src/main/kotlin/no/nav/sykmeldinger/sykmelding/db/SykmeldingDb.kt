@@ -197,8 +197,8 @@ class SykmeldingDb(
     fun getLastSykmeldingFomTom(fnr: String): Pair<LocalDate, LocalDate>? {
         val lastSykmeldingSykmeldingsPerioder =
             getSykmeldingerKunPerioder(fnr)?.last()?.sykmeldingsperioder ?: return null
-        val fom = lastSykmeldingSykmeldingsPerioder.first().fom
-        val tom = lastSykmeldingSykmeldingsPerioder.last().tom
+        val fom = lastSykmeldingSykmeldingsPerioder.minOf { it.fom }
+        val tom = lastSykmeldingSykmeldingsPerioder.maxOf { it.tom }
         return fom to tom
     }
 
