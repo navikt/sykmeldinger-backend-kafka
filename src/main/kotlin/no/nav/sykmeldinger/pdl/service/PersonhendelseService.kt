@@ -39,8 +39,12 @@ class PersonhendelseService(
                         "Did not find name in PDL, continuing"
                     )
                 } catch (ex: PersonNotFoundInPdl) {
-                    logPersonhendelseError(personhendelser, it)
-                    throw ex
+                    logPersonhendelseError(
+                        personhendelser,
+                        it,
+                        "Did not find person in PDL, continuing"
+                    )
+                    // throw ex
                 }
             }
 
