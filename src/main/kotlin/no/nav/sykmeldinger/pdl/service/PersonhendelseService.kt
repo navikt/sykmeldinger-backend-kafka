@@ -16,6 +16,7 @@ class PersonhendelseService(
     private val identendringService: IdentendringService,
     private val narmestelederDb: NarmestelederDb,
     private val pdlPersonService: PdlPersonService,
+    private val cluster: String,
 ) {
     suspend fun handlePersonhendelse(personhendelser: List<PersonhendelseDataClass>) {
         personhendelser
@@ -39,8 +40,16 @@ class PersonhendelseService(
                         "Did not find name in PDL, continuing"
                     )
                 } catch (ex: PersonNotFoundInPdl) {
-                    logPersonhendelseError(personhendelser, it)
-                    throw ex
+                    if (cluster == "prod-gcp") {
+                        logPersonhendelseError(personhendelser, it)
+                        throw ex
+                    } else {
+                        val hendelse =
+                            personhendelser.first { hendelse ->
+                                hendelse.personidenter.contains(it.first())
+                            }
+                        log.warn("Person not found in PDL, for hendelse $hendelse, skipping in dev")
+                    }
                 }
             }
 

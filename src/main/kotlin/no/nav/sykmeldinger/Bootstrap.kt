@@ -188,7 +188,8 @@ fun main() {
         PersonhendelseService(
             narmestelederDb = narmestelederDb,
             pdlPersonService = pdlPersonService,
-            identendringService = identendringService
+            identendringService = identendringService,
+            cluster = env.cluster
         )
     val pdlHendelseConsumer =
         PersonhendelseConsumer(
