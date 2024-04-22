@@ -28,7 +28,8 @@ class PersonhendelseServiceTest :
             PersonhendelseService(
                 identendringService = identendringService,
                 narmestelederDb = narmesteLederDb,
-                pdlPersonService = pdlPersonService
+                pdlPersonService = pdlPersonService,
+                cluster = "test"
             )
         beforeEach {
             clearMocks(pdlPersonService, identendringService)
