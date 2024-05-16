@@ -14,13 +14,13 @@ val kotlinVersion = "1.9.24"
 val kotestVersion = "5.9.0"
 val postgresVersion = "42.7.3"
 val hikariVersion = "5.1.0"
-val googlePostgresVersion = "1.18.0"
-val flywayVersion = "10.12.0"
+val googlePostgresVersion = "1.18.1"
+val flywayVersion = "10.13.0"
 val confluentVersion = "7.6.1"
 val commonsCodecVersion = "1.17.0"
 val ktfmtVersion = "0.44"
 val avroVersion = "1.11.3"
-val unleashedVersion = "9.2.1"
+val unleashedVersion = "9.2.2"
 
 plugins {
     id("application")
