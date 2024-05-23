@@ -1,5 +1,6 @@
 package no.nav.sykmeldinger.arbeidsforhold.kafka
 
+import io.opentelemetry.instrumentation.annotations.WithSpan
 import java.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CancellationException
@@ -144,9 +145,11 @@ class ArbeidsforholdConsumer(
                 endring == Entitetsendring.Ansettelsesperiode
         }
 
+    @WithSpan
     private suspend fun deleteArbeidsforhold(deleted: List<Int>) =
         withContext(NonCancellable) { arbeidsforholdService.deleteArbeidsforholdIds(deleted) }
 
+    @WithSpan
     private suspend fun updateArbeidsforholdFor(fnrListe: List<String>) {
         withContext(NonCancellable) {
             val jobs =

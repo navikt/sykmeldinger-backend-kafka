@@ -21,6 +21,7 @@ val commonsCodecVersion = "1.17.0"
 val ktfmtVersion = "0.44"
 val avroVersion = "1.11.3"
 val unleashedVersion = "9.2.1"
+val opentelemetryVersion = "2.3.0"
 
 plugins {
     id("application")
@@ -68,6 +69,7 @@ dependencies {
 
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("net.logstash.logback:logstash-logback-encoder:$logstashEncoderVersion")
+    implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:$opentelemetryVersion")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")

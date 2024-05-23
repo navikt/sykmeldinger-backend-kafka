@@ -1,5 +1,6 @@
 package no.nav.sykmeldinger.status.kafka
 
+import io.opentelemetry.instrumentation.annotations.WithSpan
 import java.sql.BatchUpdateException
 import java.time.Duration
 import java.time.OffsetDateTime
@@ -83,6 +84,7 @@ class SykmeldingStatusConsumer(
         }
     }
 
+    @WithSpan
     private suspend fun updateStatus(statusEvents: List<SykmeldingStatusKafkaEventDTO>) =
         withContext(Dispatchers.IO) {
             while (!tryUpdateStatus(statusEvents)) {

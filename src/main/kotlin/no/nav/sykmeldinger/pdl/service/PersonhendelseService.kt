@@ -1,5 +1,6 @@
 package no.nav.sykmeldinger.pdl.service
 
+import io.opentelemetry.instrumentation.annotations.WithSpan
 import no.nav.sykmeldinger.application.metrics.NL_NAVN_COUNTER
 import no.nav.sykmeldinger.identendring.IdentendringService
 import no.nav.sykmeldinger.log
@@ -18,6 +19,8 @@ class PersonhendelseService(
     private val pdlPersonService: PdlPersonService,
     private val cluster: String,
 ) {
+
+    @WithSpan
     suspend fun handlePersonhendelse(personhendelser: List<PersonhendelseDataClass>) {
         personhendelser
             .filter { it.opplysningstype == "FOLKEREGISTERIDENTIFIKATOR_V1" }

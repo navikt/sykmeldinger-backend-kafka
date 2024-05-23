@@ -1,5 +1,6 @@
 package no.nav.sykmeldinger.arbeidsforhold.db
 
+import io.opentelemetry.instrumentation.annotations.WithSpan
 import java.sql.Date
 import java.sql.ResultSet
 import java.time.LocalDate
@@ -93,6 +94,7 @@ class ArbeidsforholdDb(
         }
     }
 
+    @WithSpan
     fun deleteOldArbeidsforhold(date: LocalDate): Int {
         database.connection.use { connection ->
             val result =
