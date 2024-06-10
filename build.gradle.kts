@@ -22,6 +22,7 @@ val ktfmtVersion = "0.44"
 val avroVersion = "1.11.3"
 val unleashedVersion = "9.2.2"
 val opentelemetryVersion = "2.4.0"
+val snappyJavaVersion = "1.1.10.5"
 
 plugins {
     id("application")
@@ -82,7 +83,7 @@ dependencies {
     implementation("com.google.cloud.sql:postgres-socket-factory:$googlePostgresVersion")
 
     constraints {
-        implementation("org.xerial.snappy:snappy-java:1.1.10.5") {
+        implementation("org.xerial.snappy:snappy-java:$snappyJavaVersion") {
             because("override transient from org.apache.kafka:kafka_2.12")
         }
     }
@@ -109,9 +110,9 @@ dependencies {
 tasks {
 
     shadowJar {
-mergeServiceFiles {
-     setPath("META-INF/services/org.flywaydb.core.extensibility.Plugin")
- }
+        mergeServiceFiles {
+            setPath("META-INF/services/org.flywaydb.core.extensibility.Plugin")
+        }
         archiveBaseName.set("app")
         archiveClassifier.set("")
         isZip64 = true
