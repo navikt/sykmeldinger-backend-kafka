@@ -1,3 +1,5 @@
+import org.apache.avro.tool.SpecificCompilerTool
+
 group = "no.nav.sykmeldinger"
 version = "1.0.0"
 
@@ -29,7 +31,6 @@ plugins {
     kotlin("jvm") version "1.9.24"
     id("com.diffplug.spotless") version "6.25.0"
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
 }
 
 application {
@@ -107,7 +108,54 @@ dependencies {
     testImplementation("org.flywaydb:flyway-database-postgresql:$flywayVersion")
 }
 
+buildscript {
+    dependencies {
+        classpath("org.apache.avro:avro-tools:1.11.3")
+        classpath("org.apache.avro:avro:1.11.3")
+    }
+}
+
+val avroSchemasDir = "src/main/avro"
+val avroCodeGenerationDir = "build/generated-main-avro-custom-java"
+
+sourceSets.getByName("main") {
+    java {
+        srcDirs += file(avroCodeGenerationDir)
+    }
+    kotlin {
+        srcDirs += file(avroCodeGenerationDir)
+    }
+}
+
 tasks {
+
+
+    register("customAvroCodeGeneration") {
+        // Define the task inputs and outputs for the Gradle up-to-date checks.
+        inputs.dir(avroSchemasDir)
+        outputs.dir(file(avroCodeGenerationDir))
+        // The Avro code generation logs to the standard streams. Redirect the standard streams to the Gradle log.
+        logging.captureStandardOutput(LogLevel.INFO)
+        logging.captureStandardError(LogLevel.ERROR)
+
+        doLast {
+            SpecificCompilerTool().run(
+                System.`in`, System.out, System.err,
+                listOf(
+                    "-encoding",
+                    "UTF-8",
+                    "-string",
+                    "-fieldVisibility",
+                    "private",
+                    "-noSetters",
+                    "schema",
+                    "$projectDir/$avroSchemasDir",
+                    "$projectDir/$avroCodeGenerationDir",
+                ),
+            )
+        }
+
+    }
 
     shadowJar {
         mergeServiceFiles {
@@ -123,7 +171,7 @@ tasks {
                 ),
             )
         }
-        dependsOn("generateTestAvroJava")
+        dependsOn("customAvroCodeGeneration")
     }
 
     test {
@@ -140,7 +188,7 @@ tasks {
         kotlin { ktfmt(ktfmtVersion).kotlinlangStyle() }
         check {
             dependsOn("spotlessApply")
-            dependsOn("generateTestAvroJava")
+            dependsOn("customAvroCodeGeneration")
         }
     }
 }
