@@ -1,3 +1,5 @@
+import org.apache.avro.tool.SpecificCompilerTool
+
 group = "no.nav.sykmeldinger"
 version = "1.0.0"
 
@@ -23,13 +25,13 @@ val avroVersion = "1.11.3"
 val unleashedVersion = "9.2.2"
 val opentelemetryVersion = "2.4.0"
 val snappyJavaVersion = "1.1.10.5"
+val javaVersion = JavaVersion.VERSION_21
 
 plugins {
     id("application")
     kotlin("jvm") version "1.9.24"
     id("com.diffplug.spotless") version "6.25.0"
     id("com.github.johnrengelman.shadow") version "8.1.1"
-    id("com.github.davidmc24.gradle.plugin.avro") version "1.9.1"
 }
 
 application {
@@ -107,7 +109,61 @@ dependencies {
     testImplementation("org.flywaydb:flyway-database-postgresql:$flywayVersion")
 }
 
+buildscript {
+    dependencies {
+        classpath("org.apache.avro:avro-tools:1.11.3")
+        classpath("org.apache.avro:avro:1.11.3")
+    }
+}
+
+val avroSchemasDir = "src/main/avro"
+val avroCodeGenerationDir = "build/generated-main-avro-custom-java"
+
+
+sourceSets {
+    main {
+        java {
+            srcDir( file(File(avroCodeGenerationDir)))
+        }
+    }
+}
+
 tasks {
+
+    compileKotlin {
+        kotlinOptions.jvmTarget = javaVersion.toString()
+        dependsOn("customAvroCodeGeneration")
+    }
+    compileTestKotlin {
+        kotlinOptions.jvmTarget = javaVersion.toString()
+        dependsOn("customAvroCodeGeneration")
+    }
+
+    register("customAvroCodeGeneration") {
+        inputs.dir(avroSchemasDir)
+        outputs.dir(avroCodeGenerationDir)
+
+        logging.captureStandardOutput(LogLevel.INFO)
+        logging.captureStandardError(LogLevel.ERROR)
+
+        doLast {
+            SpecificCompilerTool().run(
+                System.`in`, System.out, System.err,
+                listOf(
+                    "-encoding",
+                    "UTF-8",
+                    "-string",
+                    "-fieldVisibility",
+                    "private",
+                    "-noSetters",
+                    "schema",
+                    "$projectDir/$avroSchemasDir",
+                    "$projectDir/$avroCodeGenerationDir",
+                ),
+            )
+        }
+
+    }
 
     shadowJar {
         mergeServiceFiles {
@@ -123,7 +179,7 @@ tasks {
                 ),
             )
         }
-        dependsOn("generateTestAvroJava")
+        dependsOn("customAvroCodeGeneration")
     }
 
     test {
@@ -134,13 +190,15 @@ tasks {
             showStackTraces = true
             exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
         }
+        dependsOn("customAvroCodeGeneration")
     }
 
     spotless {
-        kotlin { ktfmt(ktfmtVersion).kotlinlangStyle() }
+        kotlin { ktfmt(ktfmtVersion).kotlinlangStyle()
+        }
         check {
             dependsOn("spotlessApply")
-            dependsOn("generateTestAvroJava")
+            dependsOn("customAvroCodeGeneration")
         }
     }
 }
