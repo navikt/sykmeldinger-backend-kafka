@@ -25,6 +25,7 @@ val avroVersion = "1.11.3"
 val unleashedVersion = "9.2.2"
 val opentelemetryVersion = "2.4.0"
 val snappyJavaVersion = "1.1.10.5"
+val javaVersion = JavaVersion.VERSION_21
 
 plugins {
     id("application")
@@ -118,23 +119,30 @@ buildscript {
 val avroSchemasDir = "src/main/avro"
 val avroCodeGenerationDir = "build/generated-main-avro-custom-java"
 
-sourceSets.getByName("main") {
-    java {
-        srcDirs += file(avroCodeGenerationDir)
-    }
-    kotlin {
-        srcDirs += file(avroCodeGenerationDir)
+
+sourceSets {
+    main {
+        java {
+            srcDir( file(File(avroCodeGenerationDir)))
+        }
     }
 }
 
 tasks {
 
+    compileKotlin {
+        kotlinOptions.jvmTarget = javaVersion.toString()
+        dependsOn("customAvroCodeGeneration")
+    }
+    compileTestKotlin {
+        kotlinOptions.jvmTarget = javaVersion.toString()
+        dependsOn("customAvroCodeGeneration")
+    }
 
     register("customAvroCodeGeneration") {
-        // Define the task inputs and outputs for the Gradle up-to-date checks.
         inputs.dir(avroSchemasDir)
-        outputs.dir(file(avroCodeGenerationDir))
-        // The Avro code generation logs to the standard streams. Redirect the standard streams to the Gradle log.
+        outputs.dir(avroCodeGenerationDir)
+
         logging.captureStandardOutput(LogLevel.INFO)
         logging.captureStandardError(LogLevel.ERROR)
 
@@ -182,10 +190,12 @@ tasks {
             showStackTraces = true
             exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
         }
+        dependsOn("customAvroCodeGeneration")
     }
 
     spotless {
-        kotlin { ktfmt(ktfmtVersion).kotlinlangStyle() }
+        kotlin { ktfmt(ktfmtVersion).kotlinlangStyle()
+        }
         check {
             dependsOn("spotlessApply")
             dependsOn("customAvroCodeGeneration")
