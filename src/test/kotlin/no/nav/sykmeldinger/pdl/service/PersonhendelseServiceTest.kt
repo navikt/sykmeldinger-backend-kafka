@@ -11,7 +11,7 @@ import no.nav.sykmeldinger.TestDB
 import no.nav.sykmeldinger.identendring.IdentendringService
 import no.nav.sykmeldinger.narmesteleder.db.NarmestelederDb
 import no.nav.sykmeldinger.narmesteleder.db.NarmestelederDbModel
-import no.nav.sykmeldinger.pdl.Endringstype
+import no.nav.sykmeldinger.pdl.EndringstypeDataClass
 import no.nav.sykmeldinger.pdl.NavnDataClass
 import no.nav.sykmeldinger.pdl.PersonhendelseDataClass
 import no.nav.sykmeldinger.pdl.model.Navn
@@ -50,7 +50,7 @@ class PersonhendelseServiceTest :
                     "PDL",
                     OffsetDateTime.now().toInstant(),
                     "FOLKEREGISTERIDENTIFIKATOR_V1",
-                    Endringstype.OPPRETTET,
+                    EndringstypeDataClass.OPPRETTET,
                     "tidligereId",
                     null,
                 )
@@ -64,7 +64,7 @@ class PersonhendelseServiceTest :
             }
             test("Oppdater ident ved korrigering") {
                 personhendelseService.handlePersonhendelse(
-                    listOf(personhendelse.copy(endringstype = Endringstype.KORRIGERT))
+                    listOf(personhendelse.copy(endringstype = EndringstypeDataClass.KORRIGERT))
                 )
 
                 coVerify(exactly = 1) {
@@ -81,7 +81,7 @@ class PersonhendelseServiceTest :
 
             test("Oppdaterer ikke ident ved endringstype ANNULERT") {
                 personhendelseService.handlePersonhendelse(
-                    listOf(personhendelse.copy(endringstype = Endringstype.ANNULLERT))
+                    listOf(personhendelse.copy(endringstype = EndringstypeDataClass.ANNULLERT))
                 )
 
                 coVerify(exactly = 0) { identendringService.updateIdent(any()) }
@@ -89,7 +89,7 @@ class PersonhendelseServiceTest :
 
             test("Oppdaterer ikke ident ved endringstype OPPHOERT") {
                 personhendelseService.handlePersonhendelse(
-                    listOf(personhendelse.copy(endringstype = Endringstype.OPPHOERT))
+                    listOf(personhendelse.copy(endringstype = EndringstypeDataClass.OPPHOERT))
                 )
 
                 coVerify(exactly = 0) { identendringService.updateIdent(any()) }
@@ -100,7 +100,7 @@ class PersonhendelseServiceTest :
                     listOf(
                         personhendelse,
                         personhendelse.copy(
-                            endringstype = Endringstype.KORRIGERT,
+                            endringstype = EndringstypeDataClass.KORRIGERT,
                             hendelseId = "hendelseId2"
                         )
                     )
@@ -179,7 +179,7 @@ fun getPersonhendelse(fnr: String, navn: NavnDataClass?): PersonhendelseDataClas
         "PDL",
         OffsetDateTime.now().toInstant(),
         "type",
-        Endringstype.OPPRETTET,
+        EndringstypeDataClass.OPPRETTET,
         "tidligereId",
         navn,
     )
