@@ -1,6 +1,7 @@
 package no.nav.sykmeldinger.pdl
 
 import java.time.Instant
+import no.nav.person.pdl.leesah.Endringstype
 import no.nav.person.pdl.leesah.Personhendelse
 import no.nav.person.pdl.leesah.navn.Navn
 import no.nav.person.pdl.leesah.navn.OriginaltNavn
@@ -11,12 +12,12 @@ data class PersonhendelseDataClass(
     val master: String?,
     val opprettet: Instant?,
     val opplysningstype: String?,
-    val endringstype: Endringstype,
+    val endringstype: EndringstypeDataClass,
     val tidligereHendelseId: String?,
     val navn: NavnDataClass?
 )
 
-enum class Endringstype {
+enum class EndringstypeDataClass {
     OPPRETTET,
     KORRIGERT,
     ANNULLERT,
@@ -44,18 +45,18 @@ fun Personhendelse.toDataClass(): PersonhendelseDataClass {
         master = master,
         opprettet = opprettet,
         opplysningstype = opplysningstype,
-        endringstype = endringstype.toEndringstype(),
+        endringstype = toEndringstype(endringstype),
         tidligereHendelseId = tidligereHendelseId,
         navn = navn?.let { mapNavnToNavnDataClass(navn) }
     )
 }
 
-private fun no.nav.person.pdl.leesah.Endringstype.toEndringstype(): Endringstype {
-    return when (this) {
-        no.nav.person.pdl.leesah.Endringstype.OPPRETTET -> Endringstype.OPPRETTET
-        no.nav.person.pdl.leesah.Endringstype.KORRIGERT -> Endringstype.KORRIGERT
-        no.nav.person.pdl.leesah.Endringstype.ANNULLERT -> Endringstype.ANNULLERT
-        no.nav.person.pdl.leesah.Endringstype.OPPHOERT -> Endringstype.OPPHOERT
+private fun toEndringstype(endringstype: Endringstype): EndringstypeDataClass {
+    return when (endringstype) {
+        Endringstype.OPPRETTET -> EndringstypeDataClass.OPPRETTET
+        Endringstype.KORRIGERT -> EndringstypeDataClass.KORRIGERT
+        Endringstype.ANNULLERT -> EndringstypeDataClass.ANNULLERT
+        Endringstype.OPPHOERT -> EndringstypeDataClass.OPPHOERT
     }
 }
 

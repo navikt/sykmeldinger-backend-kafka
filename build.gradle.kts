@@ -1,4 +1,5 @@
 import org.apache.avro.tool.SpecificCompilerTool
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 group = "no.nav.sykmeldinger"
 version = "1.0.0"
@@ -25,7 +26,7 @@ val avroVersion = "1.11.3"
 val unleashedVersion = "9.2.2"
 val opentelemetryVersion = "2.5.0"
 val snappyJavaVersion = "1.1.10.5"
-val javaVersion = JavaVersion.VERSION_21
+val javaVersion = JvmTarget.JVM_21
 
 plugins {
     id("application")
@@ -128,16 +129,13 @@ sourceSets {
     }
 }
 
-tasks {
+kotlin {
+    compilerOptions {
+        jvmTarget = javaVersion
+    }
+}
 
-    compileKotlin {
-        kotlinOptions.jvmTarget = javaVersion.toString()
-        dependsOn("customAvroCodeGeneration")
-    }
-    compileTestKotlin {
-        kotlinOptions.jvmTarget = javaVersion.toString()
-        dependsOn("customAvroCodeGeneration")
-    }
+tasks {
 
     register("customAvroCodeGeneration") {
         inputs.dir(avroSchemasDir)
@@ -163,6 +161,13 @@ tasks {
             )
         }
 
+    }
+
+    compileKotlin {
+        dependsOn("customAvroCodeGeneration")
+    }
+    compileTestKotlin {
+        dependsOn("customAvroCodeGeneration")
     }
 
     shadowJar {
