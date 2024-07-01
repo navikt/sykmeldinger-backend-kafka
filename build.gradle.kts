@@ -1,4 +1,5 @@
 import org.apache.avro.tool.SpecificCompilerTool
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 group = "no.nav.sykmeldinger"
 version = "1.0.0"
@@ -12,7 +13,7 @@ val logstashEncoderVersion = "7.4"
 val prometheusVersion = "0.16.0"
 val mockkVersion = "1.13.11"
 val testContainerVersion = "1.19.8"
-val kotlinVersion = "1.9.24"
+val kotlinVersion = "2.0.0"
 val kotestVersion = "5.9.1"
 val postgresVersion = "42.7.3"
 val hikariVersion = "5.1.0"
@@ -25,11 +26,11 @@ val avroVersion = "1.11.3"
 val unleashedVersion = "9.2.2"
 val opentelemetryVersion = "2.4.0"
 val snappyJavaVersion = "1.1.10.5"
-val javaVersion = JavaVersion.VERSION_21
+val javaVersion = JvmTarget.JVM_21
 
 plugins {
     id("application")
-    kotlin("jvm") version "1.9.24"
+    kotlin("jvm") version "2.0.0"
     id("com.diffplug.spotless") version "6.25.0"
     id("com.github.johnrengelman.shadow") version "8.1.1"
 }
@@ -128,16 +129,13 @@ sourceSets {
     }
 }
 
-tasks {
+kotlin {
+    compilerOptions {
+        jvmTarget = javaVersion
+    }
+}
 
-    compileKotlin {
-        kotlinOptions.jvmTarget = javaVersion.toString()
-        dependsOn("customAvroCodeGeneration")
-    }
-    compileTestKotlin {
-        kotlinOptions.jvmTarget = javaVersion.toString()
-        dependsOn("customAvroCodeGeneration")
-    }
+tasks {
 
     register("customAvroCodeGeneration") {
         inputs.dir(avroSchemasDir)
@@ -163,6 +161,13 @@ tasks {
             )
         }
 
+    }
+
+    compileKotlin {
+        dependsOn("customAvroCodeGeneration")
+    }
+    compileTestKotlin {
+        dependsOn("customAvroCodeGeneration")
     }
 
     shadowJar {

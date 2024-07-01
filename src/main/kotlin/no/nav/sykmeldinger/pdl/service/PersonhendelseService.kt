@@ -6,7 +6,7 @@ import no.nav.sykmeldinger.identendring.IdentendringService
 import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.narmesteleder.db.NarmestelederDb
 import no.nav.sykmeldinger.objectMapper
-import no.nav.sykmeldinger.pdl.Endringstype
+import no.nav.sykmeldinger.pdl.EndringstypeDataClass
 import no.nav.sykmeldinger.pdl.PersonhendelseDataClass
 import no.nav.sykmeldinger.pdl.error.PersonNameNotFoundInPdl
 import no.nav.sykmeldinger.pdl.error.PersonNotFoundInPdl
@@ -25,8 +25,8 @@ class PersonhendelseService(
         personhendelser
             .filter { it.opplysningstype == "FOLKEREGISTERIDENTIFIKATOR_V1" }
             .filter {
-                it.endringstype == Endringstype.KORRIGERT ||
-                    it.endringstype == Endringstype.OPPRETTET
+                it.endringstype == EndringstypeDataClass.KORRIGERT ||
+                    it.endringstype == EndringstypeDataClass.OPPRETTET
             }
             .map { it.personidenter }
             .toSet()
