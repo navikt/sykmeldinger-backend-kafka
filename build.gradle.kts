@@ -26,6 +26,7 @@ val avroVersion = "1.11.3"
 val unleashedVersion = "9.2.2"
 val opentelemetryVersion = "2.4.0"
 val snappyJavaVersion = "1.1.10.5"
+val commonsCompressVersion = "1.26.2"
 val javaVersion = JvmTarget.JVM_21
 
 plugins {
@@ -101,6 +102,11 @@ dependencies {
     testImplementation("io.mockk:mockk:$mockkVersion")
     testImplementation("org.testcontainers:kafka:$testContainerVersion")
     testImplementation("org.testcontainers:postgresql:$testContainerVersion")
+      constraints {
+          implementation("org.apache.commons:commons-compress:$commonsCompressVersion") {
+            because("Due to vulnerabilities, see CVE-2024-26308")
+        }
+      }
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation("io.kotest:kotest-runner-junit5:$kotestVersion")
     testImplementation("io.kotest:kotest-assertions-core:$kotestVersion")
