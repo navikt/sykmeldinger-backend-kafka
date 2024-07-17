@@ -9,7 +9,6 @@ import io.ktor.client.plugins.ClientRequestException
 import io.opentelemetry.instrumentation.annotations.SpanAttribute
 import io.opentelemetry.instrumentation.annotations.WithSpan
 import java.time.Duration
-import java.time.LocalDate
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -102,8 +101,7 @@ class SykmeldingConsumer(
                     pdlPersonService
                         .getPerson(receivedSykmelding.personNrPasient, sykmeldingId)
                         .toSykmeldt()
-                val (fom, tom) = getReceivedSykmeldingFomTom(receivedSykmelding)
-                val arbeidsforhold = arbeidsforholdService.getArbeidsforhold(sykmeldt.fnr, fom, tom)
+                val arbeidsforhold = arbeidsforholdService.getArbeidsforhold(sykmeldt.fnr)
                 arbeidsforhold.forEach { arbeidsforholdService.insertOrUpdate(it) }
                 sykmeldingService.saveOrUpdate(
                     sykmeldingId,
@@ -132,14 +130,6 @@ class SykmeldingConsumer(
             sykmeldingService.deleteSykmelding(sykmeldingId)
             log.info("Deleted sykmelding etc with sykmeldingId: $sykmeldingId")
         }
-    }
-
-    private fun getReceivedSykmeldingFomTom(
-        receivedSykmelding: ReceivedSykmelding
-    ): Pair<LocalDate, LocalDate> {
-        val fom = receivedSykmelding.sykmelding.perioder.minOf { it.fom }
-        val tom = receivedSykmelding.sykmelding.perioder.maxOf { it.tom }
-        return fom to tom
     }
 }
 
