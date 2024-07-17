@@ -15,7 +15,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import net.logstash.logback.argument.StructuredArguments.kv
 import no.nav.sykmeldinger.arbeidsforhold.ArbeidsforholdService
 import no.nav.sykmeldinger.arbeidsforhold.kafka.model.ArbeidsforholdHendelse
 import no.nav.sykmeldinger.arbeidsforhold.kafka.model.Endringstype
@@ -72,14 +71,12 @@ class ArbeidsforholdConsumer(
                         .filter { it.value().endringstype != Endringstype.Sletting }
                         .filter { hasValidEndringstype(it.value()) }
 
-                val oppdaterArbeidsforholdForFnrListe =
+                val newhendelserByFnr =
                     arbeidsforholdEndringer
                         .map { it.value().arbeidsforhold.arbeidstaker.getFnr() }
                         .distinct()
 
-                oppdaterArbeidsforholdForFnrListe.chunked(10).forEach {
-                    updateArbeidsforholdFor(it)
-                }
+                newhendelserByFnr.chunked(10).forEach { updateArbeidsforholdFor(it) }
 
                 val deleted =
                     hendelser
@@ -145,23 +142,12 @@ class ArbeidsforholdConsumer(
                 endring == Entitetsendring.Ansettelsesperiode
         }
 
-    @WithSpan
     private suspend fun deleteArbeidsforhold(deleted: List<Int>) =
         withContext(NonCancellable) { arbeidsforholdService.deleteArbeidsforholdIds(deleted) }
 
-    @WithSpan
-    private suspend fun updateArbeidsforholdFor(fnrListe: List<String>) {
+    private suspend fun updateArbeidsforholdFor(newhendelserByFnr: List<String>) {
         withContext(NonCancellable) {
-            val jobs =
-                fnrListe.map {
-                    async(Dispatchers.IO) {
-                        secureLog.info(
-                            "Prøver å oppdatere arbeidsforhold fra arbeidsforholdhendelse for {}",
-                            kv("fnr", it)
-                        )
-                        updateArbeidsforhold(it)
-                    }
-                }
+            val jobs = newhendelserByFnr.map { async(Dispatchers.IO) { updateArbeidsforhold(it) } }
             jobs.awaitAll()
         }
     }
@@ -191,13 +177,7 @@ class ArbeidsforholdConsumer(
     }
 
     private suspend fun updateArbeidsforhold(fnr: String) {
-        val (fom, tom) =
-            sykmeldingDb.getLastSykmeldingFomTom(fnr)
-                ?: return secureLog.info(
-                    "Ingen sykmeldinger i databasen for {}, ingen perioder å oppdatere arbeidsforhold basert på sykmeldingsperioder",
-                    kv("fnr", fnr)
-                )
-        val arbeidsforhold = arbeidsforholdService.getArbeidsforhold(fnr, fom, tom)
+        val arbeidsforhold = arbeidsforholdService.getArbeidsforhold(fnr)
         val arbeidsforholdFraDb = arbeidsforholdService.getArbeidsforholdFromDb(fnr)
 
         val slettesfraDb =

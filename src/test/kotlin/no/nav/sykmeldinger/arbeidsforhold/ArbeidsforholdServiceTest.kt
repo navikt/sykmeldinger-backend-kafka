@@ -17,15 +17,9 @@ import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Opplysning
 import no.nav.sykmeldinger.arbeidsforhold.client.organisasjon.client.OrganisasjonsinfoClient
 import no.nav.sykmeldinger.arbeidsforhold.db.ArbeidsforholdDb
 import no.nav.sykmeldinger.arbeidsforhold.model.Arbeidsforhold
-import no.nav.sykmeldinger.utils.TestHelper.Companion.desember
-import no.nav.sykmeldinger.utils.TestHelper.Companion.februar
-import no.nav.sykmeldinger.utils.TestHelper.Companion.januar
-import no.nav.sykmeldinger.utils.TestHelper.Companion.juli
-import no.nav.sykmeldinger.utils.TestHelper.Companion.juni
-import no.nav.sykmeldinger.utils.TestHelper.Companion.mars
 import org.amshove.kluent.shouldBeEqualTo
 
-class ArbeidsforholdServiceTest :
+object ArbeidsforholdServiceTest :
     FunSpec({
         val testDb = TestDB.database
         val arbeidsforholdClient = mockk<ArbeidsforholdClient>()
@@ -44,9 +38,7 @@ class ArbeidsforholdServiceTest :
                 getOrganisasjonsinfo()
         }
         context("ArbeidsforholderService - getArbeidsforhold") {
-            test(
-                "getArbeidsforhold returnerer liste med gyldige arbeidsforhold etter sykmelding startdato"
-            ) {
+            test("getArbeidsforhold returnerer liste med arbeidsforhold") {
                 coEvery { arbeidsforholdClient.getArbeidsforhold(any()) } returns
                     listOf(
                         AaregArbeidsforhold(
@@ -58,7 +50,10 @@ class ArbeidsforholdServiceTest :
                             Opplysningspliktig(
                                 listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))
                             ),
-                            Ansettelsesperiode(startdato = 1.januar(2020), sluttdato = null),
+                            Ansettelsesperiode(
+                                startdato = LocalDate.now().minusYears(3),
+                                sluttdato = null
+                            ),
                         ),
                         AaregArbeidsforhold(
                             2,
@@ -70,8 +65,8 @@ class ArbeidsforholdServiceTest :
                                 listOf(Ident(IdentType.ORGANISASJONSNUMMER, "999999999", true))
                             ),
                             Ansettelsesperiode(
-                                startdato = 1.juni(2022),
-                                sluttdato = 7.desember(2022),
+                                startdato = LocalDate.now().minusMonths(6),
+                                sluttdato = LocalDate.now().minusWeeks(3),
                             ),
                         ),
                         AaregArbeidsforhold(
@@ -84,8 +79,8 @@ class ArbeidsforholdServiceTest :
                                 listOf(Ident(IdentType.ORGANISASJONSNUMMER, "999999999", true))
                             ),
                             Ansettelsesperiode(
-                                startdato = 14.desember(2022),
-                                sluttdato = 1.mars(2023),
+                                startdato = LocalDate.now().minusWeeks(2),
+                                sluttdato = LocalDate.now().plusMonths(3),
                             ),
                         ),
                     )
@@ -96,22 +91,15 @@ class ArbeidsforholdServiceTest :
                     ) andThen
                     getOrganisasjonsinfo(navn = "Navn 2")
 
-                val sykmeldingStartDato = 14.desember(2022)
-                val sykmeldingSluttDato = 1.mars(2023)
-                val arbeidsforhold =
-                    arbeidsforholdService.getArbeidsforhold(
-                        "12345678901",
-                        sykmeldingStartDato,
-                        sykmeldingSluttDato
-                    )
+                val arbeidsforhold = arbeidsforholdService.getArbeidsforhold("12345678901")
 
-                arbeidsforhold.size shouldBeEqualTo 2
+                arbeidsforhold.size shouldBeEqualTo 3
                 arbeidsforhold[0].id shouldBeEqualTo 1
                 arbeidsforhold[0].fnr shouldBeEqualTo "12345678901"
                 arbeidsforhold[0].orgnummer shouldBeEqualTo "123456789"
                 arbeidsforhold[0].juridiskOrgnummer shouldBeEqualTo "987654321"
                 arbeidsforhold[0].orgNavn shouldBeEqualTo "Navn 1"
-                arbeidsforhold[0].fom shouldBeEqualTo 1.januar(2020)
+                arbeidsforhold[0].fom shouldBeEqualTo LocalDate.now().minusYears(3)
                 arbeidsforhold[0].tom shouldBeEqualTo null
 
                 arbeidsforhold[1].id shouldBeEqualTo 3
@@ -119,18 +107,21 @@ class ArbeidsforholdServiceTest :
                 arbeidsforhold[1].orgnummer shouldBeEqualTo "88888888"
                 arbeidsforhold[1].juridiskOrgnummer shouldBeEqualTo "999999999"
                 arbeidsforhold[1].orgNavn shouldBeEqualTo "Navn 2"
-                arbeidsforhold[1].fom shouldBeEqualTo 14.desember(2022)
-                arbeidsforhold[1].tom shouldBeEqualTo 1.mars(2023)
+                arbeidsforhold[1].fom shouldBeEqualTo LocalDate.now().minusWeeks(2)
+                arbeidsforhold[1].tom shouldBeEqualTo LocalDate.now().plusMonths(3)
+
+                arbeidsforhold[2].id shouldBeEqualTo 2
+                arbeidsforhold[2].fnr shouldBeEqualTo "12345678901"
+                arbeidsforhold[2].orgnummer shouldBeEqualTo "88888888"
+                arbeidsforhold[2].juridiskOrgnummer shouldBeEqualTo "999999999"
+                arbeidsforhold[2].orgNavn shouldBeEqualTo "Navn 2"
+                arbeidsforhold[2].fom shouldBeEqualTo LocalDate.now().minusMonths(6)
+                arbeidsforhold[2].tom shouldBeEqualTo LocalDate.now().minusWeeks(3)
             }
             test("getArbeidsforhold returnerer tom liste hvis bruker ikke har arbeidsforhold") {
                 coEvery { arbeidsforholdClient.getArbeidsforhold(any()) } returns emptyList()
 
-                val arbeidsforhold =
-                    arbeidsforholdService.getArbeidsforhold(
-                        "12345678901",
-                        1.januar(2023),
-                        31.januar(2023)
-                    )
+                val arbeidsforhold = arbeidsforholdService.getArbeidsforhold("12345678901")
 
                 arbeidsforhold.size shouldBeEqualTo 0
             }
@@ -146,7 +137,10 @@ class ArbeidsforholdServiceTest :
                             Opplysningspliktig(
                                 listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))
                             ),
-                            Ansettelsesperiode(startdato = 1.januar(2020), sluttdato = null),
+                            Ansettelsesperiode(
+                                startdato = LocalDate.now().minusYears(3),
+                                sluttdato = null
+                            ),
                         ),
                         AaregArbeidsforhold(
                             2,
@@ -158,18 +152,13 @@ class ArbeidsforholdServiceTest :
                                 listOf(Ident(IdentType.ORGANISASJONSNUMMER, "999999999", true))
                             ),
                             Ansettelsesperiode(
-                                startdato = 1.juni(2022),
-                                sluttdato = 7.desember(2022),
+                                startdato = LocalDate.now().minusMonths(6),
+                                sluttdato = LocalDate.now().minusWeeks(3),
                             ),
                         ),
                     )
 
-                val arbeidsforhold =
-                    arbeidsforholdService.getArbeidsforhold(
-                        "12345678901",
-                        1.juni(2022),
-                        20.juni(2022)
-                    )
+                val arbeidsforhold = arbeidsforholdService.getArbeidsforhold("12345678901")
 
                 arbeidsforhold.size shouldBeEqualTo 1
                 arbeidsforhold[0].id shouldBeEqualTo 2
@@ -177,10 +166,12 @@ class ArbeidsforholdServiceTest :
                 arbeidsforhold[0].orgnummer shouldBeEqualTo "88888888"
                 arbeidsforhold[0].juridiskOrgnummer shouldBeEqualTo "999999999"
                 arbeidsforhold[0].orgNavn shouldBeEqualTo "Navn 1"
-                arbeidsforhold[0].fom shouldBeEqualTo 1.juni(2022)
-                arbeidsforhold[0].tom shouldBeEqualTo 7.desember(2022)
+                arbeidsforhold[0].fom shouldBeEqualTo LocalDate.now().minusMonths(6)
+                arbeidsforhold[0].tom shouldBeEqualTo LocalDate.now().minusWeeks(3)
             }
-            test("getArbeidsforhold filtrerer bort ugyldig arbeidsforhold") {
+            test(
+                "getArbeidsforhold filtrerer bort arbeidsforhold med sluttdato for mer enn 4 måneder siden"
+            ) {
                 coEvery { arbeidsforholdClient.getArbeidsforhold(any()) } returns
                     listOf(
                         AaregArbeidsforhold(
@@ -193,8 +184,8 @@ class ArbeidsforholdServiceTest :
                                 listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))
                             ),
                             Ansettelsesperiode(
-                                startdato = 1.juni(2022),
-                                sluttdato = 7.desember(2022),
+                                startdato = LocalDate.now().minusMonths(6),
+                                sluttdato = LocalDate.now().minusWeeks(3),
                             ),
                         ),
                         AaregArbeidsforhold(
@@ -207,26 +198,21 @@ class ArbeidsforholdServiceTest :
                                 listOf(Ident(IdentType.ORGANISASJONSNUMMER, "999999999", true))
                             ),
                             Ansettelsesperiode(
-                                startdato = 1.januar(2018),
-                                sluttdato = 1.juni(2023),
+                                startdato = LocalDate.now().minusYears(6),
+                                sluttdato = LocalDate.now().minusMonths(5),
                             ),
                         ),
                     )
 
-                val arbeidsforhold =
-                    arbeidsforholdService.getArbeidsforhold(
-                        "12345678901",
-                        1.januar(2023),
-                        31.januar(2023)
-                    )
+                val arbeidsforhold = arbeidsforholdService.getArbeidsforhold("12345678901")
                 arbeidsforhold.size shouldBeEqualTo 1
-                arbeidsforhold[0].id shouldBeEqualTo 2
+                arbeidsforhold[0].id shouldBeEqualTo 1
                 arbeidsforhold[0].fnr shouldBeEqualTo "12345678901"
-                arbeidsforhold[0].orgnummer shouldBeEqualTo "88888888"
-                arbeidsforhold[0].juridiskOrgnummer shouldBeEqualTo "999999999"
+                arbeidsforhold[0].orgnummer shouldBeEqualTo "123456789"
+                arbeidsforhold[0].juridiskOrgnummer shouldBeEqualTo "987654321"
                 arbeidsforhold[0].orgNavn shouldBeEqualTo "Navn 1"
-                arbeidsforhold[0].fom shouldBeEqualTo 1.januar(2018)
-                arbeidsforhold[0].tom shouldBeEqualTo 1.juni(2023)
+                arbeidsforhold[0].fom shouldBeEqualTo LocalDate.now().minusMonths(6)
+                arbeidsforhold[0].tom shouldBeEqualTo LocalDate.now().minusWeeks(3)
             }
         }
         context("ArbeidsforholderService - insertOrUpdate") {
@@ -299,368 +285,6 @@ class ArbeidsforholdServiceTest :
 
                 val arbeidsforholdFraDb = arbeidsforholdDb.getArbeidsforhold("12345678910")
                 arbeidsforholdFraDb.size shouldBeEqualTo 0
-            }
-        }
-        // i denne konteksten er startdato og sluttdato datoer for arbeidsforhold og fom og tom
-        // datoer for sykmeldingen
-        context("Knytte arbeidsforhold til sykmeldingsperiode") {
-            test("sluttdato er null, startdato er før tom") {
-                coEvery { arbeidsforholdClient.getArbeidsforhold(any()) } returns
-                    listOf(
-                        AaregArbeidsforhold(
-                            1,
-                            Arbeidssted(
-                                ArbeidsstedType.Underenhet,
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))
-                            ),
-                            Opplysningspliktig(
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))
-                            ),
-                            Ansettelsesperiode(
-                                startdato = 1.juni(2022),
-                                sluttdato = null,
-                            ),
-                        ),
-                        AaregArbeidsforhold(
-                            2,
-                            Arbeidssted(
-                                ArbeidsstedType.Underenhet,
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "88888888", true))
-                            ),
-                            Opplysningspliktig(
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "999999999", true))
-                            ),
-                            Ansettelsesperiode(startdato = 1.januar(2024), sluttdato = null),
-                        ),
-                    )
-                val fom = 1.januar(2023)
-                val tom = 31.januar(2023)
-
-                val arbeidsforhold =
-                    arbeidsforholdService.getArbeidsforhold("12345678901", fom, tom)
-                arbeidsforhold.size shouldBeEqualTo 1
-                arbeidsforhold[0].id shouldBeEqualTo 1
-                arbeidsforhold[0].fnr shouldBeEqualTo "12345678901"
-                arbeidsforhold[0].orgnummer shouldBeEqualTo "123456789"
-                arbeidsforhold[0].juridiskOrgnummer shouldBeEqualTo "987654321"
-                arbeidsforhold[0].orgNavn shouldBeEqualTo "Navn 1"
-                arbeidsforhold[0].fom shouldBeEqualTo 1.juni(2022)
-                arbeidsforhold[0].tom shouldBeEqualTo null
-            }
-            test("sluttdato er null, startdato er lik tom") {
-                coEvery { arbeidsforholdClient.getArbeidsforhold(any()) } returns
-                    listOf(
-                        AaregArbeidsforhold(
-                            1,
-                            Arbeidssted(
-                                ArbeidsstedType.Underenhet,
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))
-                            ),
-                            Opplysningspliktig(
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))
-                            ),
-                            Ansettelsesperiode(
-                                startdato = 1.januar(2023),
-                                sluttdato = null,
-                            ),
-                        ),
-                        AaregArbeidsforhold(
-                            2,
-                            Arbeidssted(
-                                ArbeidsstedType.Underenhet,
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "88888888", true))
-                            ),
-                            Opplysningspliktig(
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "999999999", true))
-                            ),
-                            Ansettelsesperiode(startdato = 1.januar(2024), sluttdato = null),
-                        ),
-                    )
-                val fom = 1.januar(2023)
-                val tom = 31.januar(2023)
-
-                val arbeidsforhold =
-                    arbeidsforholdService.getArbeidsforhold("12345678901", fom, tom)
-                arbeidsforhold.size shouldBeEqualTo 1
-                arbeidsforhold[0].id shouldBeEqualTo 1
-                arbeidsforhold[0].fnr shouldBeEqualTo "12345678901"
-                arbeidsforhold[0].orgnummer shouldBeEqualTo "123456789"
-                arbeidsforhold[0].juridiskOrgnummer shouldBeEqualTo "987654321"
-                arbeidsforhold[0].orgNavn shouldBeEqualTo "Navn 1"
-                arbeidsforhold[0].fom shouldBeEqualTo 1.januar(2023)
-                arbeidsforhold[0].tom shouldBeEqualTo null
-            }
-            test(
-                "sluttdato er null, startdato er etter tom: ingen aktive arbeidsforhold på sykmeldingstidspunktet"
-            ) {
-                coEvery { arbeidsforholdClient.getArbeidsforhold(any()) } returns
-                    listOf(
-                        AaregArbeidsforhold(
-                            1,
-                            Arbeidssted(
-                                ArbeidsstedType.Underenhet,
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))
-                            ),
-                            Opplysningspliktig(
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))
-                            ),
-                            Ansettelsesperiode(
-                                startdato = 1.februar(2023),
-                                sluttdato = null,
-                            ),
-                        ),
-                        AaregArbeidsforhold(
-                            2,
-                            Arbeidssted(
-                                ArbeidsstedType.Underenhet,
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "88888888", true))
-                            ),
-                            Opplysningspliktig(
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "999999999", true))
-                            ),
-                            Ansettelsesperiode(startdato = 1.januar(2024), sluttdato = null),
-                        ),
-                    )
-                val fom = 1.januar(2023)
-                val tom = 31.januar(2023)
-
-                val arbeidsforhold =
-                    arbeidsforholdService.getArbeidsforhold("12345678901", fom, tom)
-                arbeidsforhold.size shouldBeEqualTo 0
-            }
-            test("sluttdato er etter fom, startdato er før tom") {
-                coEvery { arbeidsforholdClient.getArbeidsforhold(any()) } returns
-                    listOf(
-                        AaregArbeidsforhold(
-                            1,
-                            Arbeidssted(
-                                ArbeidsstedType.Underenhet,
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))
-                            ),
-                            Opplysningspliktig(
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))
-                            ),
-                            Ansettelsesperiode(
-                                startdato = 1.januar(2022),
-                                sluttdato = 1.januar(2024),
-                            ),
-                        ),
-                        AaregArbeidsforhold(
-                            2,
-                            Arbeidssted(
-                                ArbeidsstedType.Underenhet,
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "88888888", true))
-                            ),
-                            Opplysningspliktig(
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "999999999", true))
-                            ),
-                            Ansettelsesperiode(
-                                startdato = 1.februar(2023),
-                                sluttdato = 1.juni(2023)
-                            ),
-                        ),
-                    )
-                val fom = 1.januar(2023)
-                val tom = 31.januar(2023)
-
-                val arbeidsforhold =
-                    arbeidsforholdService.getArbeidsforhold("12345678901", fom, tom)
-                arbeidsforhold.size shouldBeEqualTo 1
-                arbeidsforhold[0].id shouldBeEqualTo 1
-            }
-            test("sluttdato er etter fom, startdato er lik tom") {
-                coEvery { arbeidsforholdClient.getArbeidsforhold(any()) } returns
-                    listOf(
-                        AaregArbeidsforhold(
-                            1,
-                            Arbeidssted(
-                                ArbeidsstedType.Underenhet,
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))
-                            ),
-                            Opplysningspliktig(
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))
-                            ),
-                            Ansettelsesperiode(
-                                startdato = 1.januar(2023),
-                                sluttdato = 1.januar(2024),
-                            ),
-                        ),
-                        AaregArbeidsforhold(
-                            2,
-                            Arbeidssted(
-                                ArbeidsstedType.Underenhet,
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "88888888", true))
-                            ),
-                            Opplysningspliktig(
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "999999999", true))
-                            ),
-                            Ansettelsesperiode(
-                                startdato = 1.februar(2023),
-                                sluttdato = 1.juni(2023)
-                            ),
-                        ),
-                    )
-                val fom = 1.januar(2023)
-                val tom = 31.januar(2023)
-
-                val arbeidsforhold =
-                    arbeidsforholdService.getArbeidsforhold("12345678901", fom, tom)
-                arbeidsforhold.size shouldBeEqualTo 1
-                arbeidsforhold[0].id shouldBeEqualTo 1
-            }
-            test("sluttdato er etter fom, startdato er etter tom") {
-                coEvery { arbeidsforholdClient.getArbeidsforhold(any()) } returns
-                    listOf(
-                        AaregArbeidsforhold(
-                            1,
-                            Arbeidssted(
-                                ArbeidsstedType.Underenhet,
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))
-                            ),
-                            Opplysningspliktig(
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))
-                            ),
-                            Ansettelsesperiode(
-                                startdato = 1.februar(2023),
-                                sluttdato = 1.januar(2024),
-                            ),
-                        ),
-                        AaregArbeidsforhold(
-                            2,
-                            Arbeidssted(
-                                ArbeidsstedType.Underenhet,
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "88888888", true))
-                            ),
-                            Opplysningspliktig(
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "999999999", true))
-                            ),
-                            Ansettelsesperiode(
-                                startdato = 1.februar(2023),
-                                sluttdato = 1.juni(2023)
-                            ),
-                        ),
-                    )
-                val fom = 1.januar(2023)
-                val tom = 31.januar(2023)
-
-                val arbeidsforhold =
-                    arbeidsforholdService.getArbeidsforhold("12345678901", fom, tom)
-                arbeidsforhold.size shouldBeEqualTo 0
-            }
-            test("sluttdato er lik fom, startdato er før tom") {
-                coEvery { arbeidsforholdClient.getArbeidsforhold(any()) } returns
-                    listOf(
-                        AaregArbeidsforhold(
-                            1,
-                            Arbeidssted(
-                                ArbeidsstedType.Underenhet,
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))
-                            ),
-                            Opplysningspliktig(
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))
-                            ),
-                            Ansettelsesperiode(
-                                startdato = 1.februar(2023),
-                                sluttdato = 1.januar(2024),
-                            ),
-                        ),
-                        AaregArbeidsforhold(
-                            2,
-                            Arbeidssted(
-                                ArbeidsstedType.Underenhet,
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "88888888", true))
-                            ),
-                            Opplysningspliktig(
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "999999999", true))
-                            ),
-                            Ansettelsesperiode(
-                                startdato = 1.februar(2023),
-                                sluttdato = 1.juni(2023)
-                            ),
-                        ),
-                    )
-                val fom = 1.januar(2024)
-                val tom = 31.januar(2024)
-
-                val arbeidsforhold =
-                    arbeidsforholdService.getArbeidsforhold("12345678901", fom, tom)
-                arbeidsforhold.size shouldBeEqualTo 1
-                arbeidsforhold[0].id shouldBeEqualTo 1
-            }
-            test("sluttdato er før fom") {
-                coEvery { arbeidsforholdClient.getArbeidsforhold(any()) } returns
-                    listOf(
-                        AaregArbeidsforhold(
-                            1,
-                            Arbeidssted(
-                                ArbeidsstedType.Underenhet,
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))
-                            ),
-                            Opplysningspliktig(
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))
-                            ),
-                            Ansettelsesperiode(
-                                startdato = 1.februar(2023),
-                                sluttdato = 1.juni(2023),
-                            ),
-                        ),
-                        AaregArbeidsforhold(
-                            2,
-                            Arbeidssted(
-                                ArbeidsstedType.Underenhet,
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "88888888", true))
-                            ),
-                            Opplysningspliktig(
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "999999999", true))
-                            ),
-                            Ansettelsesperiode(
-                                startdato = 1.februar(2023),
-                                sluttdato = 1.juli(2023)
-                            ),
-                        ),
-                    )
-                val fom = 2.juli(2023)
-                val tom = 17.juli(2023)
-
-                val arbeidsforhold =
-                    arbeidsforholdService.getArbeidsforhold("12345678901", fom, tom)
-                arbeidsforhold.size shouldBeEqualTo 0
-            }
-            test("sluttdato er før fom, startdato er etter tom") {
-                coEvery { arbeidsforholdClient.getArbeidsforhold(any()) } returns
-                    listOf(
-                        AaregArbeidsforhold(
-                            1,
-                            Arbeidssted(
-                                ArbeidsstedType.Underenhet,
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true))
-                            ),
-                            Opplysningspliktig(
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true))
-                            ),
-                            Ansettelsesperiode(
-                                startdato = 1.februar(2023),
-                                sluttdato = 1.juni(2023),
-                            ),
-                        ),
-                        AaregArbeidsforhold(
-                            2,
-                            Arbeidssted(
-                                ArbeidsstedType.Underenhet,
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "88888888", true))
-                            ),
-                            Opplysningspliktig(
-                                listOf(Ident(IdentType.ORGANISASJONSNUMMER, "999999999", true))
-                            ),
-                            Ansettelsesperiode(startdato = 17.juli(2023), sluttdato = null),
-                        ),
-                    )
-                val fom = 2.juli(2023)
-                val tom = 16.juli(2023)
-
-                val arbeidsforhold =
-                    arbeidsforholdService.getArbeidsforhold("12345678901", fom, tom)
-                arbeidsforhold.size shouldBeEqualTo 0
             }
         }
     })

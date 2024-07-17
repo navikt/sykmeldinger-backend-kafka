@@ -5,8 +5,7 @@ import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
-import no.nav.syfo.model.Status
-import no.nav.syfo.model.ValidationResult
+import java.time.LocalDate
 import no.nav.sykmeldinger.TestDB
 import no.nav.sykmeldinger.arbeidsforhold.ArbeidsforholdService
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.client.ArbeidsforholdClient
@@ -27,15 +26,11 @@ import no.nav.sykmeldinger.arbeidsforhold.kafka.model.Endringstype
 import no.nav.sykmeldinger.arbeidsforhold.kafka.model.Entitetsendring
 import no.nav.sykmeldinger.arbeidsforhold.model.Arbeidsforhold
 import no.nav.sykmeldinger.sykmelding.db.SykmeldingDb
-import no.nav.sykmeldinger.utils.TestHelper.Companion.januar
-import no.nav.sykmeldinger.utils.TestHelper.Companion.juni
-import no.nav.sykmeldinger.utils.sykmelding
-import no.nav.sykmeldinger.utils.sykmeldingFom
-import no.nav.sykmeldinger.utils.sykmeldt
+import no.nav.sykmeldinger.sykmelding.model.Sykmeldt
 import org.amshove.kluent.shouldBeEqualTo
 import org.apache.kafka.clients.consumer.KafkaConsumer
 
-class ArbeidsforholdConsumerTest :
+object ArbeidsforholdConsumerTest :
     FunSpec(
         {
             val testDb = TestDB.database
@@ -60,13 +55,6 @@ class ArbeidsforholdConsumerTest :
 
             beforeEach {
                 TestDB.clearAllData()
-                sykmeldingDb.saveOrUpdate(
-                    "1",
-                    sykmelding,
-                    sykmeldt,
-                    ValidationResult(Status.OK, emptyList())
-                )
-                sykmeldingDb.saveOrUpdateSykmeldt(sykmeldt)
                 clearMocks(organisasjonsinfoClient, arbeidsforholdClient)
                 coEvery { organisasjonsinfoClient.getOrganisasjonsnavn(any()) } returns
                     getOrganisasjonsinfo()
@@ -86,11 +74,20 @@ class ArbeidsforholdConsumerTest :
                                     listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true)),
                                 ),
                                 Ansettelsesperiode(
-                                    startdato = 1.januar(2020),
+                                    startdato = LocalDate.now().minusYears(3),
                                     sluttdato = null,
                                 ),
                             ),
                         )
+                    sykmeldingDb.saveOrUpdateSykmeldt(
+                        Sykmeldt(
+                            "12345678901",
+                            "Per",
+                            null,
+                            "Person",
+                            null,
+                        ),
+                    )
                     val arbeidsforholdHendelse =
                         ArbeidsforholdHendelse(
                             id = 34L,
@@ -100,7 +97,7 @@ class ArbeidsforholdConsumerTest :
                                     1,
                                     Arbeidstaker(
                                         listOf(
-                                            Ident(IdentType.FOLKEREGISTERIDENT, sykmeldt.fnr, true)
+                                            Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true)
                                         ),
                                     ),
                                 ),
@@ -109,14 +106,15 @@ class ArbeidsforholdConsumerTest :
 
                     arbeidsforholdConsumer.handleArbeidsforholdHendelse(arbeidsforholdHendelse)
 
-                    val arbeidsforhold = arbeidsforholdService.getArbeidsforholdFromDb(sykmeldt.fnr)
+                    val arbeidsforhold =
+                        arbeidsforholdService.getArbeidsforholdFromDb("12345678901")
                     arbeidsforhold.size shouldBeEqualTo 1
                     arbeidsforhold[0].id shouldBeEqualTo 1
-                    arbeidsforhold[0].fnr shouldBeEqualTo sykmeldt.fnr
+                    arbeidsforhold[0].fnr shouldBeEqualTo "12345678901"
                     arbeidsforhold[0].orgnummer shouldBeEqualTo "123456789"
                     arbeidsforhold[0].juridiskOrgnummer shouldBeEqualTo "987654321"
                     arbeidsforhold[0].orgNavn shouldBeEqualTo "Navn 1"
-                    arbeidsforhold[0].fom shouldBeEqualTo 1.januar(2020)
+                    arbeidsforhold[0].fom shouldBeEqualTo LocalDate.now().minusYears(3)
                     arbeidsforhold[0].tom shouldBeEqualTo null
 
                     coVerify { arbeidsforholdClient.getArbeidsforhold(any()) }
@@ -134,11 +132,20 @@ class ArbeidsforholdConsumerTest :
                                     listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true)),
                                 ),
                                 Ansettelsesperiode(
-                                    startdato = 1.januar(2020),
-                                    sluttdato = sykmeldingFom.minusDays(1),
+                                    startdato = LocalDate.now().minusYears(3),
+                                    sluttdato = LocalDate.now().minusYears(1),
                                 ),
                             ),
                         )
+                    sykmeldingDb.saveOrUpdateSykmeldt(
+                        Sykmeldt(
+                            "12345678901",
+                            "Per",
+                            null,
+                            "Person",
+                            null,
+                        ),
+                    )
                     val arbeidsforholdHendelse =
                         ArbeidsforholdHendelse(
                             id = 34L,
@@ -148,7 +155,7 @@ class ArbeidsforholdConsumerTest :
                                     1,
                                     Arbeidstaker(
                                         listOf(
-                                            Ident(IdentType.FOLKEREGISTERIDENT, sykmeldt.fnr, true)
+                                            Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true)
                                         ),
                                     ),
                                 ),
@@ -157,8 +164,10 @@ class ArbeidsforholdConsumerTest :
 
                     arbeidsforholdConsumer.handleArbeidsforholdHendelse(arbeidsforholdHendelse)
 
-                    arbeidsforholdService.getArbeidsforholdFromDb(sykmeldt.fnr).size shouldBeEqualTo
-                        0
+                    arbeidsforholdService
+                        .getArbeidsforholdFromDb("12345678901")
+                        .size shouldBeEqualTo 0
+                    coVerify { arbeidsforholdClient.getArbeidsforhold(any()) }
                 }
                 test("Oppdaterer eksisterende arbeidsforhold") {
                     coEvery { arbeidsforholdClient.getArbeidsforhold(any()) } returns
@@ -173,21 +182,29 @@ class ArbeidsforholdConsumerTest :
                                     listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true)),
                                 ),
                                 Ansettelsesperiode(
-                                    startdato = 1.januar(2020),
+                                    startdato = LocalDate.now().minusYears(3),
                                     sluttdato = null,
                                 ),
                             ),
                         )
-
+                    sykmeldingDb.saveOrUpdateSykmeldt(
+                        Sykmeldt(
+                            "12345678901",
+                            "Per",
+                            null,
+                            "Person",
+                            null,
+                        ),
+                    )
                     arbeidsforholdService.insertOrUpdate(
                         Arbeidsforhold(
                             id = 1,
-                            fnr = sykmeldt.fnr,
+                            fnr = "12345678901",
                             orgnummer = "123456789",
                             juridiskOrgnummer = "987654321",
                             orgNavn = "Gammel Navn AS",
-                            fom = 1.januar(2020),
-                            tom = sykmeldingFom.minusDays(1),
+                            fom = LocalDate.now().minusYears(3),
+                            tom = LocalDate.now().minusDays(3),
                         ),
                     )
                     val arbeidsforholdHendelse =
@@ -199,7 +216,7 @@ class ArbeidsforholdConsumerTest :
                                     1,
                                     Arbeidstaker(
                                         listOf(
-                                            Ident(IdentType.FOLKEREGISTERIDENT, sykmeldt.fnr, true)
+                                            Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true)
                                         ),
                                     ),
                                 ),
@@ -208,28 +225,38 @@ class ArbeidsforholdConsumerTest :
 
                     arbeidsforholdConsumer.handleArbeidsforholdHendelse(arbeidsforholdHendelse)
 
-                    val arbeidsforhold = arbeidsforholdService.getArbeidsforholdFromDb(sykmeldt.fnr)
+                    val arbeidsforhold =
+                        arbeidsforholdService.getArbeidsforholdFromDb("12345678901")
                     arbeidsforhold.size shouldBeEqualTo 1
                     arbeidsforhold[0].id shouldBeEqualTo 1
-                    arbeidsforhold[0].fnr shouldBeEqualTo sykmeldt.fnr
+                    arbeidsforhold[0].fnr shouldBeEqualTo "12345678901"
                     arbeidsforhold[0].orgnummer shouldBeEqualTo "123456789"
                     arbeidsforhold[0].juridiskOrgnummer shouldBeEqualTo "987654321"
                     arbeidsforhold[0].orgNavn shouldBeEqualTo "Navn 1"
-                    arbeidsforhold[0].fom shouldBeEqualTo 1.januar(2020)
+                    arbeidsforhold[0].fom shouldBeEqualTo LocalDate.now().minusYears(3)
                     arbeidsforhold[0].tom shouldBeEqualTo null
 
                     coVerify { arbeidsforholdClient.getArbeidsforhold(any()) }
                 }
                 test("Sletter arbeidsforhold") {
+                    sykmeldingDb.saveOrUpdateSykmeldt(
+                        Sykmeldt(
+                            "12345678901",
+                            "Per",
+                            null,
+                            "Person",
+                            null,
+                        ),
+                    )
                     arbeidsforholdService.insertOrUpdate(
                         Arbeidsforhold(
                             id = 1,
-                            fnr = sykmeldt.fnr,
+                            fnr = "12345678901",
                             orgnummer = "123456789",
                             juridiskOrgnummer = "987654321",
                             orgNavn = "Gammel Navn AS",
-                            fom = 1.januar(2020),
-                            tom = sykmeldingFom.minusDays(1),
+                            fom = LocalDate.now().minusYears(3),
+                            tom = LocalDate.now().minusDays(3),
                         ),
                     )
                     val arbeidsforholdHendelse =
@@ -241,7 +268,7 @@ class ArbeidsforholdConsumerTest :
                                     1,
                                     Arbeidstaker(
                                         listOf(
-                                            Ident(IdentType.FOLKEREGISTERIDENT, sykmeldt.fnr, true)
+                                            Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true)
                                         ),
                                     ),
                                 ),
@@ -250,8 +277,9 @@ class ArbeidsforholdConsumerTest :
 
                     arbeidsforholdConsumer.handleArbeidsforholdHendelse(arbeidsforholdHendelse)
 
-                    arbeidsforholdService.getArbeidsforholdFromDb(sykmeldt.fnr).size shouldBeEqualTo
-                        0
+                    arbeidsforholdService
+                        .getArbeidsforholdFromDb("12345678901")
+                        .size shouldBeEqualTo 0
                     coVerify(exactly = 0) { arbeidsforholdClient.getArbeidsforhold(any()) }
                 }
                 test(
@@ -269,7 +297,7 @@ class ArbeidsforholdConsumerTest :
                                     listOf(Ident(IdentType.ORGANISASJONSNUMMER, "987654321", true)),
                                 ),
                                 Ansettelsesperiode(
-                                    startdato = 1.januar(2022),
+                                    startdato = LocalDate.now().minusYears(3),
                                     sluttdato = null,
                                 ),
                             ),
@@ -283,23 +311,31 @@ class ArbeidsforholdConsumerTest :
                                     listOf(Ident(IdentType.ORGANISASJONSNUMMER, "989898988", true)),
                                 ),
                                 Ansettelsesperiode(
-                                    startdato = 1.januar(2020),
-                                    sluttdato = 1.juni(2022),
+                                    startdato = LocalDate.now().minusYears(3),
+                                    sluttdato = LocalDate.now().minusMonths(5),
                                 ),
                             ),
                         )
                     arbeidsforholdService.insertOrUpdate(
                         Arbeidsforhold(
                             id = 2,
-                            fnr = sykmeldt.fnr,
+                            fnr = "12345678901",
                             orgnummer = "989898988",
                             juridiskOrgnummer = "989898988",
                             orgNavn = "Gammelt Navn AS",
-                            fom = 1.januar(2020),
-                            tom = sykmeldingFom.minusDays(1),
+                            fom = LocalDate.now().minusYears(3),
+                            tom = LocalDate.now().minusDays(3),
                         ),
                     )
-
+                    sykmeldingDb.saveOrUpdateSykmeldt(
+                        Sykmeldt(
+                            "12345678901",
+                            "Per",
+                            null,
+                            "Person",
+                            null,
+                        ),
+                    )
                     val arbeidsforholdHendelse =
                         ArbeidsforholdHendelse(
                             id = 34L,
@@ -309,7 +345,7 @@ class ArbeidsforholdConsumerTest :
                                     1,
                                     Arbeidstaker(
                                         listOf(
-                                            Ident(IdentType.FOLKEREGISTERIDENT, sykmeldt.fnr, true)
+                                            Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true)
                                         ),
                                     ),
                                 ),
@@ -318,7 +354,8 @@ class ArbeidsforholdConsumerTest :
 
                     arbeidsforholdConsumer.handleArbeidsforholdHendelse(arbeidsforholdHendelse)
 
-                    val arbeidsforhold = arbeidsforholdService.getArbeidsforholdFromDb(sykmeldt.fnr)
+                    val arbeidsforhold =
+                        arbeidsforholdService.getArbeidsforholdFromDb("12345678901")
                     arbeidsforhold.size shouldBeEqualTo 1
                     arbeidsforhold[0].id shouldBeEqualTo 1
 
@@ -364,7 +401,7 @@ class ArbeidsforholdConsumerTest :
                                     listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true)),
                                 ),
                                 Ansettelsesperiode(
-                                    startdato = 1.januar(2022),
+                                    startdato = LocalDate.now().minusYears(1),
                                     sluttdato = null,
                                 ),
                             ),
@@ -378,7 +415,7 @@ class ArbeidsforholdConsumerTest :
                                     listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true)),
                                 ),
                                 Ansettelsesperiode(
-                                    startdato = 1.januar(2022),
+                                    startdato = LocalDate.now().minusYears(1),
                                     sluttdato = null,
                                 ),
                             ),
@@ -386,26 +423,35 @@ class ArbeidsforholdConsumerTest :
                     arbeidsforholdService.insertOrUpdate(
                         Arbeidsforhold(
                             id = 1,
-                            fnr = sykmeldt.fnr,
+                            fnr = "12345678901",
                             orgnummer = "123456789",
                             juridiskOrgnummer = "123456789",
                             orgNavn = "Gammelt Navn AS",
-                            fom = 1.januar(2022),
+                            fom = LocalDate.now().minusYears(1),
                             tom = null,
                         ),
                     )
                     arbeidsforholdService.insertOrUpdate(
                         Arbeidsforhold(
                             id = 2,
-                            fnr = sykmeldt.fnr,
+                            fnr = "12345678901",
                             orgnummer = "123456789",
                             juridiskOrgnummer = "123456789",
                             orgNavn = "Gammelt Navn AS",
-                            fom = 1.januar(2022),
+                            fom = LocalDate.now().minusYears(1),
                             tom = null,
                         ),
                     )
 
+                    sykmeldingDb.saveOrUpdateSykmeldt(
+                        Sykmeldt(
+                            "12345678901",
+                            "Per",
+                            null,
+                            "Person",
+                            null,
+                        ),
+                    )
                     val arbeidsforholdHendelse =
                         ArbeidsforholdHendelse(
                             id = 34L,
@@ -415,7 +461,7 @@ class ArbeidsforholdConsumerTest :
                                     1,
                                     Arbeidstaker(
                                         listOf(
-                                            Ident(IdentType.FOLKEREGISTERIDENT, sykmeldt.fnr, true)
+                                            Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true)
                                         ),
                                     ),
                                 ),
@@ -425,7 +471,7 @@ class ArbeidsforholdConsumerTest :
                     arbeidsforholdConsumer.handleArbeidsforholdHendelse(arbeidsforholdHendelse)
 
                     val arbeidsforhold =
-                        arbeidsforholdService.getArbeidsforholdFromDb(sykmeldt.fnr).sortedBy {
+                        arbeidsforholdService.getArbeidsforholdFromDb("12345678901").sortedBy {
                             it.id
                         }
                     arbeidsforhold.size shouldBeEqualTo 2
@@ -443,20 +489,20 @@ class ArbeidsforholdConsumerTest :
                         listOf(
                             Arbeidsforhold(
                                 id = 1,
-                                fnr = sykmeldt.fnr,
+                                fnr = "12345678901",
                                 orgnummer = "123456789",
                                 juridiskOrgnummer = "987654321",
                                 orgNavn = "Navn AS",
-                                fom = 1.januar(2020),
-                                tom = sykmeldingFom.minusDays(1),
+                                fom = LocalDate.now().minusYears(3),
+                                tom = LocalDate.now().minusDays(3),
                             ),
                             Arbeidsforhold(
                                 id = 2,
-                                fnr = sykmeldt.fnr,
+                                fnr = "12345678901",
                                 orgnummer = "989898988",
                                 juridiskOrgnummer = "989898988",
                                 orgNavn = "Bedrift AS",
-                                fom = 1.januar(2020),
+                                fom = LocalDate.now().minusYears(1),
                                 tom = null,
                             ),
                         )
@@ -464,20 +510,20 @@ class ArbeidsforholdConsumerTest :
                         listOf(
                             Arbeidsforhold(
                                 id = 1,
-                                fnr = sykmeldt.fnr,
+                                fnr = "12345678901",
                                 orgnummer = "123456789",
                                 juridiskOrgnummer = "987654321",
                                 orgNavn = "Navn AS",
-                                fom = 1.januar(2020),
-                                tom = sykmeldingFom.minusDays(1),
+                                fom = LocalDate.now().minusYears(3),
+                                tom = LocalDate.now().minusDays(3),
                             ),
                             Arbeidsforhold(
                                 id = 2,
-                                fnr = sykmeldt.fnr,
+                                fnr = "12345678901",
                                 orgnummer = "989898988",
                                 juridiskOrgnummer = "989898988",
                                 orgNavn = "Gammelt Navn AS",
-                                fom = 1.januar(2020),
+                                fom = LocalDate.now().minusYears(1),
                                 tom = null,
                             ),
                         )
@@ -497,20 +543,20 @@ class ArbeidsforholdConsumerTest :
                         listOf(
                             Arbeidsforhold(
                                 id = 1,
-                                fnr = sykmeldt.fnr,
+                                fnr = "12345678901",
                                 orgnummer = "123456789",
                                 juridiskOrgnummer = "987654321",
                                 orgNavn = "Navn AS",
-                                fom = 1.januar(2020),
-                                tom = sykmeldingFom.minusDays(1),
+                                fom = LocalDate.now().minusYears(3),
+                                tom = LocalDate.now().minusDays(3),
                             ),
                             Arbeidsforhold(
                                 id = 2,
-                                fnr = sykmeldt.fnr,
+                                fnr = "12345678901",
                                 orgnummer = "989898988",
                                 juridiskOrgnummer = "989898988",
                                 orgNavn = "Bedrift AS",
-                                fom = 1.januar(2020),
+                                fom = LocalDate.now().minusYears(1),
                                 tom = null,
                             ),
                         )
@@ -518,12 +564,12 @@ class ArbeidsforholdConsumerTest :
                         listOf(
                             Arbeidsforhold(
                                 id = 1,
-                                fnr = sykmeldt.fnr,
+                                fnr = "12345678901",
                                 orgnummer = "123456789",
                                 juridiskOrgnummer = "987654321",
                                 orgNavn = "Navn AS",
-                                fom = 1.januar(2020),
-                                tom = sykmeldingFom.minusDays(1),
+                                fom = LocalDate.now().minusYears(3),
+                                tom = LocalDate.now().minusDays(3),
                             ),
                         )
 
@@ -536,38 +582,38 @@ class ArbeidsforholdConsumerTest :
                     slettesFraDb.size shouldBeEqualTo 0
                 }
                 test(
-                    "liste med id hvis agDb har ag som ikke finnes i aareg",
+                    "Returnerer liste med id hvis arbeidsforholdDb inneholder element som ikke finnes i  enn aareg-listen",
                 ) {
                     val arbeidsforholdAareg =
                         listOf(
                             Arbeidsforhold(
                                 id = 1,
-                                fnr = sykmeldt.fnr,
+                                fnr = "12345678901",
                                 orgnummer = "123456789",
                                 juridiskOrgnummer = "987654321",
                                 orgNavn = "Navn AS",
-                                fom = 1.januar(2020),
-                                tom = sykmeldingFom.minusDays(1),
+                                fom = LocalDate.now().minusYears(3),
+                                tom = LocalDate.now().minusDays(3),
                             ),
                         )
                     val arbeidsforholdFraDb =
                         listOf(
                             Arbeidsforhold(
                                 id = 1,
-                                fnr = sykmeldt.fnr,
+                                fnr = "12345678901",
                                 orgnummer = "123456789",
                                 juridiskOrgnummer = "987654321",
                                 orgNavn = "Navn AS",
-                                fom = 1.januar(2020),
-                                tom = sykmeldingFom.minusDays(1),
+                                fom = LocalDate.now().minusYears(3),
+                                tom = LocalDate.now().minusDays(3),
                             ),
                             Arbeidsforhold(
                                 id = 2,
-                                fnr = sykmeldt.fnr,
+                                fnr = "12345678901",
                                 orgnummer = "989898988",
                                 juridiskOrgnummer = "989898988",
                                 orgNavn = "Gammelt Navn AS",
-                                fom = 1.januar(2020),
+                                fom = LocalDate.now().minusYears(1),
                                 tom = null,
                             ),
                         )
