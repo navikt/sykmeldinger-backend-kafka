@@ -66,10 +66,8 @@ class ArbeidsforholdConsumer(
         log.info("Starting consuming topic $topic")
         while (isActive) {
             try {
-                val hendelser: ConsumerRecords<String, ArbeidsforholdHendelse> =
-                    kafkaConsumer.poll(Duration.ofSeconds(POLL_DURATION_SECONDS))
-
-                handleHendelser(hendelser)
+                kafkaConsumer.subscribe(listOf(topic))
+                consumeMessages()
             } catch (ex: Exception) {
                 log.error(
                     "Error running kafka consumer for arbeidsforhold, unsubscribing and waiting $DELAY_ON_ERROR_SECONDS seconds for retry",
@@ -84,8 +82,19 @@ class ArbeidsforholdConsumer(
         }
     }
 
+    private suspend fun ArbeidsforholdConsumer.consumeMessages() = coroutineScope {
+        while (isActive) {
+            val hendelser: ConsumerRecords<String, ArbeidsforholdHendelse> =
+                kafkaConsumer.poll(Duration.ofSeconds(POLL_DURATION_SECONDS))
+
+            handleHendelser(hendelser)
+        }
+    }
+
     @WithSpan
-    private suspend fun handleHendelser(hendelser: ConsumerRecords<String, ArbeidsforholdHendelse>) {
+    private suspend fun handleHendelser(
+        hendelser: ConsumerRecords<String, ArbeidsforholdHendelse>
+    ) {
         val arbeidsforholdEndringer =
             hendelser
                 .filter { it.value().endringstype != Endringstype.Sletting }
@@ -216,7 +225,7 @@ class ArbeidsforholdConsumer(
     ): List<Int> {
         if (
             arbeidsforholdDb.size == arbeidsforholdAareg.size &&
-            arbeidsforholdDb.toHashSet() == arbeidsforholdAareg.toHashSet()
+                arbeidsforholdDb.toHashSet() == arbeidsforholdAareg.toHashSet()
         ) {
             return emptyList()
         }
