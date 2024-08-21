@@ -26,7 +26,7 @@ val avroVersion = "1.12.0"
 val unleashedVersion = "9.2.4"
 val opentelemetryVersion = "2.7.0"
 val snappyJavaVersion = "1.1.10.6"
-val commonsCompressVersion = "1.27.0"
+val commonsCompressVersion = "1.27.1"
 val javaVersion = JvmTarget.JVM_21
 
 plugins {
