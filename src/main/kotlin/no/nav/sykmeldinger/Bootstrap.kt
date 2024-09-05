@@ -26,7 +26,6 @@ import kotlinx.coroutines.cancel
 import no.nav.person.pdl.leesah.Personhendelse
 import no.nav.syfo.kafka.aiven.KafkaUtils
 import no.nav.syfo.model.sykmeldingstatus.SykmeldingStatusKafkaMessageDTO
-import no.nav.syfo.unleash.createUnleashStateHandler
 import no.nav.sykmeldinger.application.ApplicationServer
 import no.nav.sykmeldinger.application.ApplicationState
 import no.nav.sykmeldinger.application.createApplicationEngine
@@ -211,18 +210,8 @@ fun main() {
             sharedScope
         )
 
-    createUnleashStateHandler(
-        scope = sharedScope,
-        toggle = SYKMELDINGER_ARBEIDSFORHOLD_CONSUMER,
-        onToggledOn = {
-            log.info("$SYKMELDINGER_ARBEIDSFORHOLD_CONSUMER has been toggled on")
-            arbeidsforholdConsumer.startConsumer()
-        },
-        onToggledOff = {
-            log.warn("$SYKMELDINGER_ARBEIDSFORHOLD_CONSUMER is toggled off, unsubscribing")
-            arbeidsforholdConsumer.stopConsumer()
-        },
-    )
+    arbeidsforholdConsumer.startConsumer()
+
     Runtime.getRuntime()
         .addShutdownHook(
             Thread {
