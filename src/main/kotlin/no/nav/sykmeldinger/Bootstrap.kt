@@ -26,7 +26,6 @@ import kotlinx.coroutines.cancel
 import no.nav.person.pdl.leesah.Personhendelse
 import no.nav.syfo.kafka.aiven.KafkaUtils
 import no.nav.syfo.model.sykmeldingstatus.SykmeldingStatusKafkaMessageDTO
-import no.nav.syfo.unleash.createUnleashStateHandler
 import no.nav.sykmeldinger.application.ApplicationServer
 import no.nav.sykmeldinger.application.ApplicationState
 import no.nav.sykmeldinger.application.createApplicationEngine
@@ -38,8 +37,6 @@ import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.client.Arbeidsfo
 import no.nav.sykmeldinger.arbeidsforhold.client.organisasjon.client.OrganisasjonsinfoClient
 import no.nav.sykmeldinger.arbeidsforhold.db.ArbeidsforholdDb
 import no.nav.sykmeldinger.arbeidsforhold.delete.DeleteArbeidsforholdService
-import no.nav.sykmeldinger.arbeidsforhold.kafka.ArbeidsforholdConsumer
-import no.nav.sykmeldinger.arbeidsforhold.kafka.model.ArbeidsforholdHendelse
 import no.nav.sykmeldinger.azuread.AccessTokenClient
 import no.nav.sykmeldinger.identendring.IdentendringService
 import no.nav.sykmeldinger.kafka.toConsumerConfig
@@ -65,7 +62,6 @@ import org.slf4j.LoggerFactory
 
 val log: Logger = LoggerFactory.getLogger("no.nav.sykmeldinger.sykmeldinger-backend-kafka")
 val secureLog: Logger = LoggerFactory.getLogger("securelog")
-const val SYKMELDINGER_ARBEIDSFORHOLD_CONSUMER = "SYKMELDINGER_ARBEIDSFORHOLD_CONSUMER"
 
 val objectMapper: ObjectMapper =
     jacksonObjectMapper().apply {
@@ -202,27 +198,6 @@ fun main() {
 
     val sharedScope = CoroutineScope(Dispatchers.IO)
 
-    val arbeidsforholdConsumer =
-        ArbeidsforholdConsumer(
-            getArbeidsforholdKafkaConsumer(),
-            env.arbeidsforholdTopic,
-            sykmeldingDb,
-            arbeidsforholdService,
-            sharedScope
-        )
-
-    createUnleashStateHandler(
-        scope = sharedScope,
-        toggle = SYKMELDINGER_ARBEIDSFORHOLD_CONSUMER,
-        onToggledOn = {
-            log.info("$SYKMELDINGER_ARBEIDSFORHOLD_CONSUMER has been toggled on")
-            arbeidsforholdConsumer.startConsumer()
-        },
-        onToggledOff = {
-            log.warn("$SYKMELDINGER_ARBEIDSFORHOLD_CONSUMER is toggled off, unsubscribing")
-            arbeidsforholdConsumer.stopConsumer()
-        },
-    )
     Runtime.getRuntime()
         .addShutdownHook(
             Thread {
@@ -317,22 +292,4 @@ private fun getNavnendringerConsumer(
                 it["specific.avro.reader"] = true
             }
     return KafkaConsumer<String, Personhendelse>(consumerProperties)
-}
-
-private fun getArbeidsforholdKafkaConsumer(): KafkaConsumer<String, ArbeidsforholdHendelse> {
-    val kafkaConsumer =
-        KafkaConsumer(
-            KafkaUtils.getAivenKafkaConfig("arbeidsforhold-consumer")
-                .toConsumerConfig(
-                    "sykmeldinger-arbeidsforhold-consumer",
-                    JacksonKafkaDeserializer::class
-                )
-                .also {
-                    it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
-                    it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
-                },
-            StringDeserializer(),
-            JacksonKafkaDeserializer(ArbeidsforholdHendelse::class),
-        )
-    return kafkaConsumer
 }

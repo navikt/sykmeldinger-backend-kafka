@@ -23,7 +23,6 @@ val confluentVersion = "7.7.0"
 val commonsCodecVersion = "1.17.1"
 val ktfmtVersion = "0.44"
 val avroVersion = "1.12.0"
-val unleashedVersion = "9.2.4"
 val opentelemetryVersion = "2.6.0"
 val snappyJavaVersion = "1.1.10.6"
 val commonsCompressVersion = "1.27.0"
@@ -79,7 +78,6 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
 
-    implementation("io.getunleash:unleash-client-java:$unleashedVersion")
 
     implementation("com.zaxxer:HikariCP:$hikariVersion")
     implementation("org.postgresql:postgresql:$postgresVersion")
