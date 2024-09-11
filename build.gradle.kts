@@ -24,7 +24,7 @@ val commonsCodecVersion = "1.17.1"
 val ktfmtVersion = "0.44"
 val avroVersion = "1.12.0"
 val opentelemetryVersion = "2.7.0"
-val snappyJavaVersion = "1.1.10.6"
+val snappyJavaVersion = "1.1.10.7"
 val commonsCompressVersion = "1.27.1"
 val javaVersion = JvmTarget.JVM_21
 
