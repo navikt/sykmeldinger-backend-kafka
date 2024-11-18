@@ -9,6 +9,7 @@ import no.nav.sykmeldinger.TestDB
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.client.ArbeidsforholdClient
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.AaregArbeidsforhold
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Ansettelsesperiode
+import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.ArbeidsforholdType
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Arbeidssted
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.ArbeidsstedType
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Ident
@@ -54,6 +55,11 @@ object ArbeidsforholdServiceTest :
                                 startdato = LocalDate.now().minusYears(3),
                                 sluttdato = null
                             ),
+                            type =
+                                ArbeidsforholdType(
+                                    kode = "ordinaertArbeidsforhold",
+                                    beskrivelse = ""
+                                ),
                         ),
                         AaregArbeidsforhold(
                             2,
@@ -68,6 +74,11 @@ object ArbeidsforholdServiceTest :
                                 startdato = LocalDate.now().minusMonths(6),
                                 sluttdato = LocalDate.now().minusWeeks(3),
                             ),
+                            type =
+                                ArbeidsforholdType(
+                                    kode = "ordinaertArbeidsforhold",
+                                    beskrivelse = ""
+                                ),
                         ),
                         AaregArbeidsforhold(
                             3,
@@ -82,6 +93,11 @@ object ArbeidsforholdServiceTest :
                                 startdato = LocalDate.now().minusWeeks(2),
                                 sluttdato = LocalDate.now().plusMonths(3),
                             ),
+                            type =
+                                ArbeidsforholdType(
+                                    kode = "ordinaertArbeidsforhold",
+                                    beskrivelse = ""
+                                ),
                         ),
                     )
                 coEvery { organisasjonsinfoClient.getOrganisasjonsnavn(any()) } returns
@@ -141,6 +157,11 @@ object ArbeidsforholdServiceTest :
                                 startdato = LocalDate.now().minusYears(3),
                                 sluttdato = null
                             ),
+                            type =
+                                ArbeidsforholdType(
+                                    kode = "ordinaertArbeidsforhold",
+                                    beskrivelse = ""
+                                ),
                         ),
                         AaregArbeidsforhold(
                             2,
@@ -155,6 +176,11 @@ object ArbeidsforholdServiceTest :
                                 startdato = LocalDate.now().minusMonths(6),
                                 sluttdato = LocalDate.now().minusWeeks(3),
                             ),
+                            type =
+                                ArbeidsforholdType(
+                                    kode = "ordinaertArbeidsforhold",
+                                    beskrivelse = ""
+                                ),
                         ),
                     )
 
@@ -187,6 +213,11 @@ object ArbeidsforholdServiceTest :
                                 startdato = LocalDate.now().minusMonths(6),
                                 sluttdato = LocalDate.now().minusWeeks(3),
                             ),
+                            type =
+                                ArbeidsforholdType(
+                                    kode = "ordinaertArbeidsforhold",
+                                    beskrivelse = ""
+                                ),
                         ),
                         AaregArbeidsforhold(
                             2,
@@ -201,6 +232,11 @@ object ArbeidsforholdServiceTest :
                                 startdato = LocalDate.now().minusYears(6),
                                 sluttdato = LocalDate.now().minusMonths(5),
                             ),
+                            type =
+                                ArbeidsforholdType(
+                                    kode = "ordinaertArbeidsforhold",
+                                    beskrivelse = ""
+                                ),
                         ),
                     )
 

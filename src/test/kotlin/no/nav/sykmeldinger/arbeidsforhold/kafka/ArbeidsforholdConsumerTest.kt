@@ -11,6 +11,7 @@ import no.nav.sykmeldinger.arbeidsforhold.ArbeidsforholdService
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.client.ArbeidsforholdClient
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.AaregArbeidsforhold
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Ansettelsesperiode
+import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.ArbeidsforholdType
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Arbeidssted
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.ArbeidsstedType
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Ident
@@ -77,6 +78,11 @@ object ArbeidsforholdConsumerTest :
                                     startdato = LocalDate.now().minusYears(3),
                                     sluttdato = null,
                                 ),
+                                type =
+                                    ArbeidsforholdType(
+                                        kode = "ordinaertArbeidsforhold",
+                                        beskrivelse = ""
+                                    ),
                             ),
                         )
                     sykmeldingDb.saveOrUpdateSykmeldt(
@@ -135,6 +141,11 @@ object ArbeidsforholdConsumerTest :
                                     startdato = LocalDate.now().minusYears(3),
                                     sluttdato = LocalDate.now().minusYears(1),
                                 ),
+                                type =
+                                    ArbeidsforholdType(
+                                        kode = "ordinaertArbeidsforhold",
+                                        beskrivelse = ""
+                                    ),
                             ),
                         )
                     sykmeldingDb.saveOrUpdateSykmeldt(
@@ -185,6 +196,11 @@ object ArbeidsforholdConsumerTest :
                                     startdato = LocalDate.now().minusYears(3),
                                     sluttdato = null,
                                 ),
+                                type =
+                                    ArbeidsforholdType(
+                                        kode = "ordinaertArbeidsforhold",
+                                        beskrivelse = ""
+                                    ),
                             ),
                         )
                     sykmeldingDb.saveOrUpdateSykmeldt(
@@ -300,6 +316,11 @@ object ArbeidsforholdConsumerTest :
                                     startdato = LocalDate.now().minusYears(3),
                                     sluttdato = null,
                                 ),
+                                type =
+                                    ArbeidsforholdType(
+                                        kode = "ordinaertArbeidsforhold",
+                                        beskrivelse = ""
+                                    ),
                             ),
                             AaregArbeidsforhold(
                                 2,
@@ -314,6 +335,11 @@ object ArbeidsforholdConsumerTest :
                                     startdato = LocalDate.now().minusYears(3),
                                     sluttdato = LocalDate.now().minusMonths(5),
                                 ),
+                                type =
+                                    ArbeidsforholdType(
+                                        kode = "ordinaertArbeidsforhold",
+                                        beskrivelse = ""
+                                    ),
                             ),
                         )
                     arbeidsforholdService.insertOrUpdate(
@@ -386,6 +412,64 @@ object ArbeidsforholdConsumerTest :
                     coVerify(exactly = 0) { arbeidsforholdClient.getArbeidsforhold(any()) }
                 }
 
+                test("Ikke lagre frilanser arbeidsforhold") {
+                    coEvery { arbeidsforholdClient.getArbeidsforhold(any()) } returns
+                        listOf(
+                            AaregArbeidsforhold(
+                                1,
+                                Arbeidssted(
+                                    ArbeidsstedType.Underenhet,
+                                    listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true)),
+                                ),
+                                Opplysningspliktig(
+                                    listOf(Ident(IdentType.ORGANISASJONSNUMMER, "123456789", true)),
+                                ),
+                                Ansettelsesperiode(
+                                    startdato = LocalDate.now().minusYears(1),
+                                    sluttdato = null,
+                                ),
+                                type =
+                                    ArbeidsforholdType(
+                                        kode = "frilanserOppdragstakerHonorarPersonerMm",
+                                        beskrivelse = ""
+                                    ),
+                            ),
+                        )
+                    sykmeldingDb.saveOrUpdateSykmeldt(
+                        Sykmeldt(
+                            "12345678901",
+                            "Per",
+                            null,
+                            "Person",
+                            null,
+                        ),
+                    )
+                    val arbeidsforholdHendelse =
+                        ArbeidsforholdHendelse(
+                            id = 34L,
+                            endringstype = Endringstype.Endring,
+                            arbeidsforhold =
+                                ArbeidsforholdKafka(
+                                    1,
+                                    Arbeidstaker(
+                                        listOf(
+                                            Ident(IdentType.FOLKEREGISTERIDENT, "12345678901", true)
+                                        ),
+                                    ),
+                                ),
+                            entitetsendringer = listOf(Entitetsendring.Ansettelsesdetaljer),
+                        )
+
+                    arbeidsforholdConsumer.handleArbeidsforholdHendelse(arbeidsforholdHendelse)
+
+                    val arbeidsforhold =
+                        arbeidsforholdService.getArbeidsforholdFromDb("12345678901").sortedBy {
+                            it.id
+                        }
+                    arbeidsforhold.size shouldBeEqualTo 0
+                    coVerify(exactly = 1) { arbeidsforholdClient.getArbeidsforhold(any()) }
+                }
+
                 test(
                     "Skal ikke slette arbeidsforhold der det finnes to arbeidsforhold på samme arbeidsgiver",
                 ) {
@@ -404,6 +488,11 @@ object ArbeidsforholdConsumerTest :
                                     startdato = LocalDate.now().minusYears(1),
                                     sluttdato = null,
                                 ),
+                                type =
+                                    ArbeidsforholdType(
+                                        kode = "ordinaertArbeidsforhold",
+                                        beskrivelse = ""
+                                    ),
                             ),
                             AaregArbeidsforhold(
                                 2,
@@ -418,6 +507,11 @@ object ArbeidsforholdConsumerTest :
                                     startdato = LocalDate.now().minusYears(1),
                                     sluttdato = null,
                                 ),
+                                type =
+                                    ArbeidsforholdType(
+                                        kode = "ordinaertArbeidsforhold",
+                                        beskrivelse = ""
+                                    ),
                             ),
                         )
                     arbeidsforholdService.insertOrUpdate(
@@ -529,7 +623,7 @@ object ArbeidsforholdConsumerTest :
                         )
 
                     val slettesFraDb =
-                        arbeidsforholdConsumer.getArbeidsforholdSomSkalSlettes(
+                        arbeidsforholdService.getArbeidsforholdSomSkalSlettes(
                             arbeidsforholdAareg = arbeidsforholdAareg,
                             arbeidsforholdDb = arbeidsforholdFraDb,
                         )
@@ -574,7 +668,7 @@ object ArbeidsforholdConsumerTest :
                         )
 
                     val slettesFraDb =
-                        arbeidsforholdConsumer.getArbeidsforholdSomSkalSlettes(
+                        arbeidsforholdService.getArbeidsforholdSomSkalSlettes(
                             arbeidsforholdAareg = arbeidsforholdAareg,
                             arbeidsforholdDb = arbeidsforholdFraDb,
                         )
@@ -619,7 +713,7 @@ object ArbeidsforholdConsumerTest :
                         )
 
                     val slettesFraDb =
-                        arbeidsforholdConsumer.getArbeidsforholdSomSkalSlettes(
+                        arbeidsforholdService.getArbeidsforholdSomSkalSlettes(
                             arbeidsforholdAareg = arbeidsforholdAareg,
                             arbeidsforholdDb = arbeidsforholdFraDb,
                         )

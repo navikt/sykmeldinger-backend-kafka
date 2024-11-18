@@ -3,7 +3,6 @@ package no.nav.sykmeldinger.arbeidsforhold.kafka
 import io.opentelemetry.instrumentation.annotations.WithSpan
 import java.time.Duration
 import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -19,7 +18,6 @@ import no.nav.sykmeldinger.arbeidsforhold.ArbeidsforholdService
 import no.nav.sykmeldinger.arbeidsforhold.kafka.model.ArbeidsforholdHendelse
 import no.nav.sykmeldinger.arbeidsforhold.kafka.model.Endringstype
 import no.nav.sykmeldinger.arbeidsforhold.kafka.model.Entitetsendring
-import no.nav.sykmeldinger.arbeidsforhold.model.Arbeidsforhold
 import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.secureLog
 import no.nav.sykmeldinger.sykmelding.db.SykmeldingDb
@@ -62,7 +60,6 @@ class ArbeidsforholdConsumer(
 
     private suspend fun runConsumer() = coroutineScope {
         kafkaConsumer.subscribe(listOf(topic))
-        startLogging()
         log.info("Starting consuming topic $topic")
         while (isActive) {
             try {
@@ -131,28 +128,6 @@ class ArbeidsforholdConsumer(
         }
     }
 
-    private fun CoroutineScope.startLogging(): Job {
-        return launch(Dispatchers.IO) {
-            try {
-                while (isActive) {
-                    delay(10.seconds)
-                    log.info(
-                        hendelsesTyper.entries.joinToString(
-                            separator = ", ",
-                            prefix = "Offset: ${lastOffset}, HendelsesTyper: {",
-                            postfix = "}",
-                            transform = { entry -> "'${entry.key}': ${entry.value}" },
-                        ),
-                    )
-                }
-            } catch (ex: CancellationException) {
-                log.info("logger cancelled")
-            } catch (ex: Exception) {
-                log.info("Error in logger", ex)
-            }
-        }
-    }
-
     private fun hasValidEndringstype(arbeidsforholdHendelse: ArbeidsforholdHendelse) =
         arbeidsforholdHendelse.entitetsendringer.any { endring ->
             endring == Entitetsendring.Ansettelsesdetaljer ||
@@ -166,7 +141,10 @@ class ArbeidsforholdConsumer(
     @WithSpan
     private suspend fun updateArbeidsforholdFor(newhendelserByFnr: List<String>) {
         withContext(NonCancellable) {
-            val jobs = newhendelserByFnr.map { async(Dispatchers.IO) { updateArbeidsforhold(it) } }
+            val jobs =
+                newhendelserByFnr.map {
+                    async(Dispatchers.IO) { arbeidsforholdService.updateArbeidsforhold(it) }
+                }
             jobs.awaitAll()
         }
     }
@@ -190,51 +168,8 @@ class ArbeidsforholdConsumer(
                     arbeidsforholdHendelse.arbeidsforhold.navArbeidsforholdId,
                 )
             } else {
-                updateArbeidsforhold(fnr)
+                arbeidsforholdService.updateArbeidsforhold(fnr)
             }
         }
-    }
-
-    private suspend fun updateArbeidsforhold(fnr: String) {
-        val arbeidsforhold = arbeidsforholdService.getArbeidsforhold(fnr)
-        val arbeidsforholdFraDb = arbeidsforholdService.getArbeidsforholdFromDb(fnr)
-
-        val slettesfraDb =
-            getArbeidsforholdSomSkalSlettes(
-                arbeidsforholdDb = arbeidsforholdFraDb,
-                arbeidsforholdAareg = arbeidsforhold,
-            )
-
-        if (slettesfraDb.isNotEmpty()) {
-            slettesfraDb.forEach {
-                log.info(
-                    "Sletter utdatert arbeidsforhold med id $it",
-                )
-                secureLog.info(
-                    "Sletter fra arbeidsforhold, siden db og areg ulike, fnr: $fnr, arbeidsforholdId: $it",
-                )
-                arbeidsforholdService.deleteArbeidsforhold(it)
-            }
-        }
-        arbeidsforhold.forEach { arbeidsforholdService.insertOrUpdate(it) }
-    }
-
-    fun getArbeidsforholdSomSkalSlettes(
-        arbeidsforholdAareg: List<Arbeidsforhold>,
-        arbeidsforholdDb: List<Arbeidsforhold>
-    ): List<Int> {
-        if (
-            arbeidsforholdDb.size == arbeidsforholdAareg.size &&
-                arbeidsforholdDb.toHashSet() == arbeidsforholdAareg.toHashSet()
-        ) {
-            return emptyList()
-        }
-
-        val arbeidsforholdAaregMap: HashMap<Int, Arbeidsforhold> =
-            HashMap(arbeidsforholdAareg.associateBy { it.id })
-        val arbeidsforholdDbMap: HashMap<Int, Arbeidsforhold> =
-            HashMap(arbeidsforholdDb.associateBy { it.id })
-
-        return arbeidsforholdDbMap.filter { arbeidsforholdAaregMap[it.key] == null }.keys.toList()
     }
 }

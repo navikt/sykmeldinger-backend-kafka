@@ -49,7 +49,6 @@ class PdlPersonService(
         var foedselsdato: LocalDate? = null
         pdlResponse.data.person.foedsel?.firstOrNull()?.foedselsdato?.let { dato ->
             foedselsdato = LocalDate.parse(dato)
-            log.info("Fant fødselsdato til person i PDL {}", foedselsdato.toString())
         }
             ?: run {
                 log.error("Fant ikke fødselsdato på person i PDL")

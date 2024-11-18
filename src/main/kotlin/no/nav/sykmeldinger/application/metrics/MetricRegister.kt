@@ -47,3 +47,11 @@ val SLETTET_ARBFORHOLD_COUNTER: Counter =
         .namespace(METRICS_NS)
         .help("Antall slettede arbeidsforhold")
         .register()
+
+val ARBEIDSFORHOLD_TYPE_COUNTER: Counter =
+    Counter.build()
+        .name("arbeidsforhold_type")
+        .namespace(METRICS_NS)
+        .help("Forskjellige typer arbeidsforhold")
+        .labelNames("type")
+        .register()

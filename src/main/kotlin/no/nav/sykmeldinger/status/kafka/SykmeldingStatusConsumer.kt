@@ -3,8 +3,6 @@ package no.nav.sykmeldinger.status.kafka
 import io.opentelemetry.instrumentation.annotations.WithSpan
 import java.sql.BatchUpdateException
 import java.time.Duration
-import java.time.OffsetDateTime
-import kotlin.time.measureTime
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -29,21 +27,9 @@ class SykmeldingStatusConsumer(
         private val log = LoggerFactory.getLogger(SykmeldingStatusConsumer::class.java)
     }
 
-    private var duration = kotlin.time.Duration.ZERO
-    private var totalRecords = 0
-    private var lastDate = OffsetDateTime.MIN
-
     @OptIn(DelicateCoroutinesApi::class)
     fun startConsumer() {
         GlobalScope.launch(Dispatchers.IO) {
-            GlobalScope.launch(Dispatchers.IO) {
-                while (applicationState.ready) {
-                    log.info(
-                        "$totalRecords records processed, last record was at $lastDate avg time per record: ${getDurationPerRecord()} ms"
-                    )
-                    delay(10000)
-                }
-            }
             while (applicationState.ready) {
                 try {
                     kafkaConsumer.subscribe(listOf(environment.statusTopic))
@@ -61,13 +47,6 @@ class SykmeldingStatusConsumer(
         }
     }
 
-    private fun getDurationPerRecord(): Long {
-        return when (duration.inWholeMilliseconds == 0L || totalRecords == 0) {
-            false -> duration.div(totalRecords).inWholeMilliseconds
-            else -> 0L
-        }
-    }
-
     private suspend fun consume() {
         while (applicationState.ready) {
             val records =
@@ -76,10 +55,7 @@ class SykmeldingStatusConsumer(
                     .mapNotNull { it.value() }
                     .filter { it.kafkaMetadata.source != "sykmeldinger-backend" }
             if (records.isNotEmpty()) {
-                lastDate = records.last().event.timestamp
-                val time = measureTime { updateStatus(records.map { it.event }) }
-                duration += time
-                totalRecords += records.count()
+                updateStatus(records.map { it.event })
             }
         }
     }

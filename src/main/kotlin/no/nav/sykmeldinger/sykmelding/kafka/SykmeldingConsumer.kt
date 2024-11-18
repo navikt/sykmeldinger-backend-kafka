@@ -101,8 +101,7 @@ class SykmeldingConsumer(
                     pdlPersonService
                         .getPerson(receivedSykmelding.personNrPasient, sykmeldingId)
                         .toSykmeldt()
-                val arbeidsforhold = arbeidsforholdService.getArbeidsforhold(sykmeldt.fnr)
-                arbeidsforhold.forEach { arbeidsforholdService.insertOrUpdate(it) }
+                arbeidsforholdService.updateArbeidsforhold(sykmeldt.fnr)
                 sykmeldingService.saveOrUpdate(
                     sykmeldingId,
                     sykmelding,
