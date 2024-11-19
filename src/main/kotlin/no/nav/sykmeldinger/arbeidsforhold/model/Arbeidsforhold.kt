@@ -33,4 +33,5 @@ data class Arbeidsforhold(
     val orgNavn: String,
     val fom: LocalDate,
     val tom: LocalDate?,
+    val type: ArbeidsforholdType?,
 )

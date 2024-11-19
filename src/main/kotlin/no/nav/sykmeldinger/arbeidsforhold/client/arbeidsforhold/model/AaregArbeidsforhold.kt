@@ -5,5 +5,5 @@ data class AaregArbeidsforhold(
     val arbeidssted: Arbeidssted,
     val opplysningspliktig: Opplysningspliktig,
     val ansettelsesperiode: Ansettelsesperiode,
-    val type: ArbeidsforholdType
+    val type: AaregArbeidsforholdType
 )

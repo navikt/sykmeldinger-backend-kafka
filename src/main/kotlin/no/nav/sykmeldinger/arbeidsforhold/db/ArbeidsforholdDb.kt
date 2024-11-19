@@ -9,6 +9,7 @@ import kotlinx.coroutines.withContext
 import no.nav.sykmeldinger.application.db.DatabaseInterface
 import no.nav.sykmeldinger.application.db.toList
 import no.nav.sykmeldinger.arbeidsforhold.model.Arbeidsforhold
+import no.nav.sykmeldinger.arbeidsforhold.model.ArbeidsforholdType
 
 class ArbeidsforholdDb(
     private val database: DatabaseInterface,
@@ -19,14 +20,15 @@ class ArbeidsforholdDb(
                 connection
                     .prepareStatement(
                         """
-               insert into arbeidsforhold(id, fnr, orgnummer, juridisk_orgnummer, orgnavn, fom, tom) 
-               values (?, ?, ?, ?, ?, ?, ?) on conflict (id) do update
+               insert into arbeidsforhold(id, fnr, orgnummer, juridisk_orgnummer, orgnavn, fom, tom, type) 
+               values (?, ?, ?, ?, ?, ?, ?, ?) on conflict (id) do update
                 set fnr = excluded.fnr,
                     orgnummer = excluded.orgnummer,
                     juridisk_orgnummer = excluded.juridisk_orgnummer,
                     orgnavn = excluded.orgnavn,
                     fom = excluded.fom,
-                    tom = excluded.tom;
+                    tom = excluded.tom,
+                    type = excluded.type;
             """,
                     )
                     .use { preparedStatement ->
@@ -40,6 +42,7 @@ class ArbeidsforholdDb(
                             7,
                             arbeidsforhold.tom?.let { Date.valueOf(arbeidsforhold.tom) }
                         )
+                        preparedStatement.setString(8, arbeidsforhold.type?.name)
                         preparedStatement.executeUpdate()
                     }
                 connection.commit()
@@ -123,4 +126,5 @@ fun ResultSet.toArbeidsforhold(): Arbeidsforhold =
         orgNavn = getString("orgnavn"),
         fom = getDate("fom").toLocalDate(),
         tom = getDate("tom")?.toLocalDate(),
+        type = getString("type")?.let { ArbeidsforholdType.valueOf(it) }
     )
