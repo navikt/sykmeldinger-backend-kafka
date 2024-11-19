@@ -7,9 +7,9 @@ import io.mockk.mockk
 import java.time.LocalDate
 import no.nav.sykmeldinger.TestDB
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.client.ArbeidsforholdClient
+import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.AaregArbeidsforholdType
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.AaregArbeidsforhold
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Ansettelsesperiode
-import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.ArbeidsforholdType
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Arbeidssted
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.ArbeidsstedType
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Ident
@@ -18,6 +18,7 @@ import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Opplysning
 import no.nav.sykmeldinger.arbeidsforhold.client.organisasjon.client.OrganisasjonsinfoClient
 import no.nav.sykmeldinger.arbeidsforhold.db.ArbeidsforholdDb
 import no.nav.sykmeldinger.arbeidsforhold.model.Arbeidsforhold
+import no.nav.sykmeldinger.arbeidsforhold.model.ArbeidsforholdType
 import org.amshove.kluent.shouldBeEqualTo
 
 object ArbeidsforholdServiceTest :
@@ -56,7 +57,7 @@ object ArbeidsforholdServiceTest :
                                 sluttdato = null
                             ),
                             type =
-                                ArbeidsforholdType(
+                                AaregArbeidsforholdType(
                                     kode = "ordinaertArbeidsforhold",
                                     beskrivelse = ""
                                 ),
@@ -75,7 +76,7 @@ object ArbeidsforholdServiceTest :
                                 sluttdato = LocalDate.now().minusWeeks(3),
                             ),
                             type =
-                                ArbeidsforholdType(
+                                AaregArbeidsforholdType(
                                     kode = "ordinaertArbeidsforhold",
                                     beskrivelse = ""
                                 ),
@@ -94,7 +95,7 @@ object ArbeidsforholdServiceTest :
                                 sluttdato = LocalDate.now().plusMonths(3),
                             ),
                             type =
-                                ArbeidsforholdType(
+                                AaregArbeidsforholdType(
                                     kode = "ordinaertArbeidsforhold",
                                     beskrivelse = ""
                                 ),
@@ -158,7 +159,7 @@ object ArbeidsforholdServiceTest :
                                 sluttdato = null
                             ),
                             type =
-                                ArbeidsforholdType(
+                                AaregArbeidsforholdType(
                                     kode = "ordinaertArbeidsforhold",
                                     beskrivelse = ""
                                 ),
@@ -177,7 +178,7 @@ object ArbeidsforholdServiceTest :
                                 sluttdato = LocalDate.now().minusWeeks(3),
                             ),
                             type =
-                                ArbeidsforholdType(
+                                AaregArbeidsforholdType(
                                     kode = "ordinaertArbeidsforhold",
                                     beskrivelse = ""
                                 ),
@@ -214,7 +215,7 @@ object ArbeidsforholdServiceTest :
                                 sluttdato = LocalDate.now().minusWeeks(3),
                             ),
                             type =
-                                ArbeidsforholdType(
+                                AaregArbeidsforholdType(
                                     kode = "ordinaertArbeidsforhold",
                                     beskrivelse = ""
                                 ),
@@ -233,7 +234,7 @@ object ArbeidsforholdServiceTest :
                                 sluttdato = LocalDate.now().minusMonths(5),
                             ),
                             type =
-                                ArbeidsforholdType(
+                                AaregArbeidsforholdType(
                                     kode = "ordinaertArbeidsforhold",
                                     beskrivelse = ""
                                 ),
@@ -262,6 +263,7 @@ object ArbeidsforholdServiceTest :
                         orgNavn = "Bedriften AS",
                         fom = LocalDate.of(2020, 5, 1),
                         tom = null,
+                        type = ArbeidsforholdType.ORDINAERT_ARBEIDSFORHOLD,
                     )
 
                 arbeidsforholdService.insertOrUpdate(arbeidsforhold)
@@ -275,6 +277,36 @@ object ArbeidsforholdServiceTest :
                 arbeidsforholdFraDb[0].orgNavn shouldBeEqualTo "Bedriften AS"
                 arbeidsforholdFraDb[0].fom shouldBeEqualTo LocalDate.of(2020, 5, 1)
                 arbeidsforholdFraDb[0].tom shouldBeEqualTo null
+                arbeidsforholdFraDb[0].type shouldBeEqualTo
+                    ArbeidsforholdType.ORDINAERT_ARBEIDSFORHOLD
+            }
+
+            test("Lagrer nytt arbeidsforhold - frilanser") {
+                val arbeidsforhold =
+                    Arbeidsforhold(
+                        id = 1,
+                        fnr = "12345678910",
+                        orgnummer = "888888888",
+                        juridiskOrgnummer = "999999999",
+                        orgNavn = "Bedriften AS",
+                        fom = LocalDate.of(2020, 5, 1),
+                        tom = null,
+                        type = ArbeidsforholdType.FRILANSER_OPPDRAGSTAKER_HONORAR_PERSONER_MM,
+                    )
+
+                arbeidsforholdService.insertOrUpdate(arbeidsforhold)
+
+                val arbeidsforholdFraDb = arbeidsforholdDb.getArbeidsforhold("12345678910")
+                arbeidsforholdFraDb.size shouldBeEqualTo 1
+                arbeidsforholdFraDb[0].id shouldBeEqualTo 1
+                arbeidsforholdFraDb[0].fnr shouldBeEqualTo "12345678910"
+                arbeidsforholdFraDb[0].orgnummer shouldBeEqualTo "888888888"
+                arbeidsforholdFraDb[0].juridiskOrgnummer shouldBeEqualTo "999999999"
+                arbeidsforholdFraDb[0].orgNavn shouldBeEqualTo "Bedriften AS"
+                arbeidsforholdFraDb[0].fom shouldBeEqualTo LocalDate.of(2020, 5, 1)
+                arbeidsforholdFraDb[0].tom shouldBeEqualTo null
+                arbeidsforholdFraDb[0].type shouldBeEqualTo
+                    ArbeidsforholdType.FRILANSER_OPPDRAGSTAKER_HONORAR_PERSONER_MM
             }
             test("Oppdaterer arbeidsforhold") {
                 val arbeidsforhold =
@@ -286,6 +318,7 @@ object ArbeidsforholdServiceTest :
                         orgNavn = "Bedriften AS",
                         fom = LocalDate.of(2020, 5, 1),
                         tom = null,
+                        type = ArbeidsforholdType.ORDINAERT_ARBEIDSFORHOLD,
                     )
                 arbeidsforholdService.insertOrUpdate(arbeidsforhold)
 
@@ -314,6 +347,7 @@ object ArbeidsforholdServiceTest :
                         orgNavn = "Bedriften AS",
                         fom = LocalDate.of(2020, 5, 1),
                         tom = null,
+                        type = ArbeidsforholdType.ORDINAERT_ARBEIDSFORHOLD,
                     )
                 arbeidsforholdService.insertOrUpdate(arbeidsforhold)
 

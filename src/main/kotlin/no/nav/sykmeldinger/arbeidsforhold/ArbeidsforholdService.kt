@@ -1,7 +1,6 @@
 package no.nav.sykmeldinger.arbeidsforhold
 
 import java.time.LocalDate
-import no.nav.sykmeldinger.application.metrics.ARBEIDSFORHOLD_TYPE_COUNTER
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.client.ArbeidsforholdClient
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Ansettelsesperiode
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.ArbeidsstedType
@@ -75,7 +74,6 @@ class ArbeidsforholdService(
             arbeidsgivere
                 .filter { it.arbeidssted.type == ArbeidsstedType.Underenhet }
                 .filter { arbeidsforholdErGyldig(it.ansettelsesperiode) }
-                .filter { gylidgArbeidsforholdType(it.type.kode) }
                 .sortedWith(
                     compareByDescending(nullsLast()) { it.ansettelsesperiode.sluttdato },
                 )
@@ -84,6 +82,7 @@ class ArbeidsforholdService(
                         organisasjonsinfoClient.getOrganisasjonsnavn(
                             aaregArbeidsforhold.arbeidssted.getOrgnummer()
                         )
+                    val arbeidsforholdType = ArbeidsforholdType.parse(aaregArbeidsforhold.type.kode)
                     Arbeidsforhold(
                         id = aaregArbeidsforhold.navArbeidsforholdId,
                         fnr = fnr,
@@ -93,6 +92,7 @@ class ArbeidsforholdService(
                         orgNavn = organisasjonsinfo.navn.getNameAsString(),
                         fom = aaregArbeidsforhold.ansettelsesperiode.startdato,
                         tom = aaregArbeidsforhold.ansettelsesperiode.sluttdato,
+                        type = arbeidsforholdType,
                     )
                 }
         return arbeidsgiverList
@@ -104,16 +104,6 @@ class ArbeidsforholdService(
 
     fun deleteArbeidsforhold(id: Int) {
         arbeidsforholdDb.deleteArbeidsforhold(id)
-    }
-
-    private fun gylidgArbeidsforholdType(type: String): Boolean {
-        val arbeidsforholdType = ArbeidsforholdType.parse(type)
-        ARBEIDSFORHOLD_TYPE_COUNTER.labels(arbeidsforholdType.name).inc()
-
-        return when (arbeidsforholdType) {
-            ArbeidsforholdType.FRILANSER_OPPDRAGSTAKER_HONORAR_PERSONER_MM -> false
-            else -> true
-        }
     }
 
     private fun arbeidsforholdErGyldig(ansettelsesperiode: Ansettelsesperiode): Boolean {

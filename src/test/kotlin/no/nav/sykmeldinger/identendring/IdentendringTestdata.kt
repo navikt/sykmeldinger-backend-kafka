@@ -4,6 +4,7 @@ import java.time.LocalDate
 import java.time.OffsetDateTime
 import java.time.ZoneOffset
 import no.nav.sykmeldinger.arbeidsforhold.model.Arbeidsforhold
+import no.nav.sykmeldinger.arbeidsforhold.model.ArbeidsforholdType
 import no.nav.sykmeldinger.sykmelding.model.Adresse
 import no.nav.sykmeldinger.sykmelding.model.AktivitetIkkeMulig
 import no.nav.sykmeldinger.sykmelding.model.ArbeidsrelatertArsak
@@ -33,6 +34,7 @@ fun getArbeidsforhold(fnr: String) =
         orgNavn = "Bedriften AS",
         fom = LocalDate.now().minusYears(3),
         tom = null,
+        type = ArbeidsforholdType.ORDINAERT_ARBEIDSFORHOLD,
     )
 
 fun getSykmelding(): Sykmelding {

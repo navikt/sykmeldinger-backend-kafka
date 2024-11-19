@@ -9,9 +9,9 @@ import java.time.LocalDate
 import no.nav.sykmeldinger.TestDB
 import no.nav.sykmeldinger.arbeidsforhold.ArbeidsforholdService
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.client.ArbeidsforholdClient
+import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.AaregArbeidsforholdType
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.AaregArbeidsforhold
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Ansettelsesperiode
-import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.ArbeidsforholdType
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Arbeidssted
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.ArbeidsstedType
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Ident
@@ -26,6 +26,7 @@ import no.nav.sykmeldinger.arbeidsforhold.kafka.model.Arbeidstaker
 import no.nav.sykmeldinger.arbeidsforhold.kafka.model.Endringstype
 import no.nav.sykmeldinger.arbeidsforhold.kafka.model.Entitetsendring
 import no.nav.sykmeldinger.arbeidsforhold.model.Arbeidsforhold
+import no.nav.sykmeldinger.arbeidsforhold.model.ArbeidsforholdType
 import no.nav.sykmeldinger.sykmelding.db.SykmeldingDb
 import no.nav.sykmeldinger.sykmelding.model.Sykmeldt
 import org.amshove.kluent.shouldBeEqualTo
@@ -79,7 +80,7 @@ object ArbeidsforholdConsumerTest :
                                     sluttdato = null,
                                 ),
                                 type =
-                                    ArbeidsforholdType(
+                                    AaregArbeidsforholdType(
                                         kode = "ordinaertArbeidsforhold",
                                         beskrivelse = ""
                                     ),
@@ -142,7 +143,7 @@ object ArbeidsforholdConsumerTest :
                                     sluttdato = LocalDate.now().minusYears(1),
                                 ),
                                 type =
-                                    ArbeidsforholdType(
+                                    AaregArbeidsforholdType(
                                         kode = "ordinaertArbeidsforhold",
                                         beskrivelse = ""
                                     ),
@@ -197,7 +198,7 @@ object ArbeidsforholdConsumerTest :
                                     sluttdato = null,
                                 ),
                                 type =
-                                    ArbeidsforholdType(
+                                    AaregArbeidsforholdType(
                                         kode = "ordinaertArbeidsforhold",
                                         beskrivelse = ""
                                     ),
@@ -221,6 +222,7 @@ object ArbeidsforholdConsumerTest :
                             orgNavn = "Gammel Navn AS",
                             fom = LocalDate.now().minusYears(3),
                             tom = LocalDate.now().minusDays(3),
+                            type = ArbeidsforholdType.ORDINAERT_ARBEIDSFORHOLD,
                         ),
                     )
                     val arbeidsforholdHendelse =
@@ -273,6 +275,7 @@ object ArbeidsforholdConsumerTest :
                             orgNavn = "Gammel Navn AS",
                             fom = LocalDate.now().minusYears(3),
                             tom = LocalDate.now().minusDays(3),
+                            type = ArbeidsforholdType.ORDINAERT_ARBEIDSFORHOLD,
                         ),
                     )
                     val arbeidsforholdHendelse =
@@ -317,7 +320,7 @@ object ArbeidsforholdConsumerTest :
                                     sluttdato = null,
                                 ),
                                 type =
-                                    ArbeidsforholdType(
+                                    AaregArbeidsforholdType(
                                         kode = "ordinaertArbeidsforhold",
                                         beskrivelse = ""
                                     ),
@@ -336,7 +339,7 @@ object ArbeidsforholdConsumerTest :
                                     sluttdato = LocalDate.now().minusMonths(5),
                                 ),
                                 type =
-                                    ArbeidsforholdType(
+                                    AaregArbeidsforholdType(
                                         kode = "ordinaertArbeidsforhold",
                                         beskrivelse = ""
                                     ),
@@ -351,6 +354,7 @@ object ArbeidsforholdConsumerTest :
                             orgNavn = "Gammelt Navn AS",
                             fom = LocalDate.now().minusYears(3),
                             tom = LocalDate.now().minusDays(3),
+                            type = ArbeidsforholdType.ORDINAERT_ARBEIDSFORHOLD,
                         ),
                     )
                     sykmeldingDb.saveOrUpdateSykmeldt(
@@ -412,7 +416,7 @@ object ArbeidsforholdConsumerTest :
                     coVerify(exactly = 0) { arbeidsforholdClient.getArbeidsforhold(any()) }
                 }
 
-                test("Ikke lagre frilanser arbeidsforhold") {
+                test("lagre frilanser arbeidsforhold") {
                     coEvery { arbeidsforholdClient.getArbeidsforhold(any()) } returns
                         listOf(
                             AaregArbeidsforhold(
@@ -429,7 +433,7 @@ object ArbeidsforholdConsumerTest :
                                     sluttdato = null,
                                 ),
                                 type =
-                                    ArbeidsforholdType(
+                                    AaregArbeidsforholdType(
                                         kode = "frilanserOppdragstakerHonorarPersonerMm",
                                         beskrivelse = ""
                                     ),
@@ -466,7 +470,7 @@ object ArbeidsforholdConsumerTest :
                         arbeidsforholdService.getArbeidsforholdFromDb("12345678901").sortedBy {
                             it.id
                         }
-                    arbeidsforhold.size shouldBeEqualTo 0
+                    arbeidsforhold.size shouldBeEqualTo 1
                     coVerify(exactly = 1) { arbeidsforholdClient.getArbeidsforhold(any()) }
                 }
 
@@ -489,7 +493,7 @@ object ArbeidsforholdConsumerTest :
                                     sluttdato = null,
                                 ),
                                 type =
-                                    ArbeidsforholdType(
+                                    AaregArbeidsforholdType(
                                         kode = "ordinaertArbeidsforhold",
                                         beskrivelse = ""
                                     ),
@@ -508,7 +512,7 @@ object ArbeidsforholdConsumerTest :
                                     sluttdato = null,
                                 ),
                                 type =
-                                    ArbeidsforholdType(
+                                    AaregArbeidsforholdType(
                                         kode = "ordinaertArbeidsforhold",
                                         beskrivelse = ""
                                     ),
@@ -523,6 +527,7 @@ object ArbeidsforholdConsumerTest :
                             orgNavn = "Gammelt Navn AS",
                             fom = LocalDate.now().minusYears(1),
                             tom = null,
+                            type = ArbeidsforholdType.ORDINAERT_ARBEIDSFORHOLD,
                         ),
                     )
                     arbeidsforholdService.insertOrUpdate(
@@ -534,6 +539,7 @@ object ArbeidsforholdConsumerTest :
                             orgNavn = "Gammelt Navn AS",
                             fom = LocalDate.now().minusYears(1),
                             tom = null,
+                            type = ArbeidsforholdType.ORDINAERT_ARBEIDSFORHOLD,
                         ),
                     )
 
@@ -589,6 +595,7 @@ object ArbeidsforholdConsumerTest :
                                 orgNavn = "Navn AS",
                                 fom = LocalDate.now().minusYears(3),
                                 tom = LocalDate.now().minusDays(3),
+                                type = ArbeidsforholdType.ORDINAERT_ARBEIDSFORHOLD,
                             ),
                             Arbeidsforhold(
                                 id = 2,
@@ -598,6 +605,7 @@ object ArbeidsforholdConsumerTest :
                                 orgNavn = "Bedrift AS",
                                 fom = LocalDate.now().minusYears(1),
                                 tom = null,
+                                type = ArbeidsforholdType.ORDINAERT_ARBEIDSFORHOLD,
                             ),
                         )
                     val arbeidsforholdFraDb =
@@ -610,6 +618,7 @@ object ArbeidsforholdConsumerTest :
                                 orgNavn = "Navn AS",
                                 fom = LocalDate.now().minusYears(3),
                                 tom = LocalDate.now().minusDays(3),
+                                type = ArbeidsforholdType.ORDINAERT_ARBEIDSFORHOLD,
                             ),
                             Arbeidsforhold(
                                 id = 2,
@@ -619,6 +628,7 @@ object ArbeidsforholdConsumerTest :
                                 orgNavn = "Gammelt Navn AS",
                                 fom = LocalDate.now().minusYears(1),
                                 tom = null,
+                                type = ArbeidsforholdType.ORDINAERT_ARBEIDSFORHOLD,
                             ),
                         )
 
@@ -643,6 +653,7 @@ object ArbeidsforholdConsumerTest :
                                 orgNavn = "Navn AS",
                                 fom = LocalDate.now().minusYears(3),
                                 tom = LocalDate.now().minusDays(3),
+                                type = ArbeidsforholdType.ORDINAERT_ARBEIDSFORHOLD,
                             ),
                             Arbeidsforhold(
                                 id = 2,
@@ -652,6 +663,7 @@ object ArbeidsforholdConsumerTest :
                                 orgNavn = "Bedrift AS",
                                 fom = LocalDate.now().minusYears(1),
                                 tom = null,
+                                type = ArbeidsforholdType.ORDINAERT_ARBEIDSFORHOLD,
                             ),
                         )
                     val arbeidsforholdFraDb =
@@ -664,6 +676,7 @@ object ArbeidsforholdConsumerTest :
                                 orgNavn = "Navn AS",
                                 fom = LocalDate.now().minusYears(3),
                                 tom = LocalDate.now().minusDays(3),
+                                type = ArbeidsforholdType.ORDINAERT_ARBEIDSFORHOLD,
                             ),
                         )
 
@@ -688,6 +701,7 @@ object ArbeidsforholdConsumerTest :
                                 orgNavn = "Navn AS",
                                 fom = LocalDate.now().minusYears(3),
                                 tom = LocalDate.now().minusDays(3),
+                                type = ArbeidsforholdType.ORDINAERT_ARBEIDSFORHOLD,
                             ),
                         )
                     val arbeidsforholdFraDb =
@@ -700,6 +714,7 @@ object ArbeidsforholdConsumerTest :
                                 orgNavn = "Navn AS",
                                 fom = LocalDate.now().minusYears(3),
                                 tom = LocalDate.now().minusDays(3),
+                                type = ArbeidsforholdType.ORDINAERT_ARBEIDSFORHOLD,
                             ),
                             Arbeidsforhold(
                                 id = 2,
@@ -709,6 +724,7 @@ object ArbeidsforholdConsumerTest :
                                 orgNavn = "Gammelt Navn AS",
                                 fom = LocalDate.now().minusYears(1),
                                 tom = null,
+                                type = ArbeidsforholdType.ORDINAERT_ARBEIDSFORHOLD,
                             ),
                         )
 

@@ -4,6 +4,7 @@ import io.kotest.core.spec.style.FunSpec
 import java.time.LocalDate
 import no.nav.sykmeldinger.TestDB
 import no.nav.sykmeldinger.arbeidsforhold.model.Arbeidsforhold
+import no.nav.sykmeldinger.arbeidsforhold.model.ArbeidsforholdType
 import org.amshove.kluent.shouldBeEqualTo
 
 object ArbeidsforholdDbTest :
@@ -25,6 +26,7 @@ object ArbeidsforholdDbTest :
                         orgNavn = "Bedriften AS",
                         fom = LocalDate.of(2020, 5, 1),
                         tom = LocalDate.now().minusMonths(5),
+                        type = ArbeidsforholdType.ORDINAERT_ARBEIDSFORHOLD,
                     )
                 arbeidsforholdDb.insertOrUpdate(arbeidsforhold)
 
@@ -45,6 +47,7 @@ object ArbeidsforholdDbTest :
                         orgNavn = "Bedriften AS",
                         fom = LocalDate.of(2020, 5, 1),
                         tom = LocalDate.now().minusMonths(3),
+                        type = ArbeidsforholdType.ORDINAERT_ARBEIDSFORHOLD,
                     )
                 arbeidsforholdDb.insertOrUpdate(arbeidsforhold)
 
@@ -63,6 +66,7 @@ object ArbeidsforholdDbTest :
                         orgNavn = "Bedriften AS",
                         fom = LocalDate.of(2020, 5, 1),
                         tom = null,
+                        type = ArbeidsforholdType.ORDINAERT_ARBEIDSFORHOLD,
                     )
                 arbeidsforholdDb.insertOrUpdate(arbeidsforhold)
 
