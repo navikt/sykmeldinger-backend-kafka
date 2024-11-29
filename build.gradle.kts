@@ -4,10 +4,13 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 group = "no.nav.sykmeldinger"
 version = "1.0.0"
 
+val javaVersion = JvmTarget.JVM_21
+
+
 val coroutinesVersion = "1.9.0"
 val jacksonVersion = "2.18.0"
 val kluentVersion = "1.73"
-val ktorVersion = "2.3.12"
+val ktorVersion = "3.0.1"
 val logbackVersion = "1.5.8"
 val logstashEncoderVersion = "8.0"
 val prometheusVersion = "0.16.0"
@@ -24,9 +27,13 @@ val commonsCodecVersion = "1.17.1"
 val ktfmtVersion = "0.44"
 val avroVersion = "1.12.0"
 val opentelemetryVersion = "2.8.0"
+
+
+//Due to vulnerabilities
+val nettycommonVersion = "4.1.115.Final"
 val snappyJavaVersion = "1.1.10.7"
 val commonsCompressVersion = "1.27.1"
-val javaVersion = JvmTarget.JVM_21
+
 
 plugins {
     id("application")
@@ -60,6 +67,11 @@ dependencies {
 
     implementation("io.ktor:ktor-server-core:$ktorVersion")
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
+    constraints {
+        implementation("io.netty:netty-common:$nettycommonVersion") {
+            because("Due to vulnerabilities in io.ktor:ktor-server-netty")
+        }
+    }
     implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
     implementation("io.ktor:ktor-client-core:$ktorVersion")
     implementation("io.ktor:ktor-client-apache:$ktorVersion")

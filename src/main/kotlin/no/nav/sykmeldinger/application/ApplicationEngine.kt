@@ -8,9 +8,10 @@ import io.ktor.serialization.jackson.jackson
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationCallPipeline
 import io.ktor.server.application.install
-import io.ktor.server.engine.ApplicationEngine
+import io.ktor.server.engine.EmbeddedServer
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import io.ktor.server.netty.NettyApplicationEngine
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
@@ -21,7 +22,8 @@ import no.nav.sykmeldinger.application.metrics.monitorHttpRequests
 fun createApplicationEngine(
     env: Environment,
     applicationState: ApplicationState,
-): ApplicationEngine = embeddedServer(Netty, env.applicationPort) { module(applicationState) }
+): EmbeddedServer<NettyApplicationEngine, NettyApplicationEngine.Configuration> =
+    embeddedServer(Netty, env.applicationPort) { module(applicationState) }
 
 private fun Application.module(applicationState: ApplicationState) {
     install(ContentNegotiation) {

@@ -9,8 +9,8 @@ import java.time.LocalDate
 import no.nav.sykmeldinger.TestDB
 import no.nav.sykmeldinger.arbeidsforhold.ArbeidsforholdService
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.client.ArbeidsforholdClient
-import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.AaregArbeidsforholdType
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.AaregArbeidsforhold
+import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.AaregArbeidsforholdType
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Ansettelsesperiode
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Arbeidssted
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.ArbeidsstedType
