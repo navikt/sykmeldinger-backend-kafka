@@ -10,7 +10,7 @@ val javaVersion = JvmTarget.JVM_21
 val coroutinesVersion = "1.9.0"
 val jacksonVersion = "2.18.2"
 val kluentVersion = "1.73"
-val ktorVersion = "3.0.1"
+val ktorVersion = "3.0.2"
 val logbackVersion = "1.5.12"
 val logstashEncoderVersion = "8.0"
 val prometheusVersion = "0.16.0"
@@ -30,8 +30,6 @@ val opentelemetryVersion = "2.10.0"
 
 
 //Due to vulnerabilities
-val nettycommonVersion = "4.1.115.Final"
-val snappyJavaVersion = "1.1.10.7"
 val commonsCompressVersion = "1.27.1"
 
 
@@ -39,7 +37,7 @@ plugins {
     id("application")
     kotlin("jvm") version "2.1.0"
     id("com.diffplug.spotless") version "6.25.0"
-    id("com.github.johnrengelman.shadow") version "8.1.1"
+    id("com.gradleup.shadow") version "8.3.5"
 }
 
 application {
@@ -67,11 +65,6 @@ dependencies {
 
     implementation("io.ktor:ktor-server-core:$ktorVersion")
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
-    constraints {
-        implementation("io.netty:netty-common:$nettycommonVersion") {
-            because("Due to vulnerabilities in io.ktor:ktor-server-netty")
-        }
-    }
     implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
     implementation("io.ktor:ktor-client-core:$ktorVersion")
     implementation("io.ktor:ktor-client-apache:$ktorVersion")
@@ -95,11 +88,7 @@ dependencies {
     implementation("org.postgresql:postgresql:$postgresVersion")
     implementation("com.google.cloud.sql:postgres-socket-factory:$googlePostgresVersion")
 
-    constraints {
-        implementation("org.xerial.snappy:snappy-java:$snappyJavaVersion") {
-            because("override transient from org.apache.kafka:kafka_2.12")
-        }
-    }
+
     implementation("io.confluent:kafka-avro-serializer:$confluentVersion")
     constraints {
         implementation("org.apache.avro:avro:$avroVersion") {
