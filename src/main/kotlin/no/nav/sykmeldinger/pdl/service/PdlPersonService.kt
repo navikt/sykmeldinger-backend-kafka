@@ -47,7 +47,7 @@ class PdlPersonService(
             throw PersonNameNotFoundInPdl("Fant ikke navn på person i PDL")
         }
         var foedselsdato: LocalDate? = null
-        pdlResponse.data.person.foedsel?.firstOrNull()?.foedselsdato?.let { dato ->
+        pdlResponse.data.person.foedselsdato?.firstOrNull()?.foedselsdato?.let { dato ->
             foedselsdato = LocalDate.parse(dato)
         }
             ?: run {
