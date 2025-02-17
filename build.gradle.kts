@@ -21,12 +21,12 @@ val kotestVersion = "5.9.1"
 val postgresVersion = "42.7.5"
 val hikariVersion = "6.2.1"
 val googlePostgresVersion = "1.23.1"
-val flywayVersion = "11.3.1"
+val flywayVersion = "11.3.2"
 val confluentVersion = "7.8.1"
 val commonsCodecVersion = "1.18.0"
 val ktfmtVersion = "0.44"
 val avroVersion = "1.12.0"
-val opentelemetryVersion = "2.12.0"
+val opentelemetryVersion = "2.13.0"
 
 
 //Due to vulnerabilities
