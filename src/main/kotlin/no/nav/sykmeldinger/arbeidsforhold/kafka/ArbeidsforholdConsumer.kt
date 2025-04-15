@@ -23,6 +23,7 @@ import no.nav.sykmeldinger.secureLog
 import no.nav.sykmeldinger.sykmelding.db.SykmeldingDb
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
+import kotlin.coroutines.cancellation.CancellationException
 
 class ArbeidsforholdConsumer(
     private val kafkaConsumer: KafkaConsumer<String, ArbeidsforholdHendelse>,
@@ -65,18 +66,29 @@ class ArbeidsforholdConsumer(
             try {
                 kafkaConsumer.subscribe(listOf(topic))
                 consumeMessages()
-            } catch (ex: Exception) {
-                log.error(
-                    "Error running kafka consumer for arbeidsforhold, unsubscribing and waiting $DELAY_ON_ERROR_SECONDS seconds for retry",
-                    ex,
-                )
-                kafkaConsumer.unsubscribe()
-                delay(DELAY_ON_ERROR_SECONDS.seconds)
-                kafkaConsumer.subscribe(listOf(topic))
+            } catch (ex: Throwable) {
+                if (ex is CancellationException) {
+                    log.warn("Consumer coroutine cancelled: ${ex.message}")
+                    throw ex
+                } else {
+                    log.error(
+                        """
+                    Unexpected error in Kafka consumer for topic "$topic"
+                    ↪ Type: ${ex::class.simpleName}
+                    ↪ Message: ${ex.message}
+                    ↪ Will unsubscribe and retry in $DELAY_ON_ERROR_SECONDS seconds
+                    """.trimIndent(),
+                        ex
+                    )
+                    kafkaConsumer.unsubscribe()
+                    delay(DELAY_ON_ERROR_SECONDS.seconds)
+                    kafkaConsumer.subscribe(listOf(topic))
+                }
             }
-            log.info("Arbeidsforhold consumer coroutine not active")
-            kafkaConsumer.unsubscribe()
         }
+
+        log.info("Kafka consumer coroutine for topic $topic is no longer active, unsubscribing.")
+        kafkaConsumer.unsubscribe()
     }
 
     private suspend fun ArbeidsforholdConsumer.consumeMessages() = coroutineScope {
