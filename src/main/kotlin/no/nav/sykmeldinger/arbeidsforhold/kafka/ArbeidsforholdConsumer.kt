@@ -67,7 +67,7 @@ class ArbeidsforholdConsumer(
                 consumeMessages()
             } catch (ex: Exception) {
                 log.error(
-                    "Error running kafka consumer for arbeidsforhold, unsubscribing and waiting $DELAY_ON_ERROR_SECONDS seconds for retry",
+                    "Error running kafka consumer for arbeidsforhold, unsubscribing and waiting $DELAY_ON_ERROR_SECONDS seconds for retry ${ex.message}",
                     ex,
                 )
                 kafkaConsumer.unsubscribe()
@@ -81,10 +81,15 @@ class ArbeidsforholdConsumer(
 
     private suspend fun ArbeidsforholdConsumer.consumeMessages() = coroutineScope {
         while (isActive) {
-            val hendelser: ConsumerRecords<String, ArbeidsforholdHendelse> =
-                kafkaConsumer.poll(Duration.ofSeconds(POLL_DURATION_SECONDS))
+            try {
+                val hendelser: ConsumerRecords<String, ArbeidsforholdHendelse> =
+                    kafkaConsumer.poll(Duration.ofSeconds(POLL_DURATION_SECONDS))
 
-            handleHendelser(hendelser)
+                handleHendelser(hendelser)
+            } catch (ex: Exception) {
+                log.error("Error in consumeMessages: ${ex.message}", ex)
+                throw ex
+            }
         }
     }
 
@@ -92,39 +97,44 @@ class ArbeidsforholdConsumer(
     private suspend fun handleHendelser(
         hendelser: ConsumerRecords<String, ArbeidsforholdHendelse>
     ) {
-        val arbeidsforholdEndringer =
-            hendelser
-                .filter { it.value().endringstype != Endringstype.Sletting }
-                .filter { hasValidEndringstype(it.value()) }
+        try {
+            val arbeidsforholdEndringer =
+                hendelser
+                    .filter { it.value().endringstype != Endringstype.Sletting }
+                    .filter { hasValidEndringstype(it.value()) }
 
-        val newhendelserByFnr =
-            arbeidsforholdEndringer
-                .map { it.value().arbeidsforhold.arbeidstaker.getFnr() }
-                .distinct()
+            val newhendelserByFnr =
+                arbeidsforholdEndringer
+                    .map { it.value().arbeidsforhold.arbeidstaker.getFnr() }
+                    .distinct()
 
-        newhendelserByFnr.chunked(10).forEach { updateArbeidsforholdFor(it) }
+            newhendelserByFnr.chunked(10).forEach { updateArbeidsforholdFor(it) }
 
-        val deleted =
-            hendelser
-                .filter { it.value().endringstype == Endringstype.Sletting }
-                .map { it.value().arbeidsforhold.navArbeidsforholdId }
+            val deleted =
+                hendelser
+                    .filter { it.value().endringstype == Endringstype.Sletting }
+                    .map { it.value().arbeidsforhold.navArbeidsforholdId }
 
-        deleteArbeidsforhold(deleted)
+            deleteArbeidsforhold(deleted)
 
-        val hendelsesTypesCount =
-            arbeidsforholdEndringer
-                .flatMap { it.value().entitetsendringer }
-                .groupingBy { it.name }
-                .eachCount()
+            val hendelsesTypesCount =
+                arbeidsforholdEndringer
+                    .flatMap { it.value().entitetsendringer }
+                    .groupingBy { it.name }
+                    .eachCount()
 
-        for ((type, count) in hendelsesTypesCount) {
-            hendelsesTyper[type] = hendelsesTyper.getOrDefault(type, 0) + count
-        }
-        hendelsesTyper["Slettet"] = hendelsesTyper.getOrDefault("Slettet", 0) + deleted.size
+            for ((type, count) in hendelsesTypesCount) {
+                hendelsesTyper[type] = hendelsesTyper.getOrDefault(type, 0) + count
+            }
+            hendelsesTyper["Slettet"] = hendelsesTyper.getOrDefault("Slettet", 0) + deleted.size
 
-        if (hendelser.count() > 0) {
-            log.info("Last hendelsesId ${hendelser.last().value().id}")
-            lastOffset = hendelser.last().offset()
+            if (hendelser.count() > 0) {
+                log.info("Last hendelsesId ${hendelser.last().value().id}")
+                lastOffset = hendelser.last().offset()
+            }
+        } catch (e: Exception) {
+            log.error("Error when updating arbeidsforhold ${e.message} ${e.stackTrace}", e)
+            throw e
         }
     }
 
