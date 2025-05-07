@@ -8,7 +8,7 @@ metadata:
 spec:
   image: {{ image }}
   replicas:
-    min: 1
+    min: 3
     max: 3
     cpuThresholdPercentage: 90
   port: 8080
@@ -46,8 +46,8 @@ spec:
     limits:
       memory: 3Gi
     requests:
-      cpu: 150m
-      memory: 1000Mi
+      cpu: 200m
+      memory: 1256Mi
   azure:
     application:
       enabled: true

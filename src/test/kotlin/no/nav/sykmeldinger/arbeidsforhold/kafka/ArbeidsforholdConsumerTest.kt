@@ -6,6 +6,7 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
 import java.time.LocalDate
+import java.time.LocalDateTime
 import no.nav.sykmeldinger.TestDB
 import no.nav.sykmeldinger.arbeidsforhold.ArbeidsforholdService
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.client.ArbeidsforholdClient
@@ -58,8 +59,8 @@ object ArbeidsforholdConsumerTest :
             beforeEach {
                 TestDB.clearAllData()
                 clearMocks(organisasjonsinfoClient, arbeidsforholdClient)
-                coEvery { organisasjonsinfoClient.getOrganisasjonsnavn(any()) } returns
-                    getOrganisasjonsinfo()
+                coEvery { organisasjonsinfoClient.getOrgnavn(any()) } returns
+                    getOrganisasjonsinfo().navn.getNameAsString()
             }
 
             context("ArbeidsforholdConsumer - handleArbeidsforholdHendelse") {
@@ -109,6 +110,7 @@ object ArbeidsforholdConsumerTest :
                                     ),
                                 ),
                             entitetsendringer = listOf(Entitetsendring.Ansettelsesdetaljer),
+                            tidsstempel = LocalDateTime.now(),
                         )
 
                     arbeidsforholdConsumer.handleArbeidsforholdHendelse(arbeidsforholdHendelse)
@@ -172,6 +174,7 @@ object ArbeidsforholdConsumerTest :
                                     ),
                                 ),
                             entitetsendringer = listOf(Entitetsendring.Ansettelsesdetaljer),
+                            tidsstempel = LocalDateTime.now(),
                         )
 
                     arbeidsforholdConsumer.handleArbeidsforholdHendelse(arbeidsforholdHendelse)
@@ -239,6 +242,7 @@ object ArbeidsforholdConsumerTest :
                                     ),
                                 ),
                             entitetsendringer = listOf(Entitetsendring.Ansettelsesdetaljer),
+                            tidsstempel = LocalDateTime.now(),
                         )
 
                     arbeidsforholdConsumer.handleArbeidsforholdHendelse(arbeidsforholdHendelse)
@@ -292,6 +296,7 @@ object ArbeidsforholdConsumerTest :
                                     ),
                                 ),
                             entitetsendringer = listOf(Entitetsendring.Ansettelsesdetaljer),
+                            tidsstempel = LocalDateTime.now(),
                         )
 
                     arbeidsforholdConsumer.handleArbeidsforholdHendelse(arbeidsforholdHendelse)
@@ -380,6 +385,7 @@ object ArbeidsforholdConsumerTest :
                                     ),
                                 ),
                             entitetsendringer = listOf(Entitetsendring.Ansettelsesdetaljer),
+                            tidsstempel = LocalDateTime.now()
                         )
 
                     arbeidsforholdConsumer.handleArbeidsforholdHendelse(arbeidsforholdHendelse)
@@ -406,6 +412,7 @@ object ArbeidsforholdConsumerTest :
                                     ),
                                 ),
                             entitetsendringer = listOf(Entitetsendring.Ansettelsesdetaljer),
+                            tidsstempel = LocalDateTime.now(),
                         )
 
                     arbeidsforholdConsumer.handleArbeidsforholdHendelse(arbeidsforholdHendelse)
@@ -462,6 +469,7 @@ object ArbeidsforholdConsumerTest :
                                     ),
                                 ),
                             entitetsendringer = listOf(Entitetsendring.Ansettelsesdetaljer),
+                            tidsstempel = LocalDateTime.now(),
                         )
 
                     arbeidsforholdConsumer.handleArbeidsforholdHendelse(arbeidsforholdHendelse)
@@ -566,6 +574,7 @@ object ArbeidsforholdConsumerTest :
                                     ),
                                 ),
                             entitetsendringer = listOf(Entitetsendring.Ansettelsesdetaljer),
+                            tidsstempel = LocalDateTime.now(),
                         )
 
                     arbeidsforholdConsumer.handleArbeidsforholdHendelse(arbeidsforholdHendelse)

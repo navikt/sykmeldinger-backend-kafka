@@ -36,8 +36,8 @@ object ArbeidsforholdServiceTest :
                 arbeidsforholdClient,
                 organisasjonsinfoClient,
             )
-            coEvery { organisasjonsinfoClient.getOrganisasjonsnavn(any()) } returns
-                getOrganisasjonsinfo()
+            coEvery { organisasjonsinfoClient.getOrgnavn(any()) } returns
+                getOrganisasjonsinfo().navn.getNameAsString()
         }
         context("ArbeidsforholderService - getArbeidsforhold") {
             test("getArbeidsforhold returnerer liste med arbeidsforhold") {
@@ -101,12 +101,14 @@ object ArbeidsforholdServiceTest :
                                 ),
                         ),
                     )
-                coEvery { organisasjonsinfoClient.getOrganisasjonsnavn(any()) } returns
-                    getOrganisasjonsinfo() andThen
+                coEvery { organisasjonsinfoClient.getOrgnavn(any()) } returns
+                    getOrganisasjonsinfo().navn.getNameAsString() andThen
                     getOrganisasjonsinfo(
-                        navn = "Navn 2",
-                    ) andThen
-                    getOrganisasjonsinfo(navn = "Navn 2")
+                            navn = "Navn 2",
+                        )
+                        .navn
+                        .getNameAsString() andThen
+                    getOrganisasjonsinfo(navn = "Navn 2").navn.getNameAsString()
 
                 val arbeidsforhold = arbeidsforholdService.getArbeidsforhold("12345678901")
 

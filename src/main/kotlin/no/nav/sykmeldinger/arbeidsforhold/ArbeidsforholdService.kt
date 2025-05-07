@@ -8,8 +8,6 @@ import no.nav.sykmeldinger.arbeidsforhold.client.organisasjon.client.Organisasjo
 import no.nav.sykmeldinger.arbeidsforhold.db.ArbeidsforholdDb
 import no.nav.sykmeldinger.arbeidsforhold.model.Arbeidsforhold
 import no.nav.sykmeldinger.arbeidsforhold.model.ArbeidsforholdType
-import no.nav.sykmeldinger.log
-import no.nav.sykmeldinger.secureLog
 
 class ArbeidsforholdService(
     private val arbeidsforholdClient: ArbeidsforholdClient,
@@ -32,12 +30,12 @@ class ArbeidsforholdService(
 
         if (slettesfraDb.isNotEmpty()) {
             slettesfraDb.forEach {
-                log.info(
+                /*   log.info(
                     "Sletter utdatert arbeidsforhold med id $it",
                 )
                 secureLog.info(
                     "Sletter fra arbeidsforhold, siden db og areg ulike, fnr: $fnr, arbeidsforholdId: $it",
-                )
+                )*/
                 deleteArbeidsforhold(it)
             }
         }
@@ -78,8 +76,8 @@ class ArbeidsforholdService(
                     compareByDescending(nullsLast()) { it.ansettelsesperiode.sluttdato },
                 )
                 .map { aaregArbeidsforhold ->
-                    val organisasjonsinfo =
-                        organisasjonsinfoClient.getOrganisasjonsnavn(
+                    val orgnavn =
+                        organisasjonsinfoClient.getOrgnavn(
                             aaregArbeidsforhold.arbeidssted.getOrgnummer()
                         )
                     val arbeidsforholdType = ArbeidsforholdType.parse(aaregArbeidsforhold.type.kode)
@@ -89,7 +87,7 @@ class ArbeidsforholdService(
                         orgnummer = aaregArbeidsforhold.arbeidssted.getOrgnummer(),
                         juridiskOrgnummer =
                             aaregArbeidsforhold.opplysningspliktig.getJuridiskOrgnummer(),
-                        orgNavn = organisasjonsinfo.navn.getNameAsString(),
+                        orgNavn = orgnavn,
                         fom = aaregArbeidsforhold.ansettelsesperiode.startdato,
                         tom = aaregArbeidsforhold.ansettelsesperiode.sluttdato,
                         type = arbeidsforholdType,

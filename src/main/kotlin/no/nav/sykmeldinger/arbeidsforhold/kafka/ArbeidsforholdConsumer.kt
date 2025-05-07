@@ -4,9 +4,9 @@ import io.opentelemetry.instrumentation.annotations.WithSpan
 import java.time.Duration
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -17,7 +17,6 @@ import kotlinx.coroutines.withContext
 import no.nav.sykmeldinger.arbeidsforhold.ArbeidsforholdService
 import no.nav.sykmeldinger.arbeidsforhold.kafka.model.ArbeidsforholdHendelse
 import no.nav.sykmeldinger.arbeidsforhold.kafka.model.Endringstype
-import no.nav.sykmeldinger.arbeidsforhold.kafka.model.Entitetsendring
 import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.secureLog
 import no.nav.sykmeldinger.sykmelding.db.SykmeldingDb
@@ -33,8 +32,6 @@ class ArbeidsforholdConsumer(
 ) {
 
     private var job: Job? = null
-    private val hendelsesTyper: MutableMap<String, Int> = mutableMapOf()
-    private var lastOffset: Long = 0
 
     companion object {
         private const val DELAY_ON_ERROR_SECONDS = 60L
@@ -44,6 +41,7 @@ class ArbeidsforholdConsumer(
     fun startConsumer() {
         if (job == null || job!!.isCompleted) {
             job = scope.launch(Dispatchers.IO) { runConsumer() }
+
             log.info("ArbeidsforholdConsumer started")
         } else (log.info("ArbeidsforholdConsumer already running"))
     }
@@ -58,9 +56,11 @@ class ArbeidsforholdConsumer(
         }
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     private suspend fun runConsumer() = coroutineScope {
         kafkaConsumer.subscribe(listOf(topic))
         log.info("Starting consuming topic $topic")
+
         while (isActive) {
             try {
                 kafkaConsumer.subscribe(listOf(topic))
@@ -83,8 +83,7 @@ class ArbeidsforholdConsumer(
         while (isActive) {
             try {
                 val hendelser: ConsumerRecords<String, ArbeidsforholdHendelse> =
-                    kafkaConsumer.poll(Duration.ofSeconds(POLL_DURATION_SECONDS))
-
+                    kafkaConsumer.poll(Duration.ofSeconds(0))
                 handleHendelser(hendelser)
             } catch (ex: Exception) {
                 log.error("Error in consumeMessages: ${ex.message}", ex)
@@ -98,17 +97,16 @@ class ArbeidsforholdConsumer(
         hendelser: ConsumerRecords<String, ArbeidsforholdHendelse>
     ) {
         try {
+
             val arbeidsforholdEndringer =
-                hendelser
-                    .filter { it.value().endringstype != Endringstype.Sletting }
-                    .filter { hasValidEndringstype(it.value()) }
+                hendelser.filter { it.value().endringstype != Endringstype.Sletting }
 
             val newhendelserByFnr =
                 arbeidsforholdEndringer
                     .map { it.value().arbeidsforhold.arbeidstaker.getFnr() }
                     .distinct()
 
-            newhendelserByFnr.chunked(10).forEach { updateArbeidsforholdFor(it) }
+            newhendelserByFnr.chunked(100).forEach { updateArbeidsforholdFor(it) }
 
             val deleted =
                 hendelser
@@ -116,41 +114,19 @@ class ArbeidsforholdConsumer(
                     .map { it.value().arbeidsforhold.navArbeidsforholdId }
 
             deleteArbeidsforhold(deleted)
-
-            val hendelsesTypesCount =
-                arbeidsforholdEndringer
-                    .flatMap { it.value().entitetsendringer }
-                    .groupingBy { it.name }
-                    .eachCount()
-
-            for ((type, count) in hendelsesTypesCount) {
-                hendelsesTyper[type] = hendelsesTyper.getOrDefault(type, 0) + count
-            }
-            hendelsesTyper["Slettet"] = hendelsesTyper.getOrDefault("Slettet", 0) + deleted.size
-
-            if (hendelser.count() > 0) {
-                log.info("Last hendelsesId ${hendelser.last().value().id}")
-                lastOffset = hendelser.last().offset()
-            }
         } catch (e: Exception) {
             log.error("Error when updating arbeidsforhold ${e.message} ${e.stackTrace}", e)
             throw e
         }
     }
 
-    private fun hasValidEndringstype(arbeidsforholdHendelse: ArbeidsforholdHendelse) =
-        arbeidsforholdHendelse.entitetsendringer.any { endring ->
-            endring == Entitetsendring.Ansettelsesdetaljer ||
-                endring == Entitetsendring.Ansettelsesperiode
-        }
-
     @WithSpan
     private suspend fun deleteArbeidsforhold(deleted: List<Int>) =
-        withContext(NonCancellable) { arbeidsforholdService.deleteArbeidsforholdIds(deleted) }
+        withContext(Dispatchers.IO) { arbeidsforholdService.deleteArbeidsforholdIds(deleted) }
 
     @WithSpan
     private suspend fun updateArbeidsforholdFor(newhendelserByFnr: List<String>) {
-        withContext(NonCancellable) {
+        withContext(Dispatchers.IO) {
             val jobs =
                 newhendelserByFnr.map {
                     async(Dispatchers.IO) { arbeidsforholdService.updateArbeidsforhold(it) }

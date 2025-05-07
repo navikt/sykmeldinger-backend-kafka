@@ -11,12 +11,17 @@ class OrganisasjonsinfoClient(
     private val httpClient: HttpClient,
     private val url: String,
 ) {
-    suspend fun getOrganisasjonsnavn(orgNummer: String): Organisasjonsinfo {
+
+    suspend fun getOrgnavn(orgNummer: String): String {
         val timer =
             HTTP_CLIENT_HISTOGRAM.labels("$url/api/v1/organisasjon/:orgNummer/noekkelinfo")
                 .startTimer()
         try {
-            return httpClient.get("$url/api/v1/organisasjon/$orgNummer/noekkelinfo").body()
+            return httpClient
+                .get("$url/api/v1/organisasjon/$orgNummer/noekkelinfo")
+                .body<Organisasjonsinfo>()
+                .navn
+                .getNameAsString()
         } catch (e: Exception) {
             log.error("Noe gikk galt ved henting av organisasjon $orgNummer fra ereg")
             throw e

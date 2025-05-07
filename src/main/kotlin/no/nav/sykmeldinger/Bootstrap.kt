@@ -318,7 +318,7 @@ private fun getNavnendringerConsumer(
             )
             .also {
                 it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
-                it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
+                it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 1000
                 it["specific.avro.reader"] = true
             }
     return KafkaConsumer<String, Personhendelse>(consumerProperties)
@@ -329,12 +329,12 @@ private fun getArbeidsforholdKafkaConsumer(): KafkaConsumer<String, Arbeidsforho
         KafkaConsumer(
             KafkaUtils.getAivenKafkaConfig("arbeidsforhold-consumer")
                 .toConsumerConfig(
-                    "sykmeldinger-arbeidsforhold-consumer",
+                    "sykmeldinger-backend-kafka-arbeidsforhold-consumer",
                     JacksonKafkaDeserializer::class
                 )
                 .also {
                     it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
-                    it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 100
+                    it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 1000
                 },
             StringDeserializer(),
             JacksonKafkaDeserializer(ArbeidsforholdHendelse::class),
