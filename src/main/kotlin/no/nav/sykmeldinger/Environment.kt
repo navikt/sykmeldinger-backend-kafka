@@ -20,13 +20,13 @@ data class Environment(
     val schemaRegistryUrl: String = getEnvVar("KAFKA_SCHEMA_REGISTRY"),
     val kafkaSchemaRegistryUsername: String = getEnvVar("KAFKA_SCHEMA_REGISTRY_USER"),
     val kafkaSchemaRegistryPassword: String = getEnvVar("KAFKA_SCHEMA_REGISTRY_PASSWORD"),
-    val behandlingsutfallTopic: String = "teamsykmelding.sykmelding-behandlingsutfall",
     val cluster: String = getEnvVar("NAIS_CLUSTER_NAME"),
     val eregUrl: String = getEnvVar("EREG_URL"),
     val aaregUrl: String = getEnvVar("AAREG_URL"),
     val aaregScope: String = getEnvVar("AAREG_SCOPE"),
     val arbeidsforholdTopic: String = getEnvVar("ARBEIDSFORHOLD_TOPIC"),
     val electorPath: String = getEnvVar("ELECTOR_PATH"),
+    val sykmeldingnotifikasjonTopic: String = "teamsykmelding.sykmeldingnotifikasjon",
 )
 
 fun getEnvVar(varName: String, defaultValue: String? = null) =

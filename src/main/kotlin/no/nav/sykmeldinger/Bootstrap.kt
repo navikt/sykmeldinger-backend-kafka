@@ -25,6 +25,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import no.nav.person.pdl.leesah.Personhendelse
 import no.nav.syfo.kafka.aiven.KafkaUtils
+import no.nav.syfo.kafka.aiven.toProducerConfig
 import no.nav.syfo.model.sykmeldingstatus.SykmeldingStatusKafkaMessageDTO
 import no.nav.sykmeldinger.application.ApplicationServer
 import no.nav.sykmeldinger.application.ApplicationState
@@ -55,10 +56,13 @@ import no.nav.sykmeldinger.status.kafka.SykmeldingStatusConsumer
 import no.nav.sykmeldinger.sykmelding.SykmeldingService
 import no.nav.sykmeldinger.sykmelding.db.SykmeldingDb
 import no.nav.sykmeldinger.sykmelding.kafka.SykmeldingConsumer
+import no.nav.sykmeldinger.sykmelding.notifikasjon.SykmeldingNotifikasjonService
 import no.nav.sykmeldinger.util.kafka.JacksonKafkaDeserializer
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.common.serialization.StringDeserializer
+import org.apache.kafka.common.serialization.StringSerializer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -171,6 +175,8 @@ fun main() {
 
     val sykmeldingDb = SykmeldingDb(database)
     val sykmeldingService = SykmeldingService(sykmeldingDb)
+    val sykmeldingNotifikasjonService =
+        SykmeldingNotifikasjonService(getKafkaProducer(), env.sykmeldingnotifikasjonTopic)
     val sykmeldingConsumer =
         SykmeldingConsumer(
             getKafkaConsumer(),
@@ -178,7 +184,8 @@ fun main() {
             pdlPersonService,
             arbeidsforholdService,
             sykmeldingService,
-            env.cluster
+            env.cluster,
+            sykmeldingNotifikasjonService
         )
     sykmeldingConsumer.startConsumer()
 
@@ -225,6 +232,15 @@ fun main() {
     deleteArbeidsforholdService.start()
 
     applicationServer.start()
+}
+
+private fun getKafkaProducer(): KafkaProducer<String, String> {
+    val kafkaProducer =
+        KafkaProducer<String, String>(
+            KafkaUtils.getAivenKafkaConfig("sykmeldinger-backend-kafka-producer")
+                .toProducerConfig(StringSerializer::class, StringSerializer::class)
+        )
+    return kafkaProducer
 }
 
 private fun getKafkaConsumer(): KafkaConsumer<String, String> {
