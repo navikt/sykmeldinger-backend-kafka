@@ -24,6 +24,7 @@ import no.nav.sykmeldinger.pdl.service.PdlPersonService
 import no.nav.sykmeldinger.sykmelding.SykmeldingMapper
 import no.nav.sykmeldinger.sykmelding.SykmeldingService
 import no.nav.sykmeldinger.sykmelding.model.Sykmeldt
+import no.nav.sykmeldinger.sykmelding.notifikasjon.SykmeldingNotifikasjonService
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.slf4j.LoggerFactory
 
@@ -42,6 +43,7 @@ class SykmeldingConsumer(
     private val arbeidsforholdService: ArbeidsforholdService,
     private val sykmeldingService: SykmeldingService,
     private val cluster: String,
+    private val sykmeldingNotifikasjonService: SykmeldingNotifikasjonService,
 ) {
     companion object {
         private val log = LoggerFactory.getLogger(SykmeldingConsumer::class.java)
@@ -108,6 +110,7 @@ class SykmeldingConsumer(
                     sykmeldt,
                     receivedSykmelding.validationResult
                 )
+                sykmeldingNotifikasjonService.sendSykmeldingNotifikasjon(receivedSykmelding)
             } catch (e: PersonNotFoundInPdl) {
                 if (cluster != "dev-gcp") {
                     log.error("Person not found in PDL, for sykmelding $sykmeldingId", e)

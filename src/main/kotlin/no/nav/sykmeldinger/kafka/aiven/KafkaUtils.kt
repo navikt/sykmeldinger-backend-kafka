@@ -35,13 +35,11 @@ class KafkaUtils {
 }
 
 fun Properties.toProducerConfig(
-    groupId: String,
     valueSerializer: KClass<out Serializer<out Any>>,
     keySerializer: KClass<out Serializer<out Any>> = StringSerializer::class
 ): Properties =
     Properties().also {
         it.putAll(this)
-        it[ConsumerConfig.GROUP_ID_CONFIG] = groupId
         it[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = valueSerializer.java
         it[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = keySerializer.java
     }
