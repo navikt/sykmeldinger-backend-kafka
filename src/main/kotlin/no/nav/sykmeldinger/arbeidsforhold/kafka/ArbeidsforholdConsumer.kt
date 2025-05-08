@@ -2,10 +2,12 @@ package no.nav.sykmeldinger.arbeidsforhold.kafka
 
 import io.opentelemetry.instrumentation.annotations.WithSpan
 import java.time.Duration
+import java.time.LocalDateTime
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -20,6 +22,7 @@ import no.nav.sykmeldinger.arbeidsforhold.kafka.model.Endringstype
 import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.secureLog
 import no.nav.sykmeldinger.sykmelding.db.SykmeldingDb
+import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.KafkaConsumer
 
@@ -83,8 +86,10 @@ class ArbeidsforholdConsumer(
         while (isActive) {
             try {
                 val hendelser: ConsumerRecords<String, ArbeidsforholdHendelse> =
-                    kafkaConsumer.poll(Duration.ofSeconds(0))
-                handleHendelser(hendelser)
+                    kafkaConsumer.poll(Duration.ofSeconds(10_000))
+                if(hendelser.count() > 0) {
+                    handleHendelser(hendelser)
+                }
             } catch (ex: Exception) {
                 log.error("Error in consumeMessages: ${ex.message}", ex)
                 throw ex
@@ -113,12 +118,16 @@ class ArbeidsforholdConsumer(
                     .filter { it.value().endringstype == Endringstype.Sletting }
                     .map { it.value().arbeidsforhold.navArbeidsforholdId }
 
-            deleteArbeidsforhold(deleted)
+            if(deleted.isNotEmpty()) {
+                deleteArbeidsforhold(deleted)
+            }
         } catch (e: Exception) {
             log.error("Error when updating arbeidsforhold ${e.message} ${e.stackTrace}", e)
             throw e
         }
     }
+
+
 
     @WithSpan
     private suspend fun deleteArbeidsforhold(deleted: List<Int>) =
