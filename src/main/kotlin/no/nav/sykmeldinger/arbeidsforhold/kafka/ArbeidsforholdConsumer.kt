@@ -122,7 +122,7 @@ class ArbeidsforholdConsumer(
                 deleteArbeidsforhold(deleted)
             }
         } catch (e: Exception) {
-            log.error("Error when updating arbeidsforhold ${e.message} ${e.stackTrace}", e)
+            log.error("Error consuming p: ${hendelser.firstOrNull()?.partition()}: o: ${hendelser.firstOrNull()?.offset()}when updating arbeidsforhold ${e.message} ${e.stackTrace}", e)
             throw e
         }
     }
