@@ -334,7 +334,7 @@ private fun getArbeidsforholdKafkaConsumer(): KafkaConsumer<String, Arbeidsforho
                 )
                 .also {
                     it[ConsumerConfig.AUTO_OFFSET_RESET_CONFIG] = "none"
-                    it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 1000
+                    it[ConsumerConfig.MAX_POLL_RECORDS_CONFIG] = 1
                 },
             StringDeserializer(),
             JacksonKafkaDeserializer(ArbeidsforholdHendelse::class),
