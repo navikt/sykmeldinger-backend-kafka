@@ -18,6 +18,7 @@ import no.nav.sykmeldinger.arbeidsforhold.ArbeidsforholdService
 import no.nav.sykmeldinger.arbeidsforhold.kafka.model.ArbeidsforholdHendelse
 import no.nav.sykmeldinger.arbeidsforhold.kafka.model.Endringstype
 import no.nav.sykmeldinger.log
+import no.nav.sykmeldinger.objectMapper
 import no.nav.sykmeldinger.secureLog
 import no.nav.sykmeldinger.sykmelding.db.SykmeldingDb
 import org.apache.kafka.clients.consumer.ConsumerRecords
@@ -105,6 +106,15 @@ class ArbeidsforholdConsumer(
 
             val newhendelserByFnr =
                 arbeidsforholdEndringer
+                    .filter {
+                        val hasArbeidstaker = it.value().arbeidsforhold.arbeidstaker.identer != null
+                        if (!hasArbeidstaker) {
+                            secureLog.error(
+                                "invalid arbeidstaker for ${objectMapper.writeValueAsString(it.value())}"
+                            )
+                        }
+                        hasArbeidstaker
+                    }
                     .map { it.value().arbeidsforhold.arbeidstaker.getFnr() }
                     .distinct()
 
