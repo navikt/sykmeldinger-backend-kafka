@@ -17,6 +17,7 @@ import kotlinx.coroutines.withContext
 import no.nav.sykmeldinger.arbeidsforhold.ArbeidsforholdService
 import no.nav.sykmeldinger.arbeidsforhold.kafka.model.ArbeidsforholdHendelse
 import no.nav.sykmeldinger.arbeidsforhold.kafka.model.Endringstype
+import no.nav.sykmeldinger.arbeidsforhold.kafka.model.Entitetsendring
 import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.objectMapper
 import no.nav.sykmeldinger.secureLog
@@ -115,6 +116,12 @@ class ArbeidsforholdConsumer(
                         }
                         hasArbeidstaker
                     }
+                    .filter {
+                        it.value().entitetsendringer.contains(Entitetsendring.Ansettelsesperiode) ||
+                            it.value()
+                                .entitetsendringer
+                                .contains(Entitetsendring.Ansettelsesdetaljer)
+                    }
                     .map { it.value().arbeidsforhold.arbeidstaker.getFnr() }
                     .distinct()
 
@@ -122,7 +129,10 @@ class ArbeidsforholdConsumer(
 
             val deleted =
                 hendelser
-                    .filter { it.value().endringstype == Endringstype.Sletting }
+                    .filter {
+                        it.value().endringstype == Endringstype.Sletting ||
+                            it.value().arbeidsforhold.arbeidstaker.identer == null
+                    }
                     .map { it.value().arbeidsforhold.navArbeidsforholdId }
 
             if (deleted.isNotEmpty()) {
