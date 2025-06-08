@@ -7,26 +7,26 @@ version = "1.0.0"
 val javaVersion = JvmTarget.JVM_21
 
 
-val coroutinesVersion = "1.10.1"
-val jacksonVersion = "2.18.2"
+val coroutinesVersion = "1.10.2"
+val jacksonVersion = "2.19.0"
 val kluentVersion = "1.73"
-val ktorVersion = "3.1.0"
-val logbackVersion = "1.5.16"
-val logstashEncoderVersion = "8.0"
+val ktorVersion = "3.1.3"
+val logbackVersion = "1.5.18"
+val logstashEncoderVersion = "8.1"
 val prometheusVersion = "0.16.0"
-val mockkVersion = "1.13.16"
-val testContainerVersion = "1.20.4"
-val kotlinVersion = "2.1.10"
+val mockkVersion = "1.14.2"
+val testContainerVersion = "1.21.0"
+val kotlinVersion = "2.1.21"
 val kotestVersion = "5.9.1"
 val postgresVersion = "42.7.5"
-val hikariVersion = "6.2.1"
-val googlePostgresVersion = "1.23.1"
-val flywayVersion = "11.3.2"
-val confluentVersion = "7.8.1"
+val hikariVersion = "6.3.0"
+val googlePostgresVersion = "1.25.0"
+val flywayVersion = "11.8.2"
+val confluentVersion = "7.9.1"
 val commonsCodecVersion = "1.18.0"
 val ktfmtVersion = "0.44"
 val avroVersion = "1.12.0"
-val opentelemetryVersion = "2.13.0"
+val opentelemetryVersion = "2.16.0"
 
 
 //Due to vulnerabilities
@@ -35,8 +35,8 @@ val commonsCompressVersion = "1.27.1"
 
 plugins {
     id("application")
-    kotlin("jvm") version "2.1.10"
-    id("com.diffplug.spotless") version "7.0.2"
+    kotlin("jvm") version "2.1.21"
+    id("com.diffplug.spotless") version "7.0.3"
     id("com.gradleup.shadow") version "8.3.6"
 }
 
