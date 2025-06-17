@@ -3,13 +3,18 @@ package no.nav.sykmeldinger.sykmelding.db
 import java.sql.Connection
 import java.sql.Date
 import java.sql.ResultSet
+import java.sql.Timestamp
 import java.sql.Types
 import java.time.LocalDate
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import no.nav.syfo.model.ValidationResult
+import no.nav.syfo.model.sykmeldingstatus.STATUS_APEN
 import no.nav.sykmeldinger.application.db.DatabaseInterface
 import no.nav.sykmeldinger.application.db.toList
+import no.nav.sykmeldinger.log
 import no.nav.sykmeldinger.objectMapper
 import no.nav.sykmeldinger.status.db.toPGObject
 import no.nav.sykmeldinger.sykmelding.model.Sykmelding
@@ -17,6 +22,20 @@ import no.nav.sykmeldinger.sykmelding.model.Sykmeldt
 import org.postgresql.util.PGobject
 
 data class UpdateResult(val table: String, val updatedRows: Int)
+
+private fun getMinTime(
+    mottattDato: OffsetDateTime,
+    currentTime: OffsetDateTime = OffsetDateTime.now(ZoneOffset.UTC)
+): OffsetDateTime {
+    return if (mottattDato.isBefore(currentTime)) {
+        mottattDato
+    } else {
+        log.info(
+            "Current time $currentTime is before mottatt sykmelding time $mottattDato, setting status timestamp to current time"
+        )
+        currentTime
+    }
+}
 
 class SykmeldingDb(
     private val database: DatabaseInterface,
@@ -116,7 +135,10 @@ class SykmeldingDb(
                 }
             connection.saveOrUpdateSykmeldt(sykmeldt)
             connection.insertBehandlingsutfall(sykmeldingId, validationResult)
-
+            connection.insertOrUpdateApenStatus(
+                sykmeldingId,
+                getMinTime(sykmelding.mottattTidspunkt)
+            )
             connection.commit()
         }
     }
@@ -223,23 +245,41 @@ class SykmeldingDb(
             }
     }
 
-    private fun Connection.insertBehandlingsutfall(
+    private fun Connection.insertOrUpdateApenStatus(
         sykmeldingId: String,
-        validationResult: ValidationResult
+        mottattDato: OffsetDateTime
     ) {
         prepareStatement(
                 """
-               insert into behandlingsutfall(sykmelding_id, behandlingsutfall, rule_hits) values(?, ?, ?) on conflict(sykmelding_id) do nothing;
-            """,
+            insert into sykmeldingstatus(sykmelding_id, event, timestamp) values(?, ?, ?) on conflict do nothing;
+        """,
             )
             .use { ps ->
                 var index = 1
                 ps.setString(index++, sykmeldingId)
-                ps.setString(index++, validationResult.status.name)
-                ps.setObject(index, toPGObject(validationResult.ruleHits))
+                ps.setString(index++, STATUS_APEN)
+                ps.setTimestamp(index, Timestamp.from(mottattDato.toInstant()))
                 ps.executeUpdate()
             }
     }
+}
+
+private fun Connection.insertBehandlingsutfall(
+    sykmeldingId: String,
+    validationResult: ValidationResult
+) {
+    prepareStatement(
+            """
+               insert into behandlingsutfall(sykmelding_id, behandlingsutfall, rule_hits) values(?, ?, ?) on conflict(sykmelding_id) do nothing;
+            """,
+        )
+        .use { ps ->
+            var index = 1
+            ps.setString(index++, sykmeldingId)
+            ps.setString(index++, validationResult.status.name)
+            ps.setObject(index, toPGObject(validationResult.ruleHits))
+            ps.executeUpdate()
+        }
 }
 
 fun ResultSet.toSykmeldt(): Sykmeldt {
