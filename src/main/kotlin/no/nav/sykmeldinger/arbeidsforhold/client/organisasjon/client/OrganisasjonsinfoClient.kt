@@ -23,7 +23,7 @@ class OrganisasjonsinfoClient(
                 .navn
                 .getNameAsString()
         } catch (e: Exception) {
-            log.error("Noe gikk galt ved henting av organisasjon $orgNummer fra ereg")
+            log.error("Noe gikk galt ved henting av organisasjon $orgNummer fra ereg", e)
             throw e
         } finally {
             timer.observeDuration()
