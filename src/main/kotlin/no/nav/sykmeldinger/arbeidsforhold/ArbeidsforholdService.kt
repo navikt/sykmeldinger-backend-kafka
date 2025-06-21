@@ -4,16 +4,22 @@ import java.time.LocalDate
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.client.ArbeidsforholdClient
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.Ansettelsesperiode
 import no.nav.sykmeldinger.arbeidsforhold.client.arbeidsforhold.model.ArbeidsstedType
+import no.nav.sykmeldinger.arbeidsforhold.client.organisasjon.client.OrganisasjonNotFoundException
 import no.nav.sykmeldinger.arbeidsforhold.client.organisasjon.client.OrganisasjonsinfoClient
 import no.nav.sykmeldinger.arbeidsforhold.db.ArbeidsforholdDb
 import no.nav.sykmeldinger.arbeidsforhold.model.Arbeidsforhold
 import no.nav.sykmeldinger.arbeidsforhold.model.ArbeidsforholdType
+import org.slf4j.LoggerFactory
 
 class ArbeidsforholdService(
     private val arbeidsforholdClient: ArbeidsforholdClient,
     private val organisasjonsinfoClient: OrganisasjonsinfoClient,
     private val arbeidsforholdDb: ArbeidsforholdDb,
 ) {
+    companion object {
+        private val log = LoggerFactory.getLogger(ArbeidsforholdService::class.java)
+    }
+
     suspend fun insertOrUpdate(arbeidsforhold: Arbeidsforhold) {
         arbeidsforholdDb.insertOrUpdate(arbeidsforhold)
     }
@@ -75,23 +81,32 @@ class ArbeidsforholdService(
                 .sortedWith(
                     compareByDescending(nullsLast()) { it.ansettelsesperiode.sluttdato },
                 )
-                .map { aaregArbeidsforhold ->
-                    val orgnavn =
-                        organisasjonsinfoClient.getOrgnavn(
-                            aaregArbeidsforhold.arbeidssted.getOrgnummer()
+                .mapNotNull { aaregArbeidsforhold ->
+                    try {
+                        val orgnavn =
+                            organisasjonsinfoClient.getOrgnavn(
+                                aaregArbeidsforhold.arbeidssted.getOrgnummer()
+                            )
+                        val arbeidsforholdType =
+                            ArbeidsforholdType.parse(aaregArbeidsforhold.type.kode)
+                        Arbeidsforhold(
+                            id = aaregArbeidsforhold.navArbeidsforholdId,
+                            fnr = fnr,
+                            orgnummer = aaregArbeidsforhold.arbeidssted.getOrgnummer(),
+                            juridiskOrgnummer =
+                                aaregArbeidsforhold.opplysningspliktig.getJuridiskOrgnummer(),
+                            orgNavn = orgnavn,
+                            fom = aaregArbeidsforhold.ansettelsesperiode.startdato,
+                            tom = aaregArbeidsforhold.ansettelsesperiode.sluttdato,
+                            type = arbeidsforholdType,
                         )
-                    val arbeidsforholdType = ArbeidsforholdType.parse(aaregArbeidsforhold.type.kode)
-                    Arbeidsforhold(
-                        id = aaregArbeidsforhold.navArbeidsforholdId,
-                        fnr = fnr,
-                        orgnummer = aaregArbeidsforhold.arbeidssted.getOrgnummer(),
-                        juridiskOrgnummer =
-                            aaregArbeidsforhold.opplysningspliktig.getJuridiskOrgnummer(),
-                        orgNavn = orgnavn,
-                        fom = aaregArbeidsforhold.ansettelsesperiode.startdato,
-                        tom = aaregArbeidsforhold.ansettelsesperiode.sluttdato,
-                        type = arbeidsforholdType,
-                    )
+                    } catch (ex: OrganisasjonNotFoundException) {
+                        log.warn(
+                            "Could not find organisasjon for arbeidsforholdId: ${aaregArbeidsforhold.navArbeidsforholdId}",
+                            ex
+                        )
+                        null
+                    }
                 }
         return arbeidsgiverList
     }
