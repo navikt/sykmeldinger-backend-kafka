@@ -14,7 +14,7 @@ data class ReceivedSykmelding(
     val legekontorOrgNr: String?,
     val legekontorHerId: String?,
     val legekontorReshId: String?,
-    val legekontorOrgName: String,
+    val legekontorOrgName: String?,
     val mottattDato: LocalDateTime,
     val rulesetVersion: String?,
     val merknader: List<Merknad>?,
