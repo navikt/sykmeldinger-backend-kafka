@@ -64,7 +64,7 @@ spec:
       external:
         - host: pdl-api.dev-fss-pub.nais.io
         - host: ereg-services-q1.dev-fss-pub.nais.io
-        - host: aareg-services-q2.dev-fss-pub.nais.io
+        - host: aareg-services-q1.dev-fss-pub.nais.io
         - host: teamsykmelding-unleash-api.nav.cloud.nais.io
   env:
     - name: CLOUD_SQL_INSTANCE
@@ -76,8 +76,8 @@ spec:
     - name: EREG_URL
       value: https://ereg-services-q1.dev-fss-pub.nais.io
     - name: AAREG_URL
-      value: https://aareg-services-q2.dev-fss-pub.nais.io
+      value: https://aareg-services-q1.dev-fss-pub.nais.io
     - name: AAREG_SCOPE
-      value: api://dev-fss.arbeidsforhold.aareg-services-nais/.default
+      value: api://dev-fss.arbeidsforhold.aareg-services-nais-q1/.default
     - name: ARBEIDSFORHOLD_TOPIC
       value: arbeidsforhold.aapen-aareg-q1-arbeidsforholdhendelse-v1
