@@ -10,7 +10,9 @@ spec:
   replicas:
     min: 3
     max: 3
-    cpuThresholdPercentage: 90
+    scalingStrategy:
+      cpu:
+        thresholdPercentage: 90
   port: 8080
   kafka:
     pool: nav-prod
