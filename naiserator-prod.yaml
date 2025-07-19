@@ -9,7 +9,7 @@ spec:
   image: {{ image }}
   replicas:
     min: 3
-    max: 3
+    max: 6
     scalingStrategy:
       cpu:
         thresholdPercentage: 90
