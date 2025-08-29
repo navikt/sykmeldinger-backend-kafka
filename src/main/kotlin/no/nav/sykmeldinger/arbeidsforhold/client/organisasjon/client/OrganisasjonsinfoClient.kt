@@ -26,13 +26,12 @@ class OrganisasjonsinfoClient(
             val response = httpClient.get("$url/api/v1/organisasjon/$orgNummer/noekkelinfo")
             return response.body<Organisasjonsinfo>().navn.getNameAsString()
         } catch (ex: ClientRequestException) {
-            if(ex.response.status == HttpStatusCode.NotFound) {
+            if (ex.response.status == HttpStatusCode.NotFound) {
                 val errorResponse = ex.response.body<OrganisjonsinfoErrorResponse>()
                 throw OrganisasjonNotFoundException(errorResponse.melding)
             }
             throw ex
-        }
-        catch (e: Exception) {
+        } catch (e: Exception) {
             log.error("Noe gikk galt ved henting av organisasjon $orgNummer fra ereg", e)
             throw e
         } finally {

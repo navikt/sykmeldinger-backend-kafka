@@ -84,7 +84,6 @@ class SykmeldingConsumer(
                             cr.value()?.let {
                                 objectMapper.readValue(it, ReceivedSykmelding::class.java)
                             }
-
                         handleSykmelding(cr.key(), sykmelding)
                     }
                 }
