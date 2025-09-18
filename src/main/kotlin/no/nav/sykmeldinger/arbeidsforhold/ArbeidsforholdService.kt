@@ -15,6 +15,7 @@ class ArbeidsforholdService(
     private val arbeidsforholdClient: ArbeidsforholdClient,
     private val organisasjonsinfoClient: OrganisasjonsinfoClient,
     private val arbeidsforholdDb: ArbeidsforholdDb,
+    private val cluster: String,
 ) {
     companion object {
         private val log = LoggerFactory.getLogger(ArbeidsforholdService::class.java)
@@ -25,27 +26,35 @@ class ArbeidsforholdService(
     }
 
     suspend fun updateArbeidsforhold(fnr: String) {
-        val arbeidsforhold = getArbeidsforhold(fnr)
-        val arbeidsforholdFraDb = getArbeidsforholdFromDb(fnr)
+        try {
+            val arbeidsforhold = getArbeidsforhold(fnr)
+            val arbeidsforholdFraDb = getArbeidsforholdFromDb(fnr)
 
-        val slettesfraDb =
-            getArbeidsforholdSomSkalSlettes(
-                arbeidsforholdDb = arbeidsforholdFraDb,
-                arbeidsforholdAareg = arbeidsforhold,
-            )
-
-        if (slettesfraDb.isNotEmpty()) {
-            slettesfraDb.forEach {
-                /*   log.info(
-                    "Sletter utdatert arbeidsforhold med id $it",
+            val slettesfraDb =
+                getArbeidsforholdSomSkalSlettes(
+                    arbeidsforholdDb = arbeidsforholdFraDb,
+                    arbeidsforholdAareg = arbeidsforhold,
                 )
-                secureLog.info(
-                    "Sletter fra arbeidsforhold, siden db og areg ulike, fnr: $fnr, arbeidsforholdId: $it",
-                )*/
-                deleteArbeidsforhold(it)
+
+            if (slettesfraDb.isNotEmpty()) {
+                slettesfraDb.forEach {
+                    /*   log.info(
+                        "Sletter utdatert arbeidsforhold med id $it",
+                    )
+                    secureLog.info(
+                        "Sletter fra arbeidsforhold, siden db og areg ulike, fnr: $fnr, arbeidsforholdId: $it",
+                    )*/
+                    deleteArbeidsforhold(it)
+                }
+            }
+            arbeidsforhold.forEach { insertOrUpdate(it) }
+        } catch (e: Exception) {
+            if (cluster == "dev-gcp") {
+                log.warn("Could not update arbeidsforhold", e)
+            } else {
+                throw e
             }
         }
-        arbeidsforhold.forEach { insertOrUpdate(it) }
     }
 
     fun getArbeidsforholdSomSkalSlettes(

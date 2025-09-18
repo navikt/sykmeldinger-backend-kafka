@@ -28,7 +28,12 @@ object ArbeidsforholdServiceTest :
         val organisasjonsinfoClient = mockk<OrganisasjonsinfoClient>()
         val arbeidsforholdDb = ArbeidsforholdDb(testDb)
         val arbeidsforholdService =
-            ArbeidsforholdService(arbeidsforholdClient, organisasjonsinfoClient, arbeidsforholdDb)
+            ArbeidsforholdService(
+                arbeidsforholdClient,
+                organisasjonsinfoClient,
+                arbeidsforholdDb,
+                "dev-gcp"
+            )
 
         beforeTest {
             TestDB.clearAllData()

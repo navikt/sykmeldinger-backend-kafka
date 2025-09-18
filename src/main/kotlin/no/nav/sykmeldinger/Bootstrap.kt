@@ -171,7 +171,12 @@ fun main() {
     val arbeidsforholdDb = ArbeidsforholdDb(database)
     val organisasjonsinfoClient = OrganisasjonsinfoClient(httpClient, env.eregUrl)
     val arbeidsforholdService =
-        ArbeidsforholdService(arbeidsforholdClient, organisasjonsinfoClient, arbeidsforholdDb)
+        ArbeidsforholdService(
+            arbeidsforholdClient,
+            organisasjonsinfoClient,
+            arbeidsforholdDb,
+            env.cluster
+        )
 
     val sykmeldingDb = SykmeldingDb(database)
     val sykmeldingService = SykmeldingService(sykmeldingDb)

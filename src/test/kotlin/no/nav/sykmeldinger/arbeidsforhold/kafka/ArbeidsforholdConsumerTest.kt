@@ -47,6 +47,7 @@ object ArbeidsforholdConsumerTest :
                     arbeidsforholdClient,
                     organisasjonsinfoClient,
                     arbeidsforholdDb,
+                    "dev-gcp",
                 )
             val arbeidsforholdConsumer =
                 ArbeidsforholdConsumer(
