@@ -1,5 +1,13 @@
 [![Deploy to dev and prod](https://github.com/navikt/sykmeldinger-backend-kafka/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/navikt/sykmeldinger-backend-kafka/actions/workflows/deploy.yml)
 # sykmeldinger-backend-kafka
+
+> [!WARNING]
+> 
+> **Deprecated!**
+> 
+> Denne appen er nå slått sammen med [Ditt Sykefravær](https://github.com/navikt/ditt-sykefravaer)
+
+
 This project contains the application code and infrastructure for sykmeldinger-backend-kafka
 
 ## Technologies used
